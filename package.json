@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/but-sd/themoviedb-discovery-app-demo-2#readme",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1"
   },
   "devDependencies": {
