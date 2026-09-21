@@ -2,6 +2,18 @@
   "name": "themoviedb-discovery-app-demo-2",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/but-sd/themoviedb-discovery-app-demo-2#readme",
+  "bugs": {
+    "url": "https://github.com/but-sd/themoviedb-discovery-app-demo-2/issues"
+  },
+  "license": "ISC",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/but-sd/themoviedb-discovery-app-demo-2.git"
+  },
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "lint": "oxlint -c oxlint.config.ts .",
@@ -10,20 +22,9 @@
     "fmt:check": "oxfmt --check",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "vite",
-    "dev:server": "tsx watch src/back-end/index.ts"
+    "dev:server": "tsx watch src/back-end/index.ts",
+    "prepare": "husky"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/but-sd/themoviedb-discovery-app-demo-2.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/but-sd/themoviedb-discovery-app-demo-2/issues"
-  },
-  "homepage": "https://github.com/but-sd/themoviedb-discovery-app-demo-2#readme",
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -37,10 +38,16 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vite": "^8.3.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,html,md,yml,yaml}": "npm run fmt",
+    "*.{js,jsx,ts,tsx}": "npm run lint:fix"
   }
 }
