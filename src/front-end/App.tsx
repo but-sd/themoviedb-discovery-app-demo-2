@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from "../back-end/constants";
 import type { Movie } from "../back-end/schemas/MoviesTypes";
 import MovieItem from "./src/front-end/components/MovieItem";
 
@@ -7,8 +8,17 @@ export default function App() {
   const [movies, setMovies] = useState<Movie[] | null>(null);
 
   useEffect(() => {
-    // fetch data from an API /api/movies/popular
-    fetch("/api/movies/popular")
+    // read parameters from the URL query string or use default values if not provided
+    const urlParams = new URLSearchParams(window.location.search);
+    const language = urlParams.get("language") || DEFAULT_LANGUAGE;
+    const page = urlParams.get("page") || DEFAULT_PAGE;
+    const region = urlParams.get("region") || DEFAULT_REGION;
+
+    // debug log the query parameters
+    console.log("Query Params from frontend:", { language, page, region });
+
+    // fetch data from an API /api/movies/popular with query parameters
+    fetch(`/api/movies/popular?language=${language}&page=${page}&region=${region}`)
       .then((response) => response.json())
       .then((data) => {
         console.log("Fetched movies data:", data); // Log the fetched data for debugging
@@ -18,7 +28,7 @@ export default function App() {
 
   return (
     <div>
-      <h1>Popular Movies</h1>
+      <h1>Films populaires</h1>
       {movies ? (
         <ul>
           {movies.map((movie) => (
