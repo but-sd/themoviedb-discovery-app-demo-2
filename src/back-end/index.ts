@@ -10,6 +10,10 @@ import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 // Create a new express application instance
 const app = express();
 
+app.get('/', (_req: express.Request, res: express.Response) => {
+  res.send('Welcome to the TMDB Discovery App API');
+});
+
 // Define a route handler for fetching popular movies from TMDB API
 app.get(
   '/api/movies/popular',
