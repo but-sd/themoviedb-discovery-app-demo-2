@@ -14,6 +14,7 @@ export default function MovieItem({ movie }: MovieItemProps) {
 
   return (
     <Link to={`/movies/${movie.id}`} className="movie-card-link">
+    {/* <a href={`/movies/${movie.id}`} className="movie-card-link"> */}
       <div className="movie-card">
         {posterUrl ? (
           <img className="movie-poster" src={posterUrl} alt={`Affiche de ${movie.title}`} />
@@ -27,6 +28,7 @@ export default function MovieItem({ movie }: MovieItemProps) {
           </p>
         </div>
       </div>
+    {/* </a> */}
     </Link>
   );
 }

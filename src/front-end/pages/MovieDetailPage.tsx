@@ -1,3 +1,7 @@
+import { useParams } from "react-router";
+
 export default function MovieDetailPage() {
-  return <main className="app-shell">Main content of the MovieDetailPage component</main>;
-} 
+  const { id } = useParams<{ id: string }>();
+
+  return <main className="app-shell">Movie id: {id}</main>;
+}
