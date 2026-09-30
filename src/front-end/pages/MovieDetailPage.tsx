@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
-import { MovieDetails } from "../../back-end/schemas/MoviesTypes";
-import MovieDetailCard from "../components/MovieDetailCard";
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router';
+import { MovieDetails } from '../../back-end/schemas/MoviesTypes';
+import MovieDetailCard from '../components/MovieDetailCard';
 
 export default function MovieDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +15,7 @@ export default function MovieDetailPage() {
     fetch(`/api/movies/${id}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched movie details data:", data); // Log the fetched data for debugging
+        console.log('Fetched movie details data:', data); // Log the fetched data for debugging
         setMovie(data); // Update the state with the fetched movie details data
       });
   }, [id]); // Dependency for the useEffect hook
@@ -28,7 +28,13 @@ export default function MovieDetailPage() {
           ← Retour vers les films populaires
         </Link>
       </header>
-      <section>{movie ? <MovieDetailCard movie={movie} /> : <p className="status-message">Loading...</p>}</section>
+      <section>
+        {movie ? (
+          <MovieDetailCard movie={movie} />
+        ) : (
+          <p className="status-message">Loading...</p>
+        )}
+      </section>
     </main>
   );
 }

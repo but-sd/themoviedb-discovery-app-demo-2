@@ -1,27 +1,33 @@
-import { useEffect, useState } from "react";
-import MovieItem from "../components/MovieItem";
-import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from "../../back-end/constants";
-import type { Movie } from "../../back-end/schemas/MoviesTypes";
+import { useEffect, useState } from 'react';
+import MovieItem from '../components/MovieItem';
+import {
+  DEFAULT_LANGUAGE,
+  DEFAULT_PAGE,
+  DEFAULT_REGION,
+} from '../../back-end/constants';
+import type { Movie } from '../../back-end/schemas/MoviesTypes';
 
 export default function MoviesListPage() {
-    // State to hold the fetched movies data, initialized to null
+  // State to hold the fetched movies data, initialized to null
   const [movies, setMovies] = useState<Movie[] | null>(null);
 
   useEffect(() => {
     // read parameters from the URL query string or use default values if not provided
     const urlParams = new URLSearchParams(window.location.search);
-    const language = urlParams.get("language") || DEFAULT_LANGUAGE;
-    const page = urlParams.get("page") || DEFAULT_PAGE;
-    const region = urlParams.get("region") || DEFAULT_REGION;
+    const language = urlParams.get('language') || DEFAULT_LANGUAGE;
+    const page = urlParams.get('page') || DEFAULT_PAGE;
+    const region = urlParams.get('region') || DEFAULT_REGION;
 
     // debug log the query parameters
-    console.log("Query Params from frontend:", { language, page, region });
+    console.log('Query Params from frontend:', { language, page, region });
 
     // fetch data from an API /api/movies/popular with query parameters
-    fetch(`/api/movies/popular?language=${language}&page=${page}&region=${region}`)
+    fetch(
+      `/api/movies/popular?language=${language}&page=${page}&region=${region}`,
+    )
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched movies data:", data); // Log the fetched data for debugging
+        console.log('Fetched movies data:', data); // Log the fetched data for debugging
         setMovies(data.results); // Update the state with the fetched movies data
       });
   }, []);
@@ -31,7 +37,8 @@ export default function MoviesListPage() {
       <header className="app-header">
         <h1>Films populaires</h1>
         <h2>
-          Films tendances en France, d'après les données de <b>The Movie Database</b>
+          Films tendances en France, d'après les données de{' '}
+          <b>The Movie Database</b>
         </h2>
       </header>
       <section>

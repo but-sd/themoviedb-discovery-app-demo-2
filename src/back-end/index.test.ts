@@ -57,8 +57,8 @@ describe('back-end server routes', () => {
       expect(routeHandlers.has('/api/health')).toBe(true);
     });
 
-    it("registers the /api/movies/:id route", () => {
-      expect(routeHandlers.has("/api/movies/:id")).toBe(true);
+    it('registers the /api/movies/:id route', () => {
+      expect(routeHandlers.has('/api/movies/:id')).toBe(true);
     });
   });
 });

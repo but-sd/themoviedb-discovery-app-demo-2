@@ -36,8 +36,8 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font:
-    600 12px/1.4 "Avenir Next",
-    "Trebuchet MS",
+    600 12px/1.4 'Avenir Next',
+    'Trebuchet MS',
     sans-serif;
   color: #2a6f77;
 }
@@ -45,8 +45,8 @@
 .movie-detail-copy h1 {
   margin: 0 0 10px;
   font:
-    700 44px/1.02 "Avenir Next",
-    "Trebuchet MS",
+    700 44px/1.02 'Avenir Next',
+    'Trebuchet MS',
     sans-serif;
   letter-spacing: -0.03em;
   color: var(--ink-strong);
@@ -83,8 +83,8 @@
   background: #ffffffb8;
   border: 1px solid var(--line);
   font:
-    600 13px/1 "Avenir Next",
-    "Trebuchet MS",
+    600 13px/1 'Avenir Next',
+    'Trebuchet MS',
     sans-serif;
   color: var(--ink-strong);
 }
@@ -105,8 +105,8 @@
 .movie-detail-section h2 {
   margin: 0 0 8px;
   font:
-    650 20px/1.2 "Avenir Next",
-    "Trebuchet MS",
+    650 20px/1.2 'Avenir Next',
+    'Trebuchet MS',
     sans-serif;
   color: var(--ink-strong);
 }

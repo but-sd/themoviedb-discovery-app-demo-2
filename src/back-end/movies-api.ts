@@ -69,32 +69,42 @@ export function registerMoviesApi(app: Express): void {
     },
   );
 
-  app.get("/api/movies/:id", async (_req: express.Request, res: express.Response) => {
-    const movieId = _req.params.id;
+  app.get(
+    '/api/movies/:id',
+    async (_req: express.Request, res: express.Response) => {
+      const movieId = _req.params.id;
 
-    try {
-      const response = await fetch(`https://api.themoviedb.org/3/movie/${movieId}`, {
-        headers: {
-          Authorization: `Bearer ${tmdbAccessToken}`,
-          "Content-Type": "application/json;charset=utf-8",
-        },
-      });
+      try {
+        const response = await fetch(
+          `https://api.themoviedb.org/3/movie/${movieId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${tmdbAccessToken}`,
+              'Content-Type': 'application/json;charset=utf-8',
+            },
+          },
+        );
 
-      if (!response.ok) {
-        throw new Error(`TMDB API request failed with status ${response.status}`);
+        if (!response.ok) {
+          throw new Error(
+            `TMDB API request failed with status ${response.status}`,
+          );
+        }
+
+        // Parse the raw response from the TMDB API
+        const rawData = (await response.json()) as TmdbMovieDetails;
+
+        // Transform the raw data into the supported format for our application
+        const data: MovieDetails = toSupportedMovieDetails(rawData);
+
+        // Send the transformed data as a JSON response
+        res.json(data);
+      } catch (error) {
+        console.error(`Error fetching movie with ID ${movieId}:`, error);
+        res
+          .status(500)
+          .json({ error: `Failed to fetch movie with ID ${movieId}` });
       }
-
-      // Parse the raw response from the TMDB API
-      const rawData = (await response.json()) as TmdbMovieDetails;
-
-      // Transform the raw data into the supported format for our application
-      const data: MovieDetails = toSupportedMovieDetails(rawData);
-
-      // Send the transformed data as a JSON response
-      res.json(data);
-    } catch (error) {
-      console.error(`Error fetching movie with ID ${movieId}:`, error);
-      res.status(500).json({ error: `Failed to fetch movie with ID ${movieId}` });
-    }
-  });
+    },
+  );
 }

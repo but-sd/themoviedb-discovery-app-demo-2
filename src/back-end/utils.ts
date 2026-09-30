@@ -1,4 +1,9 @@
-import type { TmdbMoviesRawResponse, Movie, TmdbMovieDetails, MovieDetails } from './schemas/MoviesTypes';
+import type {
+  TmdbMoviesRawResponse,
+  Movie,
+  TmdbMovieDetails,
+  MovieDetails,
+} from './schemas/MoviesTypes';
 
 /**
  * Transforms a TmdbMovie object into a supported Movie object by omitting the 'adult' and 'video' properties.
@@ -29,7 +34,9 @@ export const toSupportedMovie = (
  * @param movie The raw TmdbMovieDetails object.
  * @returns The supported MovieDetails object.
  */
-export const toSupportedMovieDetails = (movie: TmdbMovieDetails): MovieDetails => {
+export const toSupportedMovieDetails = (
+  movie: TmdbMovieDetails,
+): MovieDetails => {
   return {
     backdrop_path: movie.backdrop_path,
     genres: movie.genres,

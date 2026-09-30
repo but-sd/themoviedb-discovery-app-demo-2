@@ -1,8 +1,8 @@
-import { Navigate, Route, Routes } from "react-router";
-import "./app.css";
-import MovieDetailPage from "./pages/MovieDetailPage";
-import MoviesListPage from "./pages/MoviesListPage";
-import NotFoundPage from "./pages/NotFoundPage";
+import { Navigate, Route, Routes } from 'react-router';
+import './app.css';
+import MovieDetailPage from './pages/MovieDetailPage';
+import MoviesListPage from './pages/MoviesListPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
   return (
