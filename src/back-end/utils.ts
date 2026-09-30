@@ -1,6 +1,6 @@
 import type {
-  TmdbMoviesRawResponse,
   Movie,
+  TmdbMovie,
   TmdbMovieDetails,
   MovieDetails,
 } from './schemas/MoviesTypes';
@@ -10,9 +10,7 @@ import type {
  * @param movieTmdb The raw TmdbMovie object.
  * @returns The supported Movie object.
  */
-export const toSupportedMovie = (
-  movieTmdb: TmdbMoviesRawResponse['results'][number],
-): Movie => {
+export const toSupportedMovie = (movieTmdb: TmdbMovie): Movie => {
   return {
     backdrop_path: movieTmdb.backdrop_path,
     genre_ids: movieTmdb.genre_ids,
