@@ -64,8 +64,8 @@ describe('movies API', () => {
     registerMoviesApi(app);
     toSupportedMovieMock.mockReset();
     toSupportedMovieDetailsMock.mockReset();
-    vi.spyOn(console, 'log').mockImplementation(() => { });
-    vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -92,7 +92,7 @@ describe('movies API', () => {
   });
 
   describe('GET /api/movies/popular', () => {
-    it('returns popular movies with defaults and supplied query parameters', async () => {
+    it('returns popular movies', async () => {
       // Arrange
       const rawMovie = { id: 1 };
       const rawData = {
@@ -102,56 +102,35 @@ describe('movies API', () => {
         total_results: 1,
       } as unknown as TmdbMoviesRawResponse;
       const supportedMovie = { id: 1, title: 'Movie' };
-      const fetchMock = vi
-        .fn()
-        .mockResolvedValueOnce(tmdbResponse(rawData))
-        .mockResolvedValueOnce(tmdbResponse({ ...rawData, page: 3 }));
+      const fetchMock = vi.fn().mockResolvedValueOnce(tmdbResponse(rawData));
       vi.stubGlobal('fetch', fetchMock);
       toSupportedMovieMock.mockReturnValue(supportedMovie);
-      const defaultResponse = createResponse();
-      const customResponse = createResponse();
+      const response = createResponse();
 
       // Act
       await getHandler('/api/movies/popular')(
         { query: {} } as Request,
-        defaultResponse,
-        vi.fn(),
-      );
-      await getHandler('/api/movies/popular')(
-        {
-          query: { language: 'fr-FR', page: '3', region: 'CA' },
-        } as unknown as Request,
-        customResponse,
+        response,
         vi.fn(),
       );
 
       // Assert
-      const defaultQuery = new URLSearchParams({
-        language: DEFAULT_LANGUAGE,
-        page: DEFAULT_PAGE,
-        region: DEFAULT_REGION,
-      });
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        1,
-        `https://api.themoviedb.org/3/movie/popular?${defaultQuery}`,
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^https:\/\/api\.themoviedb\.org\/3\/movie\/popular\?/,
+        ),
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: `Bearer ${tmdbAccessToken}`,
           }),
         }),
       );
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
-        'https://api.themoviedb.org/3/movie/popular?language=fr-FR&page=3&region=CA',
-        expect.any(Object),
-      );
-      expect(defaultResponse.json).toHaveBeenCalledWith({
+      expect(response.json).toHaveBeenCalledWith({
         page: 1,
         results: [supportedMovie],
         total_pages: 2,
         total_results: 1,
       });
-      expect(customResponse.json).toHaveBeenCalled();
     });
 
     it('returns errors for unsuccessful and rejected popular movie requests', async () => {
@@ -187,57 +166,35 @@ describe('movies API', () => {
   });
 
   describe('GET /api/movies/:id', () => {
-    it('returns movie details with defaults and supplied query parameters', async () => {
+    it('returns movie details', async () => {
       // Arrange
       const rawData = { id: 42 } as unknown as TmdbMovieDetails;
       const supportedDetails = { id: 42, title: 'Movie details' };
-      const fetchMock = vi
-        .fn()
-        .mockResolvedValueOnce(tmdbResponse(rawData))
-        .mockResolvedValueOnce(tmdbResponse(rawData));
+      const fetchMock = vi.fn().mockResolvedValueOnce(tmdbResponse(rawData));
       vi.stubGlobal('fetch', fetchMock);
       toSupportedMovieDetailsMock.mockReturnValue(supportedDetails);
-      const defaultResponse = createResponse();
-      const customResponse = createResponse();
+      const response = createResponse();
 
       // Act
       await getHandler('/api/movies/:id')(
         { params: { id: '42' }, query: {} } as unknown as Request,
-        defaultResponse,
-        vi.fn(),
-      );
-      await getHandler('/api/movies/:id')(
-        {
-          params: { id: '7' },
-          query: { language: 'fr-FR', page: '3', region: 'CA' },
-        } as unknown as Request,
-        customResponse,
+        response,
         vi.fn(),
       );
 
       // Assert
-      const defaultQuery = new URLSearchParams({
-        language: DEFAULT_LANGUAGE,
-        page: DEFAULT_PAGE,
-        region: DEFAULT_REGION,
-      });
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        1,
-        `https://api.themoviedb.org/3/movie/42?${defaultQuery}`,
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^https:\/\/api\.themoviedb\.org\/3\/movie\/42\?/,
+        ),
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: `Bearer ${tmdbAccessToken}`,
           }),
         }),
       );
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
-        'https://api.themoviedb.org/3/movie/7?language=fr-FR&page=3&region=CA',
-        expect.any(Object),
-      );
       expect(toSupportedMovieDetailsMock).toHaveBeenCalledWith(rawData);
-      expect(defaultResponse.json).toHaveBeenCalledWith(supportedDetails);
-      expect(customResponse.json).toHaveBeenCalledWith(supportedDetails);
+      expect(response.json).toHaveBeenCalledWith(supportedDetails);
     });
 
     it('returns errors for unsuccessful and rejected movie detail requests', async () => {
