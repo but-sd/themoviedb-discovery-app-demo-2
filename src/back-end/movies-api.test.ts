@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import { tmdbAccessToken } from './config';
 import * as movieQueryParams from './movie-query-params';
-import { createMovieQueryParams } from './movie-query-params';
 import { registerMoviesApi } from './movies-api';
 import type {
   TmdbMovieDetails,
@@ -75,24 +74,6 @@ describe('movies API', () => {
     vi.restoreAllMocks();
   });
 
-  describe('createMovieQueryParams', () => {
-    it('creates URLSearchParams with default values if not provided', () => {
-      const query = {};
-      const queryParams = createMovieQueryParams(query);
-      expect(queryParams.get('language')).toBe(DEFAULT_LANGUAGE);
-      expect(queryParams.get('page')).toBe(DEFAULT_PAGE);
-      expect(queryParams.get('region')).toBe(DEFAULT_REGION);
-    });
-
-    it('creates URLSearchParams with provided query parameters', () => {
-      const query = { language: 'fr-FR', page: '3', region: 'CA' };
-      const queryParams = createMovieQueryParams(query);
-      expect(queryParams.get('language')).toBe('fr-FR');
-      expect(queryParams.get('page')).toBe('3');
-      expect(queryParams.get('region')).toBe('CA');
-    });
-  });
-
   describe('GET /api/movies/popular', () => {
     it('returns popular movies', async () => {
       // Arrange
@@ -126,7 +107,7 @@ describe('movies API', () => {
 
       // Assert that the fetch function was called with the correct URL and headers
       expect(fetchMock).toHaveBeenCalledWith(
-        `https://api.themoviedb.org/3/movie/popular?language=${DEFAULT_LANGUAGE}&page=1&region=${DEFAULT_REGION}`,
+        `https://api.themoviedb.org/3/movie/popular?language=${DEFAULT_LANGUAGE}&page=${DEFAULT_PAGE}&region=${DEFAULT_REGION}`,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: `Bearer ${tmdbAccessToken}`,
@@ -194,7 +175,7 @@ describe('movies API', () => {
 
       // Assert
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.themoviedb.org/3/movie/42?language=fr-FR&page=1&region=FR',
+        `https://api.themoviedb.org/3/movie/42?language=${DEFAULT_LANGUAGE}&page=${DEFAULT_PAGE}&region=${DEFAULT_REGION}`,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: `Bearer ${tmdbAccessToken}`,
