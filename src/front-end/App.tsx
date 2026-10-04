@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router';
+import Footer from './components/Footer/Footer';
 import './app.css';
 import MovieDetailPage from './pages/MovieDetailPage';
 import MoviesListPage from './pages/MoviesListPage';
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Footer />
     </>
   );
 }
