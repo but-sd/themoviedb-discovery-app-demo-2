@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import MovieItem from '../components/MovieItem';
+import MovieItem from '../components/MovieItem/MovieItem';
 import {
   DEFAULT_LANGUAGE,
   DEFAULT_PAGE,
