@@ -1,4 +1,4 @@
-import "./AboutPage.css";
+import './AboutPage.css';
 
 export default function AboutPage() {
   return (
@@ -7,7 +7,8 @@ export default function AboutPage() {
         <p className="about-eyebrow">TMDB Discovery</p>
         <h1>À propos de l'application</h1>
         <p className="about-intro">
-          Une application de découverte de films, pensée comme une expérience web claire, rapide et maintenable.
+          Une application de découverte de films, pensée comme une expérience
+          web claire, rapide et maintenable.
         </p>
       </header>
 
@@ -17,9 +18,11 @@ export default function AboutPage() {
           <h2 id="about-story-title">Découvrir, comparer, choisir</h2>
         </div>
         <p>
-          Cette application utilise l'API de <strong>T</strong>he <strong>M</strong>ovie <strong>D</strong>ata
-          <strong>B</strong>ase pour rendre les films populaires faciles à explorer. Elle démontre la construction d'une
-          application complète, du front-end à l'API.
+          Cette application utilise l'API de <strong>T</strong>he{' '}
+          <strong>M</strong>ovie <strong>D</strong>ata
+          <strong>B</strong>ase pour rendre les films populaires faciles à
+          explorer. Elle démontre la construction d'une application complète, du
+          front-end à l'API.
         </p>
       </section>
 
@@ -48,7 +51,10 @@ export default function AboutPage() {
         </ul>
       </section>
 
-      <section className="about-repository" aria-labelledby="about-repository-title">
+      <section
+        className="about-repository"
+        aria-labelledby="about-repository-title"
+      >
         <div>
           <p className="about-section-label">Code source</p>
           <h2 id="about-repository-title">Voir la réalisation du projet</h2>
