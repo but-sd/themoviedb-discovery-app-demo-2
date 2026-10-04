@@ -21,23 +21,25 @@ const mockTmdbMovie: TmdbMovie = {
 };
 
 describe('utils', () => {
-  it('should convert TMDB movies raw response to supported movie format', () => {
-    // Arrange: Prepare the mock TMDB movies raw response.
+  describe('toSupportedMovie', () => {
+    it('should convert TMDB movies raw response to supported movie format', () => {
+      // Arrange: Prepare the mock TMDB movies raw response.
 
-    // Act: Convert the first movie in the raw response to the supported movie format.
-    const result = toSupportedMovie(mockTmdbMovie);
+      // Act: Convert the first movie in the raw response to the supported movie format.
+      const result = toSupportedMovie(mockTmdbMovie);
 
-    // Assert: Verify that the conversion result is defined and has the expected ID.
-    expect(result).toBeDefined();
-    expect(result.id).toBe(mockTmdbMovie.id);
+      // Assert: Verify that the conversion result is defined and has the expected ID.
+      expect(result).toBeDefined();
+      expect(result.id).toBe(mockTmdbMovie.id);
 
-    // Assert: Prepare the expected movie object by omitting the 'adult' and 'video' properties.
-    const {
-      adult: _adult, // Omit the 'adult' property from the expected movie object.
-      video: _video, // Omit the 'video' property from the expected movie object.
-      ...expectedMovie
-    } = mockTmdbMovie;
+      // Assert: Prepare the expected movie object by omitting the 'adult' and 'video' properties.
+      const {
+        adult: _adult, // Omit the 'adult' property from the expected movie object.
+        video: _video, // Omit the 'video' property from the expected movie object.
+        ...expectedMovie
+      } = mockTmdbMovie;
 
-    expect(result).toEqual(expectedMovie);
+      expect(result).toEqual(expectedMovie);
+    });
   });
 });
