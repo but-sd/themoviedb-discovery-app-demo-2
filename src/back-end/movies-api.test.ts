@@ -135,36 +135,36 @@ describe('movies API', () => {
     expect(customResponse.json).toHaveBeenCalled();
   });
 
-  // it('returns errors for unsuccessful and rejected popular movie requests', async () => {
-  //   // Arrange
-  //   const fetchMock = vi
-  //     .fn()
-  //     .mockResolvedValueOnce(tmdbResponse({}, false, 503))
-  //     .mockRejectedValueOnce(new Error('Network error'));
-  //   vi.stubGlobal('fetch', fetchMock);
-  //   const unsuccessfulResponse = createResponse();
-  //   const rejectedResponse = createResponse();
+  it('returns errors for unsuccessful and rejected popular movie requests', async () => {
+    // Arrange
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(tmdbResponse({}, false, 503))
+      .mockRejectedValueOnce(new Error('Network error'));
+    vi.stubGlobal('fetch', fetchMock);
+    const unsuccessfulResponse = createResponse();
+    const rejectedResponse = createResponse();
 
-  //   // Act
-  //   await getHandler('/api/movies/popular')(
-  //     { query: {} } as Request,
-  //     unsuccessfulResponse,
-  //     vi.fn(),
-  //   );
-  //   await getHandler('/api/movies/popular')(
-  //     { query: {} } as Request,
-  //     rejectedResponse,
-  //     vi.fn(),
-  //   );
+    // Act
+    await getHandler('/api/movies/popular')(
+      { query: {} } as Request,
+      unsuccessfulResponse,
+      vi.fn(),
+    );
+    await getHandler('/api/movies/popular')(
+      { query: {} } as Request,
+      rejectedResponse,
+      vi.fn(),
+    );
 
-  //   // Assert
-  //   for (const response of [unsuccessfulResponse, rejectedResponse]) {
-  //     expect(response.status).toHaveBeenCalledWith(500);
-  //     expect(response.json).toHaveBeenCalledWith({
-  //       error: 'Failed to fetch popular movies',
-  //     });
-  //   }
-  // });
+    // Assert
+    for (const response of [unsuccessfulResponse, rejectedResponse]) {
+      expect(response.status).toHaveBeenCalledWith(500);
+      expect(response.json).toHaveBeenCalledWith({
+        error: 'Failed to fetch popular movies',
+      });
+    }
+  });
 
   it('returns movie details with defaults and supplied query parameters', async () => {
     // Arrange
