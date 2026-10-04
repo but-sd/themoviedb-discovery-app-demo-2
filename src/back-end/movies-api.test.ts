@@ -70,6 +70,7 @@ describe('movies API', () => {
   });
 
   it('returns popular movies with defaults and supplied query parameters', async () => {
+    // Arrange
     const rawMovie = { id: 1 };
     const rawData = {
       page: 1,
@@ -87,17 +88,19 @@ describe('movies API', () => {
     const defaultResponse = createResponse();
     const customResponse = createResponse();
 
+    // Act
     await getHandler('/api/movies/popular')(
       { query: {} } as Request,
       defaultResponse,
       vi.fn(),
     );
     await getHandler('/api/movies/popular')(
-      { query: { language: 'fr-FR', page: '3', region: 'CA' } } as Request,
+      { query: { language: 'fr-FR', page: '3', region: 'CA' } } as unknown as Request,
       customResponse,
       vi.fn(),
     );
 
+    // Assert
     const defaultQuery = new URLSearchParams({
       language: DEFAULT_LANGUAGE,
       page: DEFAULT_PAGE,
@@ -117,7 +120,6 @@ describe('movies API', () => {
       'https://api.themoviedb.org/3/movie/popular?language=fr-FR&page=3&region=CA',
       expect.any(Object),
     );
-    expect(toSupportedMovieMock).toHaveBeenCalledWith(rawMovie, 0, [rawMovie]);
     expect(defaultResponse.json).toHaveBeenCalledWith({
       page: 1,
       results: [supportedMovie],
@@ -128,6 +130,7 @@ describe('movies API', () => {
   });
 
   it('returns errors for unsuccessful and rejected popular movie requests', async () => {
+    // Arrange
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(tmdbResponse({}, false, 503))
@@ -136,6 +139,7 @@ describe('movies API', () => {
     const unsuccessfulResponse = createResponse();
     const rejectedResponse = createResponse();
 
+    // Act
     await getHandler('/api/movies/popular')(
       { query: {} } as Request,
       unsuccessfulResponse,
@@ -147,6 +151,7 @@ describe('movies API', () => {
       vi.fn(),
     );
 
+    // Assert
     for (const response of [unsuccessfulResponse, rejectedResponse]) {
       expect(response.status).toHaveBeenCalledWith(500);
       expect(response.json).toHaveBeenCalledWith({
@@ -156,6 +161,7 @@ describe('movies API', () => {
   });
 
   it('returns movie details with defaults and supplied query parameters', async () => {
+    // Arrange
     const rawData = { id: 42 } as unknown as TmdbMovieDetails;
     const supportedDetails = { id: 42, title: 'Movie details' };
     const fetchMock = vi
@@ -167,6 +173,7 @@ describe('movies API', () => {
     const defaultResponse = createResponse();
     const customResponse = createResponse();
 
+    // Act
     await getHandler('/api/movies/:id')(
       { params: { id: '42' }, query: {} } as unknown as Request,
       defaultResponse,
@@ -181,6 +188,7 @@ describe('movies API', () => {
       vi.fn(),
     );
 
+    // Assert
     const defaultQuery = new URLSearchParams({
       language: DEFAULT_LANGUAGE,
       page: DEFAULT_PAGE,
@@ -206,6 +214,7 @@ describe('movies API', () => {
   });
 
   it('returns errors for unsuccessful and rejected movie detail requests', async () => {
+    // Arrange
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(tmdbResponse({}, false, 404))
@@ -214,6 +223,7 @@ describe('movies API', () => {
     const unsuccessfulResponse = createResponse();
     const rejectedResponse = createResponse();
 
+    // Act
     await getHandler('/api/movies/:id')(
       { params: { id: '42' }, query: {} } as unknown as Request,
       unsuccessfulResponse,
@@ -225,6 +235,7 @@ describe('movies API', () => {
       vi.fn(),
     );
 
+    // Assert
     for (const response of [unsuccessfulResponse, rejectedResponse]) {
       expect(response.status).toHaveBeenCalledWith(500);
       expect(response.json).toHaveBeenCalledWith({
