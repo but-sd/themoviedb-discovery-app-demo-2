@@ -15,7 +15,7 @@ import type {
  * @param query - The query parameters from the Express request.
  * @returns A URLSearchParams object containing the language, page, and region parameters.
  */
-function createMovieQueryParams(query: express.Request['query']): URLSearchParams {
+export function createMovieQueryParams(query: express.Request['query']): URLSearchParams {
   const { language, page, region } = query;
   const queryParams = new URLSearchParams();
 
