@@ -2,7 +2,9 @@ import type { Express, Request, RequestHandler, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import { tmdbAccessToken } from './config';
-import { createMovieQueryParams, registerMoviesApi } from './movies-api';
+import * as movieQueryParams from './movie-query-params';
+import { createMovieQueryParams } from './movie-query-params';
+import { registerMoviesApi } from './movies-api';
 import type {
   TmdbMovieDetails,
   TmdbMoviesRawResponse,
@@ -106,6 +108,10 @@ describe('movies API', () => {
       vi.stubGlobal('fetch', fetchMock);
       toSupportedMovieMock.mockReturnValue(supportedMovie);
       const response = createResponse();
+      const createMovieQueryParamsSpy = vi.spyOn(
+        movieQueryParams,
+        'createMovieQueryParams',
+      );
 
       // Act
       await getHandler('/api/movies/popular')(
@@ -115,16 +121,20 @@ describe('movies API', () => {
       );
 
       // Assert
+      // Assert that the createMovieQueryParams function was called with the correct query parameters
+      expect(createMovieQueryParamsSpy).toHaveBeenCalledWith({});
+
+      // Assert that the fetch function was called with the correct URL and headers
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringMatching(
-          /^https:\/\/api\.themoviedb\.org\/3\/movie\/popular\?/,
-        ),
+        `https://api.themoviedb.org/3/movie/popular?language=${DEFAULT_LANGUAGE}&page=1&region=${DEFAULT_REGION}`,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: `Bearer ${tmdbAccessToken}`,
           }),
         }),
       );
+
+      // Assert that the response contains the transformed movie data
       expect(response.json).toHaveBeenCalledWith({
         page: 1,
         results: [supportedMovie],
@@ -184,9 +194,7 @@ describe('movies API', () => {
 
       // Assert
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringMatching(
-          /^https:\/\/api\.themoviedb\.org\/3\/movie\/42\?/,
-        ),
+        'https://api.themoviedb.org/3/movie/42?language=fr-FR&page=1&region=FR',
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: `Bearer ${tmdbAccessToken}`,

@@ -1,7 +1,7 @@
 import type { Express } from 'express';
 import express from 'express';
+import { createMovieQueryParams } from './movie-query-params';
 import { toSupportedMovie, toSupportedMovieDetails } from './utils';
-import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import { tmdbAccessToken } from './config';
 import type {
   MovieDetails,
@@ -10,21 +10,7 @@ import type {
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 
-/**
- * Creates a URLSearchParams for the movie query parameters (language, page, region) with default values if not provided.
- * @param query - The query parameters from the Express request.
- * @returns A URLSearchParams object containing the language, page, and region parameters.
- */
-export function createMovieQueryParams(query: express.Request['query']): URLSearchParams {
-  const { language, page, region } = query;
-  const queryParams = new URLSearchParams();
-
-  queryParams.append('language', (language as string) || DEFAULT_LANGUAGE);
-  queryParams.append('page', (page as string) || DEFAULT_PAGE);
-  queryParams.append('region', (region as string) || DEFAULT_REGION);
-
-  return queryParams;
-}
+export { createMovieQueryParams } from './movie-query-params';
 
 /**
  * Registers the movies API routes (popular movies and movie details) on the given Express application instance.
@@ -36,6 +22,7 @@ export function registerMoviesApi(app: Express): void {
     '/api/movies/popular',
     async (_req: express.Request, res: express.Response) => {
       try {
+        // Create the query parameters for the TMDB API request
         const queryParams = createMovieQueryParams(_req.query);
 
         // log the query parameters for debugging purposes
@@ -80,7 +67,10 @@ export function registerMoviesApi(app: Express): void {
   app.get(
     '/api/movies/:id',
     async (_req: express.Request, res: express.Response) => {
+      // Extract the movie ID from the request parameters
       const movieId = _req.params.id;
+
+      // Create the query parameters for the TMDB API request
       const queryParams = createMovieQueryParams(_req.query);
 
       // log the query parameters for debugging purposes
