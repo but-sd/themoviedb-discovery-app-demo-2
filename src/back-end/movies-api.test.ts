@@ -99,7 +99,9 @@ describe('movies API', () => {
       vi.fn(),
     );
     await getHandler('/api/movies/popular')(
-      { query: { language: 'fr-FR', page: '3', region: 'CA' } } as unknown as Request,
+      {
+        query: { language: 'fr-FR', page: '3', region: 'CA' },
+      } as unknown as Request,
       customResponse,
       vi.fn(),
     );
