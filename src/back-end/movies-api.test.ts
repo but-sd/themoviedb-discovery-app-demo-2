@@ -117,7 +117,7 @@ describe('movies API', () => {
 
       // Assert that the response contains the transformed movie data
       expect(response.json).toHaveBeenCalledWith({
-        page: 1,
+        page: DEFAULT_PAGE,
         results: [supportedMovie],
         total_pages: 2,
         total_results: 1,

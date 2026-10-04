@@ -7,7 +7,7 @@ describe('createMovieQueryParams', () => {
     const query = {};
     const queryParams = createMovieQueryParams(query);
     expect(queryParams.get('language')).toBe(DEFAULT_LANGUAGE);
-    expect(queryParams.get('page')).toBe(DEFAULT_PAGE);
+    expect(queryParams.get('page')).toBe(`${DEFAULT_PAGE}`);
     expect(queryParams.get('region')).toBe(DEFAULT_REGION);
   });
 
