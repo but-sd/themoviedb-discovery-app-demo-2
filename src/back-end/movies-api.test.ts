@@ -20,6 +20,10 @@ vi.mock('./utils', () => ({
   toSupportedMovieDetails: toSupportedMovieDetailsMock,
 }));
 
+vi.mock('./config', () => ({
+  tmdbAccessToken: 'test-access-token',
+}));
+
 type RouteHandler = (
   req: Request,
   res: Response,
