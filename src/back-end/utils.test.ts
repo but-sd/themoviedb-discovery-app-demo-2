@@ -83,7 +83,7 @@ describe('utils', () => {
       const {
         adult: _adult, // Omit the 'adult' property from the expected movie details object.
         video: _video, // Omit the 'video' property from the expected movie details object.
-        production_companies: _production_companies, // Omit the 'production_companies' property from the expected movie details object.  
+        production_companies: _production_companies, // Omit the 'production_companies' property from the expected movie details object.
         ...expectedMovieDetails
       } = mockTmdbMovieDetails;
 
