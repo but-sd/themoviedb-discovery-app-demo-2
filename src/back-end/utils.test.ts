@@ -89,7 +89,5 @@ describe('utils', () => {
 
       expect(result).toEqual(expectedMovieDetails);
     });
-
-    it
   });
 });
