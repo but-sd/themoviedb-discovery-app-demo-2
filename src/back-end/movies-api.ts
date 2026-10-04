@@ -10,26 +10,33 @@ import type {
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 
+/**
+ * Creates a URLSearchParams for the movie query parameters (language, page, region) with default values if not provided.
+ * @param query - The query parameters from the Express request.
+ * @returns A URLSearchParams object containing the language, page, and region parameters.
+ */
+function createMovieQueryParams(query: express.Request['query']): URLSearchParams {
+  const { language, page, region } = query;
+  const queryParams = new URLSearchParams();
+
+  queryParams.append('language', (language as string) || DEFAULT_LANGUAGE);
+  queryParams.append('page', (page as string) || DEFAULT_PAGE);
+  queryParams.append('region', (region as string) || DEFAULT_REGION);
+
+  return queryParams;
+}
+
+/**
+ * Registers the movies API routes (popular movies and movie details) on the given Express application instance.
+ * @param app - The Express application instance to register the movies API routes on.
+ */
 export function registerMoviesApi(app: Express): void {
   // Define a route handler for fetching popular movies from TMDB API
   app.get(
     '/api/movies/popular',
     async (_req: express.Request, res: express.Response) => {
       try {
-        // Create a URLSearchParams object to build the query string for the TMDB API request
-        const queryParams = new URLSearchParams();
-
-        // Extract query parameters from the request and append them to the query string
-        const { language, page, region } = _req.query;
-
-        // Append the query parameters to the URLSearchParams object, using default values if not provided in the request
-        // parameters: language, page, region
-        queryParams.append(
-          'language',
-          (language as string) || DEFAULT_LANGUAGE,
-        );
-        queryParams.append('page', (page as string) || DEFAULT_PAGE);
-        queryParams.append('region', (region as string) || DEFAULT_REGION);
+        const queryParams = createMovieQueryParams(_req.query);
 
         // log the query parameters for debugging purposes
         console.log('Query Params:', queryParams.toString());
@@ -69,22 +76,12 @@ export function registerMoviesApi(app: Express): void {
     },
   );
 
+  // Define a route handler for fetching movie details by ID from TMDB API
   app.get(
     '/api/movies/:id',
     async (_req: express.Request, res: express.Response) => {
       const movieId = _req.params.id;
-
-      // Create a URLSearchParams object to build the query string for the TMDB API request
-      const queryParams = new URLSearchParams();
-
-      // Extract query parameters from the request and append them to the query string
-      const { language, page, region } = _req.query;
-
-      // Append the query parameters to the URLSearchParams object, using default values if not provided in the request
-      // parameters: language, page, region
-      queryParams.append('language', (language as string) || DEFAULT_LANGUAGE);
-      queryParams.append('page', (page as string) || DEFAULT_PAGE);
-      queryParams.append('region', (region as string) || DEFAULT_REGION);
+      const queryParams = createMovieQueryParams(_req.query);
 
       // log the query parameters for debugging purposes
       console.log('Query Params:', queryParams.toString());
