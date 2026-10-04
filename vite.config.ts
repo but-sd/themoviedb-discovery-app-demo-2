@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import packageJson from './package.json';
+import packageJson from './package.json' with { type: 'json' };
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
