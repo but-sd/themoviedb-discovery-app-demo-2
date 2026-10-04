@@ -82,10 +82,7 @@ export function registerMoviesApi(app: Express): void {
 
       // Append the query parameters to the URLSearchParams object, using default values if not provided in the request
       // parameters: language, page, region
-      queryParams.append(
-        'language',
-        (language as string) || DEFAULT_LANGUAGE,
-      );
+      queryParams.append('language', (language as string) || DEFAULT_LANGUAGE);
       queryParams.append('page', (page as string) || DEFAULT_PAGE);
       queryParams.append('region', (region as string) || DEFAULT_REGION);
 
