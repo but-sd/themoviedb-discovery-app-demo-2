@@ -24,6 +24,7 @@
     "dev:client": "vite",
     "dev:server": "tsx watch src/back-end/index.ts",
     "test": "vitest run --coverage",
+    "test:verbose": "vitest run --reporter verbose",
     "prepare": "husky"
   },
   "dependencies": {
