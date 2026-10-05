@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the necessary modules and functions
 const { getMock, listenMock } = vi.hoisted(() => ({
@@ -33,6 +33,9 @@ const routeHandlers = new Map<string, RouteHandler>(
 
 // Check if the server was started on the expected port
 const serverWasStarted = listenMock.mock.calls.some(([port]) => port === 3000);
+const listenCallback = listenMock.mock.calls[0]?.[1] as
+  | (() => void)
+  | undefined;
 
 describe('back-end server routes', () => {
   // Clear mocks before each test to ensure isolation
@@ -40,10 +43,22 @@ describe('back-end server routes', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('server setup', () => {
     describe('server listening', () => {
       it('starts the server on port 3000', () => {
         expect(serverWasStarted).toBe(true);
+      });
+
+      it('logs when the server starts listening', () => {
+        const logMock = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+        listenCallback?.();
+
+        expect(logMock).toHaveBeenCalledWith('Server is running on port 3000');
       });
     });
   });

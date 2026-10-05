@@ -15,5 +15,13 @@ export default defineConfig({
   },
   test: {
     include: ['src/back-end/**/*.test.ts'],
+    coverage: {
+      thresholds: {
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
+      },
+    },
   },
 });
