@@ -4,7 +4,7 @@ import './app.css';
 import MovieDetailPage from './pages/MovieDetailPage';
 import MoviesListPage from './pages/MoviesListPage';
 import NotFoundPage from './pages/NotFoundPage';
-import AboutPage from './pages/AboutPage';
+import AboutPage from './pages/AboutPage/AboutPage';
 import NavBar from './components/NavBar/NavBar';
 
 export default function App() {
