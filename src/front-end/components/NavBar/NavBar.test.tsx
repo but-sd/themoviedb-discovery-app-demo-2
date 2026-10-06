@@ -17,41 +17,40 @@ function renderNavBar(path: string) {
 
 describe('NavBar', () => {
   it('renders the navigation landmark, brand, and destination links', () => {
+    // Arrange: render the navigation with the movies route selected.
+
+    // Act
     renderNavBar('/movies');
 
+    // Assert: the navigation, brand, destination URLs, and selected link are available to users.
     expect(
       screen.getByRole('navigation', { name: 'Main navigation' }),
-    ).not.toBeNull();
+    ).toBeTruthy();
     expect(screen.getByText('TMDB Discovery')).not.toBeNull();
-    expect(
-      screen
-        .getByRole('link', { name: 'Films populaires' })
-        .getAttribute('href'),
-    ).toBe('/movies');
-    expect(
-      screen.getByRole('link', { name: 'À propos' }).getAttribute('href'),
-    ).toBe('/about');
-  });
-
-  it('marks Films populaires active on the movies route', () => {
-    renderNavBar('/movies');
-
-    expect(
-      screen.getByRole('link', { name: 'Films populaires' }).className,
-    ).toContain('app-nav-link-active');
-    expect(
-      screen.getByRole('link', { name: 'À propos' }).className,
-    ).not.toContain('app-nav-link-active');
+    const moviesLink = screen.getByRole('link', { name: 'Films populaires' });
+    const aboutLink = screen.getByRole('link', { name: 'À propos' });
+    expect(moviesLink.getAttribute('href')).toBe('/movies');
+    expect(aboutLink.getAttribute('href')).toBe('/about');
+    expect(moviesLink.getAttribute('aria-current')).toBe('page');
+    expect(aboutLink.getAttribute('aria-current')).toBeNull();
   });
 
   it('marks À propos active on the about route', () => {
+    // Arrange: render the navigation on its about destination.
+
+    // Act
     renderNavBar('/about');
 
+    // Assert: À propos is the current page and Films populaires is not.
     expect(
-      screen.getByRole('link', { name: 'Films populaires' }).className,
-    ).not.toContain('app-nav-link-active');
-    expect(screen.getByRole('link', { name: 'À propos' }).className).toContain(
-      'app-nav-link-active',
-    );
+      screen
+        .getByRole('link', { name: 'Films populaires' })
+        .getAttribute('aria-current'),
+    ).toBeNull();
+    expect(
+      screen
+        .getByRole('link', { name: 'À propos' })
+        .getAttribute('aria-current'),
+    ).toBe('page');
   });
 });
