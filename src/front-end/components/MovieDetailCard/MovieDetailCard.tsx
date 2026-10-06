@@ -1,4 +1,4 @@
-import type { MovieDetails } from '../../back-end/schemas/MoviesTypes';
+import type { MovieDetails } from '../../../back-end/schemas/MoviesTypes';
 import './MovieDetailCard.css';
 
 export default function MovieDetailCard({ movie }: { movie: MovieDetails }) {
