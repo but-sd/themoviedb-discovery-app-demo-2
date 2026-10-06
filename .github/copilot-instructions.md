@@ -6,6 +6,7 @@
 - Types autorisés : feat, fix, docs, style, refactor, test, chore.
 - Format : `<type>: <message en anglais>`.
 - Exemple : "feat: add new feature to the application"
+- Le message de commit doit être rédigé en anglais et ne pas faire plus de 100 caractères dans le titre.
 
 ## Utilisation de GitHub Copilot
 
