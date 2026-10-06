@@ -24,40 +24,26 @@ function renderMovie() {
   );
 }
 
-describe('MovieItem posterUrl', () => {
-  it('should render the MovieItem component', () => {
+describe('MovieItem', () => {
+  it('renders the movie card with its standard movie details', () => {
+    // Arrange
+    const expectedPosterUrl =
+      'https://image.tmdb.org/t/p/w185/example-poster.jpg';
+    const expectedHref = `/movies/${movie.id}`;
+    const expectedMetadata = /2024 · Note 7\.5/;
+
+    // Act
     renderMovie();
 
-    // Assert
-
-    // Check that the movie as poster image is rendered.
-    const moviePoster = screen.getByRole('img');
-    expect(moviePoster).not.toBeNull();
-    expect(moviePoster.getAttribute('src')).toBe(
-      'https://image.tmdb.org/t/p/w185/example-poster.jpg',
-    );
-
-    // Check that the movie title is rendered and h2 element
-    const movieTitle = screen.queryByText(movie.title);
-    expect(movieTitle).not.toBeNull();
-    expect(movieTitle?.tagName).toBe('H2');
-
-    // Check that the movie link has the correct href attribute.
-    const movieLink = screen.getByRole('link');
-    expect(movieLink.getAttribute('href')).toBe(`/movies/${movie.id}`);
-
-    // Check that the movie release date is rendered and p element
-    const movieReleaseDate = screen.queryByText(
-      new RegExp(movie.release_date.slice(0, 4)),
-    );
-    expect(movieReleaseDate).not.toBeNull();
-    expect(movieReleaseDate?.tagName).toBe('P');
-
-    // Check that the movie vote average is rendered and p element
-    const movieVoteAverage = screen.queryByText(
-      new RegExp(movie.vote_average.toFixed(1)),
-    );
-    expect(movieVoteAverage).not.toBeNull();
-    expect(movieVoteAverage?.tagName).toBe('P');
+    // Assert: the card exposes the expected poster, title, link, and metadata.
+    const moviePoster = screen.getByRole('img', {
+      name: `Affiche de ${movie.title}`,
+    });
+    expect(moviePoster.getAttribute('src')).toBe(expectedPosterUrl);
+    expect(
+      screen.getByRole('heading', { level: 2, name: movie.title }),
+    ).toBeTruthy();
+    expect(screen.getByRole('link').getAttribute('href')).toBe(expectedHref);
+    expect(screen.getByText(expectedMetadata)).toBeTruthy();
   });
 });
