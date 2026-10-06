@@ -1,10 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router';
 import Footer from './components/Footer/Footer';
 import './app.css';
-import MovieDetailPage from './pages/MovieDetailPage';
-import MoviesListPage from './pages/MoviesListPage';
-import NotFoundPage from './pages/NotFoundPage';
-import AboutPage from './pages/AboutPage';
+import MovieDetailPage from './pages/MovieDetailPage/MovieDetailPage';
+import MoviesListPage from './pages/MoviesListPage/MoviesListPage';
+import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
+import AboutPage from './pages/AboutPage/AboutPage';
 import NavBar from './components/NavBar/NavBar';
 
 export default function App() {
