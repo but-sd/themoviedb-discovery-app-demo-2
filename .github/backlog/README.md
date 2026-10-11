@@ -98,13 +98,13 @@ Le script garantit une vue **Backlog**, nommée par `project.viewName` dans la
 configuration. La vue initiale unique « View 1 » est renommée sans changer sa
 mise en page. Si des vues personnalisées existent déjà, elles sont conservées et
 une vue tabulaire Backlog est ajoutée si nécessaire. Les relances ne créent pas
-de vue en double. La colonne **Epic** est rendue visible dans Backlog sans
+de vue en double. Les colonnes **Epic** et **Size** sont rendues visibles dans Backlog sans
 retirer ni réordonner les autres colonnes.
 
 Pour utiliser un tableau Kanban, choisir la disposition **Board** de la vue
 Backlog dans GitHub, la grouper par **Status**, puis afficher Size, Epic et
 Priority. Le script ne modifie pas les filtres ou regroupements ; il ajoute
-uniquement Epic aux colonnes visibles si nécessaire.
+uniquement Epic et Size aux colonnes visibles si nécessaire.
 
 ### Reprendre un import ou utiliser un projet existant
 

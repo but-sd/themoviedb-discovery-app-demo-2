@@ -190,7 +190,9 @@ function fixture({
                     id: 'view',
                     name: 'Backlog',
                     configuration: {
-                      visibleFields: { nodes: [{ id: 'epic' }] },
+                      visibleFields: {
+                        nodes: [{ id: 'epic' }, { id: 'size' }],
+                      },
                     },
                   },
                 ],
@@ -913,7 +915,7 @@ test('custom views are preserved and a missing Backlog view is created', () => {
   assert.equal(creations, 1);
 });
 
-test('Epic column is appended without removing or reordering existing columns', () => {
+test('Epic and Size columns are appended without removing or reordering existing columns', () => {
   const { small, run, options } = fixture({ existing: true });
   const columns = [{ id: 'title' }, { id: 'status' }, { id: 'custom-column' }];
   let updates = 0;
@@ -942,8 +944,9 @@ test('Epic column is appended without removing or reordering existing columns', 
           'status',
           'custom-column',
           'epic',
+          'size',
         ]);
-        columns.push({ id: 'epic' });
+        columns.push({ id: 'epic' }, { id: 'size' });
         updates++;
         return JSON.stringify({
           data: { updateProjectV2View: { projectV2View: { id: 'view' } } },
