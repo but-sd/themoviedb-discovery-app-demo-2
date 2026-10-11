@@ -83,6 +83,10 @@ export function validateBacklog(config) {
         );
       }
       requireValue(
+        ticket.type === 'feature',
+        `${ticket.id} : type attendu feature.`,
+      );
+      requireValue(
         config.sizes.some((size) => size.name === ticket.size),
         `${ticket.id} : taille inconnue.`,
       );
@@ -377,6 +381,22 @@ export function instantiate(config, options, run = gh, log = console.log) {
     ['ADMIN', 'MAINTAIN', 'WRITE'].includes(repository.viewerPermission),
     'Un acces en ecriture au depot cible est requis.',
   );
+  const repositoryDetails = json(run, ['api', `repos/${options.repo}`]);
+  requireValue(
+    repositoryDetails.owner?.type === 'Organization',
+    'Le type d issue natif Feature requiert un depot d organisation GitHub ; les depots personnels ne le proposent pas.',
+  );
+  const issueTypes = json(run, [
+    'api',
+    `orgs/${options.repo.split('/')[0]}/issue-types`,
+  ]);
+  const featureType = issueTypes.find(
+    (type) => type.name.toLowerCase() === 'feature' && type.is_enabled,
+  );
+  requireValue(
+    featureType,
+    'Activer le type d issue Feature dans les parametres de l organisation avant de generer le backlog.',
+  );
   const issuePages = json(run, [
     'api',
     `repos/${options.repo}/issues?state=all&per_page=100`,
@@ -573,12 +593,32 @@ export function instantiate(config, options, run = gh, log = console.log) {
           JSON.stringify({
             title: `[${ticket.id}] ${ticket.title}`,
             body: issueBody(epic, ticket, config, issueUrls),
+            type: featureType.name,
           }),
         ),
       );
       requireValue(issue.html_url, `Creation de ${ticket.id} sans URL.`);
       issueUrls.set(ticket.id, issue.html_url);
       log(`Issue creee : ${issue.html_url}`);
+    }
+    const existing = issuesById.get(ticket.id);
+    if (existing && existing.type?.name !== featureType.name) {
+      requireValue(
+        Number.isInteger(existing.number) && existing.number > 0,
+        `Numero d issue manquant pour ${ticket.id}.`,
+      );
+      run(
+        [
+          'api',
+          `repos/${options.repo}/issues/${existing.number}`,
+          '--method',
+          'PATCH',
+          '--input',
+          '-',
+        ],
+        JSON.stringify({ type: featureType.name }),
+      );
+      log(`Type ${featureType.name} defini : ${existing.html_url}`);
     }
     const url = issueUrls.get(ticket.id);
     const existingItem = items.get(url);

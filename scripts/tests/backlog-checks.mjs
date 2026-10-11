@@ -155,7 +155,16 @@ function fixture({
       });
     if (args[0] === 'api' && args[1].includes('/issues?')) {
       return JSON.stringify([
-        existing ? [{ body: marker(ticket.id), html_url: url }] : [],
+        existing
+          ? [
+              {
+                number: 1,
+                type: { name: 'Feature' },
+                body: marker(ticket.id),
+                html_url: url,
+              },
+            ]
+          : [],
       ]);
     }
     if (command === 'project create' || command === 'project view')
@@ -164,6 +173,10 @@ function fixture({
         number: 7,
         url: 'https://github.com/users/student/projects/7',
       });
+    if (args[0] === 'api' && args[1] === 'repos/student/movies')
+      return JSON.stringify({ owner: { type: 'Organization' } });
+    if (args[0] === 'api' && args[1] === 'orgs/student/issue-types')
+      return JSON.stringify([{ name: 'Feature', is_enabled: true }]);
     if (command === 'project field-list') return JSON.stringify({ fields });
     if (command === 'api graphql') {
       const payload = JSON.parse(input);
@@ -218,6 +231,9 @@ test('apply creates issues and assigns Backlog, size, weight, epic and priority'
   const { small, calls, run, options } = fixture();
   instantiate(small, options, run, () => {});
   assert.equal(calls.filter(({ args }) => args.includes('POST')).length, 1);
+  const creation = calls.find(({ args }) => args.includes('POST'));
+  assert.equal(JSON.parse(creation.input).type, 'Feature');
+  assert.ok(!Object.hasOwn(JSON.parse(creation.input), 'labels'));
   const edits = calls.filter(({ args }) => args[1] === 'item-edit');
   assert.equal(edits.length, 5);
   assert.ok(edits.some(({ args }) => args.includes('backlog')));
@@ -443,7 +459,12 @@ test('regeneration adds new tickets and epics once without changing existing wor
     },
   };
   const issues = [
-    { body: marker('WATCH-01'), html_url: existingItem.content.url },
+    {
+      number: 1,
+      type: { name: 'Feature' },
+      body: marker('WATCH-01'),
+      html_url: existingItem.content.url,
+    },
   ];
   const items = [existingItem];
   const mutations = [];
@@ -454,6 +475,8 @@ test('regeneration adds new tickets and epics once without changing existing wor
     if (args[0] === 'api' && args.includes('POST')) {
       const issue = {
         ...JSON.parse(input),
+        number: issues.length + 1,
+        type: { name: JSON.parse(input).type },
         html_url: `https://github.com/student/movies/issues/${issues.length + 1}`,
       };
       issues.push(issue);
@@ -562,6 +585,7 @@ test('explicit updates replace only title and body, resolve new dependencies and
     body: `${marker(existingTicket.id)}\nDescription et cases cochees`,
     html_url: 'https://github.com/student/movies/issues/1',
     state: 'closed',
+    type: { name: 'Feature' },
   };
   const patches = [];
   function updating(args, input) {
@@ -635,6 +659,7 @@ test('update errors are surfaced without a success summary', () => {
         [
           {
             number: 1,
+            type: { name: 'Feature' },
             body: marker('WATCH-01'),
             html_url: 'https://github.com/student/movies/issues/1',
           },
@@ -655,4 +680,61 @@ test('update errors are surfaced without a success summary', () => {
     /Modification refusee/,
   );
   assert.ok(!output.some((line) => line.includes('tickets presents')));
+});
+
+test('every configured ticket has the feature type and invalid types are rejected', () => {
+  assert.ok(
+    config.epics
+      .flatMap((epic) => epic.tickets)
+      .every((ticket) => ticket.type === 'feature'),
+  );
+  const invalid = structuredClone(config);
+  invalid.epics[0].tickets[0].type = 'bug';
+  assert.throws(() => validateBacklog(invalid), /type attendu feature/);
+});
+
+test('rerun assigns native Feature to existing tickets without replacing other properties', () => {
+  const { small, run, options } = fixture({ existing: true });
+  const patches = [];
+  function withoutType(args, input) {
+    const result = args.includes('PATCH') ? '{}' : run(args, input);
+    if (args[0] === 'api' && args[1].includes('/issues?')) {
+      const pages = JSON.parse(result);
+      delete pages[0][0].type;
+      return JSON.stringify(pages);
+    }
+    if (args.includes('PATCH')) {
+      assert.equal(args[1], 'repos/student/movies/issues/1');
+      patches.push(JSON.parse(input));
+    }
+    return result;
+  }
+  instantiate(small, options, withoutType, () => {});
+  assert.deepEqual(patches, [{ type: 'Feature' }]);
+});
+
+test('personal repositories and disabled native types fail before creating anything', () => {
+  for (const scenario of ['personal', 'disabled']) {
+    const { small, calls, run, options } = fixture();
+    function unsupported(args, input) {
+      const result = run(args, input);
+      if (scenario === 'personal' && args[1] === 'repos/student/movies')
+        return JSON.stringify({ owner: { type: 'User' } });
+      if (scenario === 'disabled' && args[1] === 'orgs/student/issue-types')
+        return JSON.stringify([{ name: 'Feature', is_enabled: false }]);
+      return result;
+    }
+    assert.throws(
+      () => instantiate(small, options, unsupported, () => {}),
+      scenario === 'personal' ? /depots personnels/ : /Activer/,
+    );
+    assert.ok(
+      !calls.some(
+        ({ args }) =>
+          args[0] === 'project' ||
+          args.includes('POST') ||
+          args.includes('PATCH'),
+      ),
+    );
+  }
 });

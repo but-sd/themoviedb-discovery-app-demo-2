@@ -2,7 +2,7 @@
 
 Le fichier [`backlog.json`](backlog.json) est la source versionnée des **7
 évolutions et 21 tickets**. Chaque étudiant peut l'adapter, puis instancier les
-issues et un GitHub Project dans **son propre dépôt**. Rien n'est créé dans le
+issues et un GitHub Project dans **son propre dépôt d'organisation**. Rien n'est créé dans le
 dépôt de l'enseignant automatiquement.
 
 ## Contenu de la configuration
@@ -11,6 +11,11 @@ Chaque évolution contient un identifiant stable, un objectif pédagogique et de
 tickets. Chaque ticket possède une user story, une estimation, une priorité, des
 critères d'acceptation et des dépendances. Les identifiants servent aussi à
 reconnaître les issues lors d'une reprise : ne pas les renommer après import.
+
+Chaque ticket porte `"type": "feature"` : le générateur utilise le **type d'issue
+natif GitHub Feature**, pas un label ni un champ personnalisé. Ce type est proposé
+pour les dépôts d'organisation. Le générateur vérifie qu'il est activé et s'arrête
+explicitement si le dépôt est personnel ou si Feature n'est pas disponible.
 
 | Évolution                       | Identifiants        | Estimations initiales |
 | ------------------------------- | ------------------- | --------------------- |
@@ -47,8 +52,11 @@ sont satisfaits. Le backlog complet n'est pas un engagement à tout réaliser.
 
 Prérequis :
 
-- Un dépôt GitHub personnel existant avec les issues activées et un accès en
-  écriture ; un fork convient.
+- Un dépôt GitHub existant dans une organisation avec les issues activées, un
+  accès en écriture et le type d'issue Feature activé dans les paramètres de
+  l'organisation. Le dépôt de chaque étudiant peut, par exemple, être hébergé
+  dans l'organisation pédagogique. Un dépôt personnel ne prend pas en charge
+  ce type natif.
 - Node.js dans la version prévue par le projet et le CLI `gh` à jour, disponible
   sur le PATH. Aucun paquet npm supplémentaire n'est requis par ce script.
 - Une authentification GitHub autorisant les issues et les Projects. Pour une
@@ -64,13 +72,15 @@ d'une organisation peuvent restreindre la création de projets. Ne jamais écrir
 un jeton dans la configuration.
 
 Depuis la racine de la copie du projet, remplacer `MON_LOGIN` et `MON_DEPOT` :
+dans `--repo`, utiliser le nom de l'organisation comme propriétaire du dépôt ;
+`--owner MON_LOGIN` reste le propriétaire du GitHub Project.
 
 ```sh
 # Vérifier les tickets localement : aucune requête GitHub, aucune écriture.
-npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --dry-run
+npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --dry-run
 
 # Créer réellement un projet et les issues dans le dépôt indiqué explicitement.
-npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --apply
+npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --apply
 ```
 
 Le script crée un GitHub Project lié au dépôt, les issues et les champs :
@@ -78,6 +88,10 @@ Le script crée un GitHub Project lié au dépôt, les issues et les champs :
 tickets sont initialisés dans **Backlog**. Le champ Status propose ensuite
 **Ready**, **In Progress**, **In Review** et **Done**. Les dépendances sont des
 liens dans les descriptions des issues, pas des blocages natifs GitHub.
+Chaque nouvelle issue reçoit le type natif **Feature**. Lors d'une relance, les
+issues existantes reçoivent également ce type s'il est absent ou différent, sans
+modifier leurs autres propriétés. Cette attribution ne nécessite pas
+`--update-existing`, qui ne concerne que les titres et descriptions.
 
 Le script ne configure pas les vues du projet. Dans GitHub, créer une vue
 **Board**, la grouper par **Status**, puis afficher Size, Epic et Priority.
@@ -89,7 +103,7 @@ La création affiche immédiatement l'URL et le numéro du projet, ainsi que la
 commande de reprise. Conserver ce numéro :
 
 ```sh
-npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --project-number 7 --apply
+npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --project-number 7 --apply
 ```
 
 **Sans `--project-number`, chaque lancement avec `--apply` crée un nouveau
@@ -125,8 +139,8 @@ Après récupération de la nouvelle configuration, chaque étudiant relance ver
 **le même numéro de projet** :
 
 ```sh
-npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --project-number 7 --dry-run
-npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --project-number 7 --apply
+npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --project-number 7 --dry-run
+npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --project-number 7 --apply
 ```
 
 La simulation reste locale : elle affiche le backlog configuré, pas la différence
@@ -149,8 +163,8 @@ Pour répercuter les changements de titres, user stories, critères d'acceptatio
 objectifs pédagogiques ou dépendances, ajouter `--update-existing` :
 
 ```sh
-npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --project-number 7 --update-existing --dry-run
-npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --project-number 7 --update-existing --apply
+npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --project-number 7 --update-existing --dry-run
+npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --project-number 7 --update-existing --apply
 ```
 
 **Cette option remplace le titre et toute la description de chaque issue dont le

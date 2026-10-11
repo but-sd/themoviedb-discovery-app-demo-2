@@ -19,6 +19,7 @@
       "tickets": [
         {
           "id": "EXP-01",
+          "type": "feature",
           "title": "Naviguer entre les pages de films",
           "story": "En tant que visiteur, je veux parcourir plusieurs pages pour decouvrir davantage de films.",
           "size": "S",
@@ -32,6 +33,7 @@
         },
         {
           "id": "EXP-02",
+          "type": "feature",
           "title": "Rechercher un film par titre",
           "story": "En tant que visiteur, je veux rechercher un titre pour retrouver un film.",
           "size": "M",
@@ -45,6 +47,7 @@
         },
         {
           "id": "EXP-03",
+          "type": "feature",
           "title": "Filtrer et trier le catalogue",
           "story": "En tant que visiteur, je veux combiner genre, annee et note minimale pour affiner ma selection.",
           "size": "L",
@@ -65,6 +68,7 @@
       "tickets": [
         {
           "id": "DASH-01",
+          "type": "feature",
           "title": "Construire un jeu de donnees d'analyse",
           "story": "En tant qu'analyste, je veux un echantillon documente pour savoir ce que mes indicateurs representent.",
           "size": "M",
@@ -78,6 +82,7 @@
         },
         {
           "id": "DASH-02",
+          "type": "feature",
           "title": "Calculer les indicateurs descriptifs",
           "story": "En tant qu'analyste, je veux decrire les notes et annees de sortie pour comprendre mon echantillon.",
           "size": "M",
@@ -91,6 +96,7 @@
         },
         {
           "id": "DASH-03",
+          "type": "feature",
           "title": "Afficher un tableau de bord interpretable",
           "story": "En tant que visiteur, je veux visualiser les distributions pour explorer les tendances de l'echantillon.",
           "size": "L",
@@ -111,6 +117,7 @@
       "tickets": [
         {
           "id": "COMP-01",
+          "type": "feature",
           "title": "Expliquer les indicateurs TMDB",
           "story": "En tant que visiteur, je veux connaitre la signification des indicateurs pour ne pas confondre popularite et qualite.",
           "size": "XS",
@@ -124,6 +131,7 @@
         },
         {
           "id": "COMP-02",
+          "type": "feature",
           "title": "Comparer une selection de films",
           "story": "En tant que visiteur, je veux comparer deux a quatre films pour choisir lequel regarder.",
           "size": "M",
@@ -137,6 +145,7 @@
         },
         {
           "id": "COMP-03",
+          "type": "feature",
           "title": "Etudier la relation entre votes et notes",
           "story": "En tant qu'analyste, je veux explorer les liens entre indicateurs pour discuter leurs limites.",
           "size": "L",
@@ -157,6 +166,7 @@
       "tickets": [
         {
           "id": "HIST-01",
+          "type": "feature",
           "title": "Modeliser et stocker les instantanes",
           "story": "En tant qu'analyste, je veux conserver des observations datees pour comparer les tendances.",
           "size": "L",
@@ -170,6 +180,7 @@
         },
         {
           "id": "HIST-02",
+          "type": "feature",
           "title": "Automatiser et suivre la collecte",
           "story": "En tant qu'analyste, je veux une collecte periodique observable pour disposer d'un historique fiable.",
           "size": "L",
@@ -183,6 +194,7 @@
         },
         {
           "id": "HIST-03",
+          "type": "feature",
           "title": "Visualiser les evolutions de popularite",
           "story": "En tant que visiteur, je veux comparer les observations d'un film pour voir son evolution.",
           "size": "M",
@@ -203,6 +215,7 @@
       "tickets": [
         {
           "id": "REC-01",
+          "type": "feature",
           "title": "Proposer une recommandation par genres",
           "story": "En tant que visiteur, je veux des suggestions proches d'un film choisi avec une explication comprehensible.",
           "size": "M",
@@ -216,6 +229,7 @@
         },
         {
           "id": "REC-02",
+          "type": "feature",
           "title": "Personnaliser les suggestions avec des favoris",
           "story": "En tant qu'utilisateur, je veux des suggestions issues de plusieurs films apprecies pour explorer mes preferences.",
           "size": "L",
@@ -229,6 +243,7 @@
         },
         {
           "id": "REC-03",
+          "type": "feature",
           "title": "Comparer et evaluer les methodes de recommandation",
           "story": "En tant qu'analyste, je veux comparer ma methode a une reference pour discuter sa pertinence.",
           "size": "XL",
@@ -249,6 +264,7 @@
       "tickets": [
         {
           "id": "WATCH-01",
+          "type": "feature",
           "title": "Conserver une liste de films favoris",
           "story": "En tant qu'utilisateur, je veux retrouver ma liste de films a voir apres avoir ferme la page.",
           "size": "S",
@@ -262,6 +278,7 @@
         },
         {
           "id": "WATCH-02",
+          "type": "feature",
           "title": "Noter les films vus",
           "story": "En tant qu'utilisateur, je veux distinguer les films vus et leur attribuer une note personnelle.",
           "size": "M",
@@ -275,6 +292,7 @@
         },
         {
           "id": "WATCH-03",
+          "type": "feature",
           "title": "Exporter et importer une watchlist",
           "story": "En tant qu'utilisateur, je veux sauvegarder ma liste pour la transferer vers un autre navigateur.",
           "size": "M",
@@ -295,6 +313,7 @@
       "tickets": [
         {
           "id": "REL-01",
+          "type": "feature",
           "title": "Gerer chargements, erreurs et resultats vides",
           "story": "En tant que visiteur, je veux comprendre l'etat de la page et pouvoir reessayer apres une erreur.",
           "size": "S",
@@ -308,6 +327,7 @@
         },
         {
           "id": "REL-02",
+          "type": "feature",
           "title": "Valider et documenter les donnees TMDB",
           "story": "En tant que developpeur, je veux controler les donnees externes pour ne pas produire d'indicateurs trompeurs.",
           "size": "M",
@@ -321,6 +341,7 @@
         },
         {
           "id": "REL-03",
+          "type": "feature",
           "title": "Tester un parcours utilisateur complet",
           "story": "En tant qu'equipe, je veux verifier un parcours de bout en bout pour livrer sans regression.",
           "size": "M",
