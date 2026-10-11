@@ -117,6 +117,28 @@
   color: var(--text-muted);
 }
 
+.movie-pagination {
+  min-height: 48px;
+  margin-top: 24px;
+  text-align: center;
+}
+
+.load-more-button {
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--page-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.load-more-button:focus-visible {
+  outline: 3px solid #2f6f95;
+  outline-offset: 4px;
+}
+
 /* Responsive */
 @media (max-width: 820px) {
   .movie-grid {

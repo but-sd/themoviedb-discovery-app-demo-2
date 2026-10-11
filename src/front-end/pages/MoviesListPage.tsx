@@ -1,36 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router';
 import MovieItem from '../components/MovieItem';
-import {
-  DEFAULT_LANGUAGE,
-  DEFAULT_PAGE,
-  DEFAULT_REGION,
-} from '../../back-end/constants';
-import type { Movie } from '../../back-end/schemas/MoviesTypes';
+import { useInfiniteMovies } from '../hooks/useInfiniteMovies';
 
 export default function MoviesListPage() {
-  // State to hold the fetched movies data, initialized to null
-  const [movies, setMovies] = useState<Movie[] | null>(null);
-
-  useEffect(() => {
-    // read parameters from the URL query string or use default values if not provided
-    const urlParams = new URLSearchParams(window.location.search);
-    const language = urlParams.get('language') || DEFAULT_LANGUAGE;
-    const page = urlParams.get('page') || DEFAULT_PAGE;
-    const region = urlParams.get('region') || DEFAULT_REGION;
-
-    // debug log the query parameters
-    console.log('Query Params from frontend:', { language, page, region });
-
-    // fetch data from an API /api/movies/popular with query parameters
-    fetch(
-      `/api/movies/popular?language=${language}&page=${page}&region=${region}`,
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Fetched movies data:', data); // Log the fetched data for debugging
-        setMovies(data.results); // Update the state with the fetched movies data
-      });
-  }, []);
+  const { search } = useLocation();
+  const { movies, isLoading, hasMore, error, sentinelRef, loadMore } =
+    useInfiniteMovies(search);
 
   return (
     <main className="app-shell">
@@ -41,8 +16,8 @@ export default function MoviesListPage() {
           <b>The Movie Database</b>
         </h2>
       </header>
-      <section>
-        {movies ? (
+      <section aria-label="Liste des films populaires" aria-busy={isLoading}>
+        {movies.length > 0 && (
           <ul className="movie-grid">
             {movies.map((movie) => (
               <li key={movie.id}>
@@ -52,9 +27,35 @@ export default function MoviesListPage() {
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="status-message">Loading...</p>
         )}
+        <div ref={sentinelRef} className="movie-pagination">
+          <div role="status" aria-live="polite">
+            {isLoading && (
+              <p className="status-message">Chargement des films...</p>
+            )}
+            {!isLoading && !hasMore && (
+              <p className="status-message">
+                {movies.length > 0
+                  ? 'Tous les films disponibles ont été affichés.'
+                  : 'Aucun film disponible.'}
+              </p>
+            )}
+          </div>
+          {error && (
+            <p className="status-message" role="alert">
+              {error}
+            </p>
+          )}
+          {!isLoading && hasMore && (
+            <button
+              type="button"
+              className="load-more-button"
+              onClick={loadMore}
+            >
+              {error ? 'Réessayer' : 'Charger plus de films'}
+            </button>
+          )}
+        </div>
       </section>
     </main>
   );
