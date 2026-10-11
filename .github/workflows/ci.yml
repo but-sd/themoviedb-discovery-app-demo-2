@@ -41,3 +41,5 @@ jobs:
         run: npm ci
       - name: '🧪 Run unit tests'
         run: npm test
+      - name: 'Verify pedagogical backlog'
+        run: npm run backlog:test

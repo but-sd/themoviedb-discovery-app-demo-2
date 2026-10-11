@@ -1,0 +1,338 @@
+{
+  "version": 1,
+  "project": {
+    "title": "TMDB - Backlog pedagogique",
+    "stages": ["Backlog", "Ready", "In Progress", "In Review", "Done"]
+  },
+  "sizes": [
+    { "name": "XS", "weight": 1 },
+    { "name": "S", "weight": 2 },
+    { "name": "M", "weight": 3 },
+    { "name": "L", "weight": 5 },
+    { "name": "XL", "weight": 8 }
+  ],
+  "epics": [
+    {
+      "id": "EXP",
+      "title": "Explorer le catalogue",
+      "objective": "Apprendre a interroger une API et a concevoir une exploration de donnees.",
+      "tickets": [
+        {
+          "id": "EXP-01",
+          "title": "Naviguer entre les pages de films",
+          "story": "En tant que visiteur, je veux parcourir plusieurs pages pour decouvrir davantage de films.",
+          "size": "S",
+          "priority": "P1",
+          "dependsOn": ["REL-01"],
+          "acceptance": [
+            "Les boutons precedent et suivant respectent les bornes des resultats.",
+            "La page courante est presente dans l'URL et restauree apres rechargement.",
+            "Une erreur de chargement est affichee sans perdre la possibilite de reessayer."
+          ]
+        },
+        {
+          "id": "EXP-02",
+          "title": "Rechercher un film par titre",
+          "story": "En tant que visiteur, je veux rechercher un titre pour retrouver un film.",
+          "size": "M",
+          "priority": "P1",
+          "dependsOn": ["EXP-01"],
+          "acceptance": [
+            "Une recherche affiche les films correspondants et permet d'ouvrir leur fiche.",
+            "Les recherches vides et sans resultat ont un comportement explicite.",
+            "Les caracteres speciaux sont acceptes et les resultats sont paginables."
+          ]
+        },
+        {
+          "id": "EXP-03",
+          "title": "Filtrer et trier le catalogue",
+          "story": "En tant que visiteur, je veux combiner genre, annee et note minimale pour affiner ma selection.",
+          "size": "L",
+          "priority": "P2",
+          "dependsOn": ["EXP-01"],
+          "acceptance": [
+            "Les filtres peuvent etre combines sur le catalogue interroge, pas seulement sur la page affichee.",
+            "Le tri par popularite ou note est disponible et documente.",
+            "Changer un filtre revient a la premiere page et les criteres sont conserves dans l'URL."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DASH",
+      "title": "Tableau de bord cinema",
+      "objective": "Transformer un echantillon en indicateurs et visualisations interpretables.",
+      "tickets": [
+        {
+          "id": "DASH-01",
+          "title": "Construire un jeu de donnees d'analyse",
+          "story": "En tant qu'analyste, je veux un echantillon documente pour savoir ce que mes indicateurs representent.",
+          "size": "M",
+          "priority": "P2",
+          "dependsOn": ["REL-02"],
+          "acceptance": [
+            "Les films collectes sont dedupliques par identifiant et exportables en CSV.",
+            "La source, la date de collecte, les criteres et la taille de l'echantillon sont fournis.",
+            "Les valeurs manquantes sont conservees comme telles et leur traitement est explique."
+          ]
+        },
+        {
+          "id": "DASH-02",
+          "title": "Calculer les indicateurs descriptifs",
+          "story": "En tant qu'analyste, je veux decrire les notes et annees de sortie pour comprendre mon echantillon.",
+          "size": "M",
+          "priority": "P2",
+          "dependsOn": ["DASH-01"],
+          "acceptance": [
+            "Effectif, moyenne et mediane des notes sont calcules sur les valeurs valides.",
+            "Les distributions par annee et genre sont disponibles avec leurs effectifs.",
+            "Un petit jeu de donnees connu permet de verifier les calculs, y compris le cas vide."
+          ]
+        },
+        {
+          "id": "DASH-03",
+          "title": "Afficher un tableau de bord interpretable",
+          "story": "En tant que visiteur, je veux visualiser les distributions pour explorer les tendances de l'echantillon.",
+          "size": "L",
+          "priority": "P2",
+          "dependsOn": ["DASH-02"],
+          "acceptance": [
+            "Un histogramme des notes et une repartition des genres affichent titres, axes et unites.",
+            "Une alternative textuelle ou tabulaire rend les donnees accessibles.",
+            "La page affiche le perimetre de collecte et avertit que les films populaires ne representent pas tout le cinema."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "COMP",
+      "title": "Comparer les films",
+      "objective": "Interroger les biais des indicateurs et distinguer popularite, note et volume de votes.",
+      "tickets": [
+        {
+          "id": "COMP-01",
+          "title": "Expliquer les indicateurs TMDB",
+          "story": "En tant que visiteur, je veux connaitre la signification des indicateurs pour ne pas confondre popularite et qualite.",
+          "size": "XS",
+          "priority": "P1",
+          "dependsOn": [],
+          "acceptance": [
+            "La note moyenne, le nombre de votes et la popularite ont une definition visible.",
+            "Une source TMDB et une date de consultation accompagnent les definitions.",
+            "Le texte explique qu'un faible nombre de votes rend une note moins robuste."
+          ]
+        },
+        {
+          "id": "COMP-02",
+          "title": "Comparer une selection de films",
+          "story": "En tant que visiteur, je veux comparer deux a quatre films pour choisir lequel regarder.",
+          "size": "M",
+          "priority": "P2",
+          "dependsOn": ["COMP-01"],
+          "acceptance": [
+            "Deux a quatre films peuvent etre ajoutes et retires sans doublon.",
+            "Le tableau compare annee, genres, note, nombre de votes et popularite.",
+            "Les informations manquantes sont distinguees des valeurs nulles ou egales a zero."
+          ]
+        },
+        {
+          "id": "COMP-03",
+          "title": "Etudier la relation entre votes et notes",
+          "story": "En tant qu'analyste, je veux explorer les liens entre indicateurs pour discuter leurs limites.",
+          "size": "L",
+          "priority": "P3",
+          "dependsOn": ["DASH-01", "COMP-01"],
+          "acceptance": [
+            "Un nuage de points represente nombre de votes et note moyenne sur le jeu d'analyse.",
+            "Une correlation est calculee et verifiee sur un exemple connu.",
+            "Une interpretation discute les valeurs extremes, le biais de selection et l'absence de conclusion causale."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "HIST",
+      "title": "Historique des tendances",
+      "objective": "Construire un mini-ETL, modeliser des donnees et analyser des evolutions temporelles.",
+      "tickets": [
+        {
+          "id": "HIST-01",
+          "title": "Modeliser et stocker les instantanes",
+          "story": "En tant qu'analyste, je veux conserver des observations datees pour comparer les tendances.",
+          "size": "L",
+          "priority": "P3",
+          "dependsOn": ["DASH-01"],
+          "acceptance": [
+            "Un schema distingue les films et leurs observations datees.",
+            "Une collecte conserve les criteres, l'horodatage et les indicateurs retenus.",
+            "La reexecution d'une meme collecte ne cree pas de doublons et un test le demontre."
+          ]
+        },
+        {
+          "id": "HIST-02",
+          "title": "Automatiser et suivre la collecte",
+          "story": "En tant qu'analyste, je veux une collecte periodique observable pour disposer d'un historique fiable.",
+          "size": "L",
+          "priority": "P3",
+          "dependsOn": ["HIST-01"],
+          "acceptance": [
+            "La periodicite et le volume collecte sont configurables et documentes.",
+            "Les limites de l'API sont respectees et les erreurs sont signalees dans un journal.",
+            "Une collecte interrompue peut etre relancee sans dupliquer les observations."
+          ]
+        },
+        {
+          "id": "HIST-03",
+          "title": "Visualiser les evolutions de popularite",
+          "story": "En tant que visiteur, je veux comparer les observations d'un film pour voir son evolution.",
+          "size": "M",
+          "priority": "P3",
+          "dependsOn": ["HIST-01"],
+          "acceptance": [
+            "Une courbe affiche les observations en ordre chronologique sur une periode selectionnee.",
+            "Les jours sans observation sont signales sans inventer de valeur.",
+            "Un jeu d'instantanes de demonstration permet de travailler sans attendre plusieurs semaines."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REC",
+      "title": "Recommandation explicable",
+      "objective": "Preparer des variables, comparer des methodes simples et evaluer leurs recommandations.",
+      "tickets": [
+        {
+          "id": "REC-01",
+          "title": "Proposer une recommandation par genres",
+          "story": "En tant que visiteur, je veux des suggestions proches d'un film choisi avec une explication comprehensible.",
+          "size": "M",
+          "priority": "P3",
+          "dependsOn": ["DASH-01"],
+          "acceptance": [
+            "La methode de similarite des genres est decrite et testee sur un exemple connu.",
+            "Le film de depart est exclu des resultats et les egalites ont un ordre deterministe.",
+            "Chaque suggestion indique les genres partages et le perimetre du catalogue utilise."
+          ]
+        },
+        {
+          "id": "REC-02",
+          "title": "Personnaliser les suggestions avec des favoris",
+          "story": "En tant qu'utilisateur, je veux des suggestions issues de plusieurs films apprecies pour explorer mes preferences.",
+          "size": "L",
+          "priority": "P3",
+          "dependsOn": ["REC-01", "WATCH-01"],
+          "acceptance": [
+            "Les favoris alimentent un profil dont la construction est expliquee.",
+            "Les films deja favoris sont exclus des suggestions.",
+            "Sans favoris ou sans resultat, une explication invite a enrichir la selection."
+          ]
+        },
+        {
+          "id": "REC-03",
+          "title": "Comparer et evaluer les methodes de recommandation",
+          "story": "En tant qu'analyste, je veux comparer ma methode a une reference pour discuter sa pertinence.",
+          "size": "XL",
+          "priority": "P3",
+          "dependsOn": ["REC-02"],
+          "acceptance": [
+            "Un protocole reproductible compare la methode a une reference par popularite.",
+            "Les metriques retenues, par exemple precision a k et diversite, sont definies et calculees sur un jeu documente.",
+            "Le rapport explique les limites des donnees et propose un decoupage du ticket avant son engagement en sprint."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "WATCH",
+      "title": "Watchlist et notes personnelles",
+      "objective": "Modeliser un etat utilisateur persistant sans imposer de comptes pour une premiere version.",
+      "tickets": [
+        {
+          "id": "WATCH-01",
+          "title": "Conserver une liste de films favoris",
+          "story": "En tant qu'utilisateur, je veux retrouver ma liste de films a voir apres avoir ferme la page.",
+          "size": "S",
+          "priority": "P1",
+          "dependsOn": [],
+          "acceptance": [
+            "Un film peut etre ajoute ou retire depuis sa fiche et depuis la liste.",
+            "La liste est conservee dans le navigateur sans doublon apres rechargement.",
+            "La limite du stockage local et les erreurs de lecture ou d'ecriture sont expliquees a l'utilisateur."
+          ]
+        },
+        {
+          "id": "WATCH-02",
+          "title": "Noter les films vus",
+          "story": "En tant qu'utilisateur, je veux distinguer les films vus et leur attribuer une note personnelle.",
+          "size": "M",
+          "priority": "P2",
+          "dependsOn": ["WATCH-01"],
+          "acceptance": [
+            "Un film peut etre marque vu ou a voir et filtre par cet etat.",
+            "Une note personnelle de 0 a 10 peut etre saisie, modifiee et supprimee.",
+            "La note personnelle est clairement distinguee de la note TMDB et persiste apres rechargement."
+          ]
+        },
+        {
+          "id": "WATCH-03",
+          "title": "Exporter et importer une watchlist",
+          "story": "En tant qu'utilisateur, je veux sauvegarder ma liste pour la transferer vers un autre navigateur.",
+          "size": "M",
+          "priority": "P2",
+          "dependsOn": ["WATCH-02"],
+          "acceptance": [
+            "Un export JSON contient une version de format et les donnees personnelles de la liste.",
+            "Un import valide restaure les donnees avec une regle de fusion documentee.",
+            "Un fichier invalide est refuse avec un message explicite et sans alterer la liste existante."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REL",
+      "title": "Fiabiliser l'application",
+      "objective": "Garantir la qualite des donnees et apprendre a livrer un increment verifiable.",
+      "tickets": [
+        {
+          "id": "REL-01",
+          "title": "Gerer chargements, erreurs et resultats vides",
+          "story": "En tant que visiteur, je veux comprendre l'etat de la page et pouvoir reessayer apres une erreur.",
+          "size": "S",
+          "priority": "P1",
+          "dependsOn": [],
+          "acceptance": [
+            "Liste et fiche distinguent chargement, succes, resultat vide et erreur.",
+            "Un echec HTTP ou reseau ne laisse pas un chargement indefini et permet de reessayer.",
+            "Les erreurs attendues sont testees sans appel reel a TMDB."
+          ]
+        },
+        {
+          "id": "REL-02",
+          "title": "Valider et documenter les donnees TMDB",
+          "story": "En tant que developpeur, je veux controler les donnees externes pour ne pas produire d'indicateurs trompeurs.",
+          "size": "M",
+          "priority": "P1",
+          "dependsOn": ["REL-01"],
+          "acceptance": [
+            "Les parametres de pagination et les identifiants de films invalides sont refuses explicitement.",
+            "Les donnees externes invalides et les valeurs manquantes ont des traitements documentes.",
+            "Des jeux de test couvrent reponses incompletes, dates absentes et erreurs de l'API."
+          ]
+        },
+        {
+          "id": "REL-03",
+          "title": "Tester un parcours utilisateur complet",
+          "story": "En tant qu'equipe, je veux verifier un parcours de bout en bout pour livrer sans regression.",
+          "size": "M",
+          "priority": "P2",
+          "dependsOn": ["REL-01", "EXP-01"],
+          "acceptance": [
+            "Un test automatise couvre liste, changement de page, fiche et retour a la liste.",
+            "Le test est reproductible avec des donnees controlees sans jeton TMDB reel.",
+            "La commande et son integration a la verification continue sont documentees."
+          ]
+        }
+      ]
+    }
+  ]
+}
