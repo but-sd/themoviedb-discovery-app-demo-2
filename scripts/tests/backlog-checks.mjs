@@ -125,6 +125,7 @@ function fixture({
   const ticket = small.epics[0].tickets[0];
   const url = 'https://github.com/student/movies/issues/1';
   const fields = [
+    { id: 'title', name: 'Title' },
     {
       id: 'status',
       name: 'Status',
@@ -191,7 +192,11 @@ function fixture({
                     name: 'Backlog',
                     configuration: {
                       visibleFields: {
-                        nodes: [{ id: 'epic' }, { id: 'size' }],
+                        nodes: [
+                          { id: 'title' },
+                          { id: 'epic' },
+                          { id: 'size' },
+                        ],
                       },
                     },
                   },
@@ -326,7 +331,8 @@ test('new project receives all custom fields with their expected types', () => {
     if (args[1] === 'field-list') {
       const data = JSON.parse(result);
       data.fields = data.fields.filter(
-        (field) => field.name === 'Status' || created.has(field.name),
+        (field) =>
+          ['Title', 'Status'].includes(field.name) || created.has(field.name),
       );
       return JSON.stringify(data);
     }
@@ -915,7 +921,7 @@ test('custom views are preserved and a missing Backlog view is created', () => {
   assert.equal(creations, 1);
 });
 
-test('Epic and Size columns are appended without removing or reordering existing columns', () => {
+test('Epic and Size follow Title while other columns keep their relative order', () => {
   const { small, run, options } = fixture({ existing: true });
   const columns = [{ id: 'title' }, { id: 'status' }, { id: 'custom-column' }];
   let updates = 0;
@@ -941,12 +947,16 @@ test('Epic and Size columns are appended without removing or reordering existing
       if (query.includes('visibleFieldIds:')) {
         assert.deepEqual(variables.fields, [
           'title',
-          'status',
-          'custom-column',
           'epic',
           'size',
+          'status',
+          'custom-column',
         ]);
-        columns.push({ id: 'epic' }, { id: 'size' });
+        columns.splice(
+          0,
+          columns.length,
+          ...variables.fields.map((id) => ({ id })),
+        );
         updates++;
         return JSON.stringify({
           data: { updateProjectV2View: { projectV2View: { id: 'view' } } },

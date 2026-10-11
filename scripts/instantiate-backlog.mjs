@@ -308,8 +308,21 @@ function ensureBacklogColumns(run, projectId, viewName, requiredIds) {
     'Impossible de lire les colonnes de la vue Backlog.',
   );
   const ids = view.configuration.visibleFields.nodes.map((field) => field.id);
-  const missing = requiredIds.filter((id) => !ids.includes(id));
-  if (!missing.length) return;
+  const remaining = ids.filter((id) => !requiredIds.slice(1).includes(id));
+  const titleIndex = remaining.indexOf(requiredIds[0]);
+  const ordered =
+    titleIndex === -1
+      ? [...requiredIds, ...remaining]
+      : [
+          ...remaining.slice(0, titleIndex + 1),
+          ...requiredIds.slice(1),
+          ...remaining.slice(titleIndex + 1),
+        ];
+  if (
+    ordered.length === ids.length &&
+    ordered.every((id, index) => id === ids[index])
+  )
+    return;
   requireValue(ids.every(Boolean), 'Identifiant de colonne manquant.');
   graphql(
     run,
@@ -324,7 +337,7 @@ function ensureBacklogColumns(run, projectId, viewName, requiredIds) {
         }
       }
     `,
-    { id: view.id, fields: [...ids, ...missing] },
+    { id: view.id, fields: ordered },
   );
 }
 
@@ -709,7 +722,7 @@ export function instantiate(config, options, run = gh, log = console.log) {
     '--repo',
     options.repo,
   ]);
-  const visibleFields = ['Epic', 'Size'].map((name) => {
+  const visibleFields = ['Title', 'Epic', 'Size'].map((name) => {
     const field = fields.find((candidate) => candidate.name === name);
     requireValue(field, `Champ ${name} absent.`);
     return field.id;
