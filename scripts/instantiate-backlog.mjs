@@ -44,11 +44,23 @@ export function validateBacklog(config) {
       config.sizes.every(
         (size) => Number.isInteger(size.weight) && size.weight > 0,
       ) &&
+      config.sizes.every((size) =>
+        [
+          'GRAY',
+          'BLUE',
+          'GREEN',
+          'YELLOW',
+          'ORANGE',
+          'RED',
+          'PINK',
+          'PURPLE',
+        ].includes(size.color),
+      ) &&
       config.sizes.every(
         (size, index) =>
           index === 0 || size.weight > config.sizes[index - 1].weight,
       ),
-    'Tailles attendues : XS,S,M,L,XL avec des poids entiers positifs croissants.',
+    'Tailles attendues : XS,S,M,L,XL avec des poids entiers positifs croissants et des couleurs GitHub valides.',
   );
   requireValue(
     Array.isArray(config.epics) && config.epics.length > 0,
@@ -398,6 +410,58 @@ function extendSelectField(run, field, names, log) {
   );
 }
 
+function ensureSizeColors(run, fieldId, sizes) {
+  const data = graphql(
+    run,
+    `
+      query ($id: ID!) {
+        node(id: $id) {
+          ... on ProjectV2SingleSelectField {
+            options {
+              id
+              name
+              color
+              description
+            }
+          }
+        }
+      }
+    `,
+    { id: fieldId },
+  );
+  requireValue(
+    Array.isArray(data.node?.options),
+    'Impossible de lire les couleurs de Size.',
+  );
+  const options = data.node.options.map((option) => {
+    const size = sizes.find((candidate) => candidate.name === option.name);
+    return size ? { ...option, color: size.color } : option;
+  });
+  if (
+    options.every(
+      (option, index) => option.color === data.node.options[index].color,
+    )
+  )
+    return;
+  graphql(
+    run,
+    `
+      mutation ($id: ID!, $options: [ProjectV2SingleSelectFieldOptionInput!]!) {
+        updateProjectV2Field(
+          input: { fieldId: $id, singleSelectOptions: $options }
+        ) {
+          projectV2Field {
+            ... on ProjectV2SingleSelectField {
+              id
+            }
+          }
+        }
+      }
+    `,
+    { id: fieldId, options },
+  );
+}
+
 export function parseOptions(args) {
   const { values } = parseArgs({
     args,
@@ -727,6 +791,7 @@ export function instantiate(config, options, run = gh, log = console.log) {
     requireValue(field, `Champ ${name} absent.`);
     return field.id;
   });
+  ensureSizeColors(run, visibleFields[2], config.sizes);
   ensureBacklogColumns(run, project.id, config.project.viewName, visibleFields);
   const items = readProjectItems(run, project.id);
   if (personal) {

@@ -46,6 +46,13 @@ estimations proposées sont un point de départ à **réestimer collectivement**
 Après une réestimation dans GitHub, ajuster Size et Weight ensemble pour conserver
 la correspondance choisie par l'équipe.
 
+La propriété `color` de chaque taille définit sa couleur GitHub : **XS vert,
+S bleu, M jaune, L orange, XL rouge**. Le générateur applique cette palette à
+chaque création et relance, sans changer les identifiants des options ni les
+estimations des tickets. Les couleurs personnalisées de ces cinq tailles sont
+donc remplacées par celles de la configuration ; les options supplémentaires
+et les descriptions existantes sont conservées.
+
 P1 = socle conseillé ; P2 = enrichissement ; P3 = approfondissement. Une priorité
 ne remplace pas les dépendances : commencer par les tickets dont les prérequis
 sont satisfaits. Le backlog complet n'est pas un engagement à tout réaliser.

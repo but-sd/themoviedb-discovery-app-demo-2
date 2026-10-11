@@ -6,11 +6,11 @@
     "stages": ["Backlog", "Ready", "In Progress", "In Review", "Done"]
   },
   "sizes": [
-    { "name": "XS", "weight": 1 },
-    { "name": "S", "weight": 2 },
-    { "name": "M", "weight": 3 },
-    { "name": "L", "weight": 5 },
-    { "name": "XL", "weight": 8 }
+    { "name": "XS", "weight": 1, "color": "GREEN" },
+    { "name": "S", "weight": 2, "color": "BLUE" },
+    { "name": "M", "weight": 3, "color": "YELLOW" },
+    { "name": "L", "weight": 5, "color": "ORANGE" },
+    { "name": "XL", "weight": 8, "color": "RED" }
   ],
   "epics": [
     {

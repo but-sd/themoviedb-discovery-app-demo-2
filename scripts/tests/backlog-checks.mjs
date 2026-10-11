@@ -181,6 +181,24 @@ function fixture({
     if (command === 'project field-list') return JSON.stringify({ fields });
     if (command === 'api graphql') {
       const payload = JSON.parse(input);
+      if (
+        payload.variables.id === 'size' &&
+        /options\s*\{\s*id\s+name\s+color\s+description\s*\}/.test(
+          payload.query,
+        )
+      )
+        return JSON.stringify({
+          data: {
+            node: {
+              options: small.sizes.map((size) => ({
+                id: size.name,
+                name: size.name,
+                color: size.color,
+                description: '',
+              })),
+            },
+          },
+        });
       if (payload.query.includes('visibleFields(first: 100)'))
         return JSON.stringify({
           data: {
@@ -544,6 +562,7 @@ test('regeneration adds new tickets and epics once without changing existing wor
     }
     if (args[1] === 'graphql') {
       const { query, variables } = JSON.parse(input);
+      if (variables.id === 'size') return run(args, input);
       if (/options\s*\{\s*id\s+name\s+color\s+description\s*\}/.test(query))
         return JSON.stringify({ data: { node: { options: epic.options } } });
       if (query.includes('updateProjectV2Field')) {
@@ -944,6 +963,7 @@ test('Epic and Size follow Title while other columns keep their relative order',
             },
           },
         });
+
       if (query.includes('visibleFieldIds:')) {
         assert.deepEqual(variables.fields, [
           'title',
@@ -968,4 +988,51 @@ test('Epic and Size follow Title while other columns keep their relative order',
   instantiate(small, options, visible, () => {});
   instantiate(small, options, visible, () => {});
   assert.equal(updates, 1);
+});
+
+test('Size palette preserves option IDs, descriptions and custom options and applies only once', () => {
+  const { small, run, options } = fixture({ existing: true });
+  let sizeOptions = [
+    ...small.sizes.map((size) => ({
+      id: `id-${size.name}`,
+      name: size.name,
+      color: 'GRAY',
+      description: `Details ${size.name}`,
+    })),
+    {
+      id: 'custom',
+      name: 'Unestimated',
+      color: 'PURPLE',
+      description: 'Equipe',
+    },
+  ];
+  const original = structuredClone(sizeOptions);
+  let changes = 0;
+  function colors(args, input) {
+    if (args[1] === 'graphql') {
+      const { query, variables } = JSON.parse(input);
+      if (variables.id === 'size') {
+        if (query.includes('updateProjectV2Field')) {
+          sizeOptions = variables.options;
+          changes++;
+          return JSON.stringify({ data: { updateProjectV2Field: {} } });
+        }
+        return JSON.stringify({ data: { node: { options: sizeOptions } } });
+      }
+    }
+    return run(args, input);
+  }
+  instantiate(small, options, colors, () => {});
+  instantiate(small, options, colors, () => {});
+  assert.equal(changes, 1);
+  for (const size of small.sizes)
+    assert.equal(
+      sizeOptions.find((option) => option.name === size.name).color,
+      size.color,
+    );
+  assert.deepEqual(
+    sizeOptions.map(({ id, name, description }) => ({ id, name, description })),
+    original.map(({ id, name, description }) => ({ id, name, description })),
+  );
+  assert.deepEqual(sizeOptions.at(-1), original.at(-1));
 });
