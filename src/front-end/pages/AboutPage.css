@@ -11,7 +11,7 @@
 .about-eyebrow,
 .about-section-label {
   margin: 0 0 10px;
-  color: #176b86;
+  color: var(--accent);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -21,7 +21,7 @@
 .about-hero h1 {
   max-width: 700px;
   margin: 0;
-  color: #102f4c;
+  color: var(--heading);
   font-size: 3.25rem;
   line-height: 1.04;
 }
@@ -29,7 +29,7 @@
 .about-intro {
   max-width: 620px;
   margin: 20px 0 0;
-  color: #40546b;
+  color: var(--text-secondary);
   font-size: 1.22rem;
   line-height: 1.55;
 }
@@ -39,14 +39,14 @@
   grid-template-columns: minmax(200px, 0.75fr) minmax(0, 1.25fr);
   gap: 48px;
   padding: 34px 0;
-  border-top: 2px solid #7aa9bd;
+  border-top: 2px solid var(--line);
 }
 
 .about-story h2,
 .about-stack h2,
 .about-repository h2 {
   margin: 0;
-  color: #163854;
+  color: var(--ink-strong);
   font-size: 1.5rem;
   line-height: 1.2;
 }
@@ -54,7 +54,7 @@
 .about-story > p {
   max-width: 580px;
   margin: 0;
-  color: #304a63;
+  color: var(--text-secondary);
   font-size: 1.08rem;
   line-height: 1.62;
 }
@@ -64,7 +64,7 @@
   grid-template-columns: minmax(190px, 0.65fr) minmax(0, 1.35fr);
   gap: 42px;
   padding: 34px 0 38px;
-  border-top: 1px solid #b7d1db;
+  border-top: 1px solid var(--line);
 }
 
 .about-stack ul {
@@ -79,9 +79,9 @@
 .about-stack li {
   min-height: 88px;
   padding: 16px;
-  border: 1px solid #b9d6df;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgb(255 255 255 / 58%);
+  background: var(--surface-muted);
 }
 
 .about-stack strong,
@@ -90,13 +90,13 @@
 }
 
 .about-stack strong {
-  color: #163854;
+  color: var(--ink-strong);
   font-size: 1rem;
 }
 
 .about-stack span {
   margin-top: 5px;
-  color: #526779;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 

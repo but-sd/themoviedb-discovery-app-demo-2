@@ -1,7 +1,13 @@
 import { NavLink } from 'react-router';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import './NavBar.css';
 
-export default function NavBar() {
+interface NavBarProps {
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
+}
+
+export default function NavBar({ theme, onToggleTheme }: NavBarProps) {
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <div className="app-nav-shell">
@@ -24,6 +30,7 @@ export default function NavBar() {
           >
             À propos
           </NavLink>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
       </div>
     </nav>
