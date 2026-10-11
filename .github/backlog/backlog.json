@@ -2,6 +2,7 @@
   "version": 1,
   "project": {
     "title": "TMDB - Backlog pedagogique",
+    "viewName": "Backlog",
     "stages": ["Backlog", "Ready", "In Progress", "In Review", "Done"]
   },
   "sizes": [

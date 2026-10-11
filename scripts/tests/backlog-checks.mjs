@@ -180,6 +180,17 @@ function fixture({
     if (command === 'project field-list') return JSON.stringify({ fields });
     if (command === 'api graphql') {
       const payload = JSON.parse(input);
+      if (payload.query.includes('views(first: 100'))
+        return JSON.stringify({
+          data: {
+            node: {
+              views: {
+                nodes: [{ id: 'view', name: 'Backlog', number: 1 }],
+                pageInfo: { hasNextPage: false },
+              },
+            },
+          },
+        });
       if (payload.query.includes('updateProjectV2Field'))
         return JSON.stringify({ data: { updateProjectV2Field: {} } });
       if (payload.query.includes('dataType'))
@@ -813,4 +824,70 @@ test('existing feature labels are preserved regardless of case', () => {
     return run(args, input);
   }
   instantiate(small, options, labeled, () => {});
+});
+
+test('default view is renamed to configured Backlog once, without altering its layout', () => {
+  const { small, run, options } = fixture({ existing: true });
+  const view = { id: 'view', name: 'View 1', number: 1 };
+  const updates = [];
+  function withDefaultView(args, input) {
+    if (args[1] === 'graphql') {
+      const { query, variables } = JSON.parse(input);
+      if (query.includes('views(first: 100'))
+        return JSON.stringify({
+          data: {
+            node: {
+              views: { nodes: [view], pageInfo: { hasNextPage: false } },
+            },
+          },
+        });
+      if (query.includes('updateProjectV2View')) {
+        assert.deepEqual(variables, { id: 'view', name: 'Backlog' });
+        assert.ok(!query.includes('layout:'));
+        view.name = variables.name;
+        updates.push(variables);
+        return JSON.stringify({
+          data: { updateProjectV2View: { projectV2View: view } },
+        });
+      }
+    }
+    return run(args, input);
+  }
+  instantiate(small, options, withDefaultView, () => {});
+  instantiate(small, options, withDefaultView, () => {});
+  assert.equal(updates.length, 1);
+});
+
+test('custom views are preserved and a missing Backlog view is created', () => {
+  const { small, run, options } = fixture({ existing: true });
+  const views = [{ id: 'custom', name: 'Sprint actuel', number: 1 }];
+  const original = structuredClone(views[0]);
+  let creations = 0;
+  function withCustomView(args, input) {
+    if (args[1] === 'graphql') {
+      const { query, variables } = JSON.parse(input);
+      if (query.includes('views(first: 100'))
+        return JSON.stringify({
+          data: {
+            node: { views: { nodes: views, pageInfo: { hasNextPage: false } } },
+          },
+        });
+      assert.ok(!query.includes('updateProjectV2View'));
+      if (query.includes('createProjectV2View')) {
+        assert.equal(variables.name, 'Backlog');
+        assert.ok(query.includes('TABLE_LAYOUT'));
+        const view = { id: 'new-view', name: variables.name, number: 2 };
+        views.push(view);
+        creations++;
+        return JSON.stringify({
+          data: { createProjectV2View: { projectV2View: view } },
+        });
+      }
+    }
+    return run(args, input);
+  }
+  instantiate(small, options, withCustomView, () => {});
+  instantiate(small, options, withCustomView, () => {});
+  assert.deepEqual(views[0], original);
+  assert.equal(creations, 1);
 });

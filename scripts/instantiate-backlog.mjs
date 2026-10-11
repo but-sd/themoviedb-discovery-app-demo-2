@@ -25,6 +25,11 @@ export function validateBacklog(config) {
     'Titre de projet manquant.',
   );
   requireValue(
+    typeof config.project.viewName === 'string' &&
+      config.project.viewName.trim(),
+    'Nom de vue manquant.',
+  );
+  requireValue(
     Array.isArray(config.project.stages) &&
       config.project.stages[0] === 'Backlog' &&
       config.project.stages.every(
@@ -189,6 +194,76 @@ function graphql(run, query, variables) {
 
 function json(run, args) {
   return JSON.parse(run(args));
+}
+
+function ensureBacklogView(run, projectId, name, log) {
+  const views = [];
+  let cursor = null;
+  do {
+    const data = graphql(
+      run,
+      `
+        query ($id: ID!, $cursor: String) {
+          node(id: $id) {
+            ... on ProjectV2 {
+              views(first: 100, after: $cursor) {
+                nodes {
+                  id
+                  name
+                  number
+                }
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+              }
+            }
+          }
+        }
+      `,
+      { id: projectId, cursor },
+    );
+    requireValue(data.node?.views, 'Impossible de lire les vues du projet.');
+    views.push(...data.node.views.nodes);
+    cursor = data.node.views.pageInfo.hasNextPage
+      ? data.node.views.pageInfo.endCursor
+      : null;
+  } while (cursor);
+  if (views.some((view) => view.name === name)) return;
+  if (views.length === 1 && views[0].name === 'View 1') {
+    graphql(
+      run,
+      `
+        mutation ($id: ID!, $name: String!) {
+          updateProjectV2View(input: { viewId: $id, name: $name }) {
+            projectV2View {
+              id
+              name
+            }
+          }
+        }
+      `,
+      { id: views[0].id, name },
+    );
+  } else {
+    graphql(
+      run,
+      `
+        mutation ($id: ID!, $name: String!) {
+          createProjectV2View(
+            input: { projectId: $id, name: $name, layout: TABLE_LAYOUT }
+          ) {
+            projectV2View {
+              id
+              name
+            }
+          }
+        }
+      `,
+      { id: projectId, name },
+    );
+  }
+  log(`Vue ${name} configuree.`);
 }
 
 function extendSelectField(run, field, names, log) {
@@ -452,6 +527,7 @@ export function instantiate(config, options, run = gh, log = console.log) {
     `Reprise : npm run backlog:instantiate -- --repo ${options.repo} --owner ${options.owner} --project-number ${project.number} --apply`,
   );
   const number = String(project.number);
+  ensureBacklogView(run, project.id, config.project.viewName, log);
   let fields = json(run, [
     'project',
     'field-list',

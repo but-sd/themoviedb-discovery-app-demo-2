@@ -94,9 +94,15 @@ Chaque nouvelle issue reçoit le type natif **Feature** (organisation) ou le lab
 propriétés ni retirer leurs labels existants. Cette attribution ne nécessite pas
 `--update-existing`, qui ne concerne que les titres et descriptions.
 
-Le script ne configure pas les vues du projet. Dans GitHub, créer une vue
-**Board**, la grouper par **Status**, puis afficher Size, Epic et Priority.
-La colonne Backlog contient les tickets importés.
+Le script garantit une vue **Backlog**, nommée par `project.viewName` dans la
+configuration. La vue initiale unique « View 1 » est renommée sans changer sa
+mise en page. Si des vues personnalisées existent déjà, elles sont conservées et
+une vue tabulaire Backlog est ajoutée si nécessaire. Les relances ne créent pas
+de vue en double.
+
+Pour utiliser un tableau Kanban, choisir la disposition **Board** de la vue
+Backlog dans GitHub, la grouper par **Status**, puis afficher Size, Epic et
+Priority. Le script ne modifie pas les filtres, colonnes ou regroupements.
 
 ### Reprendre un import ou utiliser un projet existant
 
