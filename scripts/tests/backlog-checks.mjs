@@ -180,6 +180,24 @@ function fixture({
     if (command === 'project field-list') return JSON.stringify({ fields });
     if (command === 'api graphql') {
       const payload = JSON.parse(input);
+      if (payload.query.includes('visibleFields(first: 100)'))
+        return JSON.stringify({
+          data: {
+            node: {
+              views: {
+                nodes: [
+                  {
+                    id: 'view',
+                    name: 'Backlog',
+                    configuration: {
+                      visibleFields: { nodes: [{ id: 'epic' }] },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        });
       if (payload.query.includes('views(first: 100'))
         return JSON.stringify({
           data: {
@@ -833,6 +851,7 @@ test('default view is renamed to configured Backlog once, without altering its l
   function withDefaultView(args, input) {
     if (args[1] === 'graphql') {
       const { query, variables } = JSON.parse(input);
+      if (query.includes('visibleFields(first: 100)')) return run(args, input);
       if (query.includes('views(first: 100'))
         return JSON.stringify({
           data: {
@@ -866,12 +885,14 @@ test('custom views are preserved and a missing Backlog view is created', () => {
   function withCustomView(args, input) {
     if (args[1] === 'graphql') {
       const { query, variables } = JSON.parse(input);
+      if (query.includes('visibleFields(first: 100)')) return run(args, input);
       if (query.includes('views(first: 100'))
         return JSON.stringify({
           data: {
             node: { views: { nodes: views, pageInfo: { hasNextPage: false } } },
           },
         });
+
       assert.ok(!query.includes('updateProjectV2View'));
       if (query.includes('createProjectV2View')) {
         assert.equal(variables.name, 'Backlog');
@@ -890,4 +911,48 @@ test('custom views are preserved and a missing Backlog view is created', () => {
   instantiate(small, options, withCustomView, () => {});
   assert.deepEqual(views[0], original);
   assert.equal(creations, 1);
+});
+
+test('Epic column is appended without removing or reordering existing columns', () => {
+  const { small, run, options } = fixture({ existing: true });
+  const columns = [{ id: 'title' }, { id: 'status' }, { id: 'custom-column' }];
+  let updates = 0;
+  function visible(args, input) {
+    if (args[1] === 'graphql') {
+      const { query, variables } = JSON.parse(input);
+      if (query.includes('visibleFields(first: 100)'))
+        return JSON.stringify({
+          data: {
+            node: {
+              views: {
+                nodes: [
+                  {
+                    id: 'view',
+                    name: 'Backlog',
+                    configuration: { visibleFields: { nodes: columns } },
+                  },
+                ],
+              },
+            },
+          },
+        });
+      if (query.includes('visibleFieldIds:')) {
+        assert.deepEqual(variables.fields, [
+          'title',
+          'status',
+          'custom-column',
+          'epic',
+        ]);
+        columns.push({ id: 'epic' });
+        updates++;
+        return JSON.stringify({
+          data: { updateProjectV2View: { projectV2View: { id: 'view' } } },
+        });
+      }
+    }
+    return run(args, input);
+  }
+  instantiate(small, options, visible, () => {});
+  instantiate(small, options, visible, () => {});
+  assert.equal(updates, 1);
 });

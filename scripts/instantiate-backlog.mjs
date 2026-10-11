@@ -266,6 +266,67 @@ function ensureBacklogView(run, projectId, name, log) {
   log(`Vue ${name} configuree.`);
 }
 
+function ensureEpicColumn(run, projectId, viewName, epicId) {
+  const data = graphql(
+    run,
+    `
+      query ($id: ID!) {
+        node(id: $id) {
+          ... on ProjectV2 {
+            views(first: 100) {
+              nodes {
+                id
+                name
+                configuration {
+                  visibleFields(first: 100) {
+                    nodes {
+                      ... on ProjectV2Field {
+                        id
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                      }
+                      ... on ProjectV2IterationField {
+                        id
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    { id: projectId },
+  );
+  const view = data.node?.views?.nodes.find(
+    (candidate) => candidate.name === viewName,
+  );
+  requireValue(
+    view?.configuration?.visibleFields,
+    'Impossible de lire les colonnes de la vue Backlog.',
+  );
+  const ids = view.configuration.visibleFields.nodes.map((field) => field.id);
+  if (ids.includes(epicId)) return;
+  requireValue(ids.every(Boolean), 'Identifiant de colonne manquant.');
+  graphql(
+    run,
+    `
+      mutation ($id: ID!, $fields: [ID!]!) {
+        updateProjectV2View(
+          input: { viewId: $id, configuration: { visibleFieldIds: $fields } }
+        ) {
+          projectV2View {
+            id
+          }
+        }
+      }
+    `,
+    { id: view.id, fields: [...ids, epicId] },
+  );
+}
+
 function extendSelectField(run, field, names, log) {
   requireValue(
     Array.isArray(field.options),
@@ -647,6 +708,9 @@ export function instantiate(config, options, run = gh, log = console.log) {
     '--repo',
     options.repo,
   ]);
+  const epicField = fields.find((field) => field.name === 'Epic');
+  requireValue(epicField, 'Champ Epic absent.');
+  ensureEpicColumn(run, project.id, config.project.viewName, epicField.id);
   const items = readProjectItems(run, project.id);
   if (personal) {
     const labels = json(run, [
