@@ -11,13 +11,14 @@ Chaque ticket contient une user story, des critères d'acceptation, des
 dépendances, une priorité et une estimation initiale en taille de T-shirt.
 
 Chaque étudiant peut créer les issues et un GitHub Project dans son propre dépôt :
-le dépôt doit être hébergé dans une organisation avec le type d'issue natif
-**Feature** activé. Ce type est configuré sur chaque ticket et appliqué aussi aux
-issues existantes lors d'une relance ; aucun label de substitution n'est créé.
+le générateur utilise le type d'issue natif **Feature** pour les organisations
+(qui doivent l'activer), et automatiquement un label **feature** pour les dépôts
+personnels. Cette classification est appliquée aussi aux issues existantes lors
+d'une relance, sans retirer leurs autres labels.
 
 ```sh
-npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --dry-run
-npm run backlog:instantiate -- --repo MON_ORGANISATION/MON_DEPOT --owner MON_LOGIN --apply
+npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --dry-run
+npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --apply
 ```
 
 Consulter le [guide d'instanciation et d'atelier agile](.github/backlog/README.md)

@@ -383,19 +383,28 @@ export function instantiate(config, options, run = gh, log = console.log) {
   );
   const repositoryDetails = json(run, ['api', `repos/${options.repo}`]);
   requireValue(
-    repositoryDetails.owner?.type === 'Organization',
-    'Le type d issue natif Feature requiert un depot d organisation GitHub ; les depots personnels ne le proposent pas.',
+    ['Organization', 'User'].includes(repositoryDetails.owner?.type),
+    'Type de proprietaire du depot inconnu.',
   );
-  const issueTypes = json(run, [
-    'api',
-    `orgs/${options.repo.split('/')[0]}/issue-types`,
-  ]);
-  const featureType = issueTypes.find(
-    (type) => type.name.toLowerCase() === 'feature' && type.is_enabled,
-  );
-  requireValue(
-    featureType,
-    'Activer le type d issue Feature dans les parametres de l organisation avant de generer le backlog.',
+  const personal = repositoryDetails.owner.type === 'User';
+  let featureType;
+  if (!personal) {
+    const issueTypes = json(run, [
+      'api',
+      `orgs/${options.repo.split('/')[0]}/issue-types`,
+    ]);
+    featureType = issueTypes.find(
+      (type) => type.name.toLowerCase() === 'feature' && type.is_enabled,
+    );
+    requireValue(
+      featureType,
+      'Activer le type d issue Feature dans les parametres de l organisation avant de generer le backlog.',
+    );
+  }
+  log(
+    personal
+      ? 'Depot personnel : le type feature sera represente par un label.'
+      : `Depot d organisation : type natif ${featureType.name}.`,
   );
   const issuePages = json(run, [
     'api',
@@ -563,6 +572,31 @@ export function instantiate(config, options, run = gh, log = console.log) {
     options.repo,
   ]);
   const items = readProjectItems(run, project.id);
+  if (personal) {
+    const labels = json(run, [
+      'api',
+      `repos/${options.repo}/labels?per_page=100`,
+      '--paginate',
+      '--slurp',
+    ]).flat();
+    if (!labels.some((label) => label.name.toLowerCase() === 'feature')) {
+      run(
+        [
+          'api',
+          `repos/${options.repo}/labels`,
+          '--method',
+          'POST',
+          '--input',
+          '-',
+        ],
+        JSON.stringify({
+          name: 'feature',
+          color: 'a2eeef',
+          description: 'Nouvelle fonctionnalite du backlog pedagogique',
+        }),
+      );
+    }
+  }
 
   const ordered = [];
   const queued = new Set();
@@ -593,7 +627,9 @@ export function instantiate(config, options, run = gh, log = console.log) {
           JSON.stringify({
             title: `[${ticket.id}] ${ticket.title}`,
             body: issueBody(epic, ticket, config, issueUrls),
-            type: featureType.name,
+            ...(personal
+              ? { labels: [ticket.type] }
+              : { type: featureType.name }),
           }),
         ),
       );
@@ -602,7 +638,14 @@ export function instantiate(config, options, run = gh, log = console.log) {
       log(`Issue creee : ${issue.html_url}`);
     }
     const existing = issuesById.get(ticket.id);
-    if (existing && existing.type?.name !== featureType.name) {
+    if (
+      existing &&
+      (personal
+        ? !existing.labels?.some(
+            (label) => label.name.toLowerCase() === ticket.type,
+          )
+        : existing.type?.name !== featureType.name)
+    ) {
       requireValue(
         Number.isInteger(existing.number) && existing.number > 0,
         `Numero d issue manquant pour ${ticket.id}.`,
@@ -610,15 +653,19 @@ export function instantiate(config, options, run = gh, log = console.log) {
       run(
         [
           'api',
-          `repos/${options.repo}/issues/${existing.number}`,
+          `repos/${options.repo}/issues/${existing.number}${personal ? '/labels' : ''}`,
           '--method',
-          'PATCH',
+          personal ? 'POST' : 'PATCH',
           '--input',
           '-',
         ],
-        JSON.stringify({ type: featureType.name }),
+        JSON.stringify(
+          personal ? { labels: [ticket.type] } : { type: featureType.name },
+        ),
       );
-      log(`Type ${featureType.name} defini : ${existing.html_url}`);
+      log(
+        `${personal ? 'Label feature ajoute' : `Type ${featureType.name} defini`} : ${existing.html_url}`,
+      );
     }
     const url = issueUrls.get(ticket.id);
     const existingItem = items.get(url);

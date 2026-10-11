@@ -2,7 +2,7 @@
 
 Le fichier [`backlog.json`](backlog.json) est la source versionnée des **7
 évolutions et 21 tickets**. Chaque étudiant peut l'adapter, puis instancier les
-issues et un GitHub Project dans **son propre dépôt d'organisation**. Rien n'est créé dans le
+issues et un GitHub Project dans **son propre dépôt personnel ou d'organisation**. Rien n'est créé dans le
 dépôt de l'enseignant automatiquement.
 
 ## Contenu de la configuration
@@ -12,10 +12,12 @@ tickets. Chaque ticket possède une user story, une estimation, une priorité, d
 critères d'acceptation et des dépendances. Les identifiants servent aussi à
 reconnaître les issues lors d'une reprise : ne pas les renommer après import.
 
-Chaque ticket porte `"type": "feature"` : le générateur utilise le **type d'issue
-natif GitHub Feature**, pas un label ni un champ personnalisé. Ce type est proposé
-pour les dépôts d'organisation. Le générateur vérifie qu'il est activé et s'arrête
-explicitement si le dépôt est personnel ou si Feature n'est pas disponible.
+Chaque ticket porte `"type": "feature"`. Dans une organisation, le générateur
+utilise le **type d'issue natif GitHub Feature** et vérifie qu'il est activé.
+Dans un dépôt personnel, il utilise automatiquement un **label feature**, créé
+s'il manque. Ce choix est annoncé pendant l'import. Une erreur d'accès à l'API
+ou un type Feature désactivé dans une organisation reste une erreur explicite,
+pas un basculement silencieux vers un label.
 
 | Évolution                       | Identifiants        | Estimations initiales |
 | ------------------------------- | ------------------- | --------------------- |
@@ -52,11 +54,9 @@ sont satisfaits. Le backlog complet n'est pas un engagement à tout réaliser.
 
 Prérequis :
 
-- Un dépôt GitHub existant dans une organisation avec les issues activées, un
-  accès en écriture et le type d'issue Feature activé dans les paramètres de
-  l'organisation. Le dépôt de chaque étudiant peut, par exemple, être hébergé
-  dans l'organisation pédagogique. Un dépôt personnel ne prend pas en charge
-  ce type natif.
+- Un dépôt GitHub personnel ou d'organisation avec les issues activées et un
+  accès en écriture. Pour une organisation, le type Feature doit être activé ;
+  pour un dépôt personnel, le label feature est géré automatiquement.
 - Node.js dans la version prévue par le projet et le CLI `gh` à jour, disponible
   sur le PATH. Aucun paquet npm supplémentaire n'est requis par ce script.
 - Une authentification GitHub autorisant les issues et les Projects. Pour une
@@ -72,8 +72,8 @@ d'une organisation peuvent restreindre la création de projets. Ne jamais écrir
 un jeton dans la configuration.
 
 Depuis la racine de la copie du projet, remplacer `MON_LOGIN` et `MON_DEPOT` :
-dans `--repo`, utiliser le nom de l'organisation comme propriétaire du dépôt ;
-`--owner MON_LOGIN` reste le propriétaire du GitHub Project.
+dans `--repo`, utiliser le login personnel ou le nom de l'organisation comme
+propriétaire du dépôt ; `--owner MON_LOGIN` reste le propriétaire du GitHub Project.
 
 ```sh
 # Vérifier les tickets localement : aucune requête GitHub, aucune écriture.
@@ -88,9 +88,10 @@ Le script crée un GitHub Project lié au dépôt, les issues et les champs :
 tickets sont initialisés dans **Backlog**. Le champ Status propose ensuite
 **Ready**, **In Progress**, **In Review** et **Done**. Les dépendances sont des
 liens dans les descriptions des issues, pas des blocages natifs GitHub.
-Chaque nouvelle issue reçoit le type natif **Feature**. Lors d'une relance, les
-issues existantes reçoivent également ce type s'il est absent ou différent, sans
-modifier leurs autres propriétés. Cette attribution ne nécessite pas
+Chaque nouvelle issue reçoit le type natif **Feature** (organisation) ou le label
+**feature** (dépôt personnel). Lors d'une relance, les issues existantes reçoivent
+également cette classification si nécessaire, sans modifier leurs autres
+propriétés ni retirer leurs labels existants. Cette attribution ne nécessite pas
 `--update-existing`, qui ne concerne que les titres et descriptions.
 
 Le script ne configure pas les vues du projet. Dans GitHub, créer une vue

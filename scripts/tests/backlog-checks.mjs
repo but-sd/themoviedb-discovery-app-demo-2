@@ -713,20 +713,20 @@ test('rerun assigns native Feature to existing tickets without replacing other p
   assert.deepEqual(patches, [{ type: 'Feature' }]);
 });
 
-test('personal repositories and disabled native types fail before creating anything', () => {
-  for (const scenario of ['personal', 'disabled']) {
+test('unknown owners and disabled organization types fail before creating anything', () => {
+  for (const scenario of ['unknown', 'disabled']) {
     const { small, calls, run, options } = fixture();
     function unsupported(args, input) {
       const result = run(args, input);
-      if (scenario === 'personal' && args[1] === 'repos/student/movies')
-        return JSON.stringify({ owner: { type: 'User' } });
+      if (scenario === 'unknown' && args[1] === 'repos/student/movies')
+        return JSON.stringify({ owner: { type: 'Unknown' } });
       if (scenario === 'disabled' && args[1] === 'orgs/student/issue-types')
         return JSON.stringify([{ name: 'Feature', is_enabled: false }]);
       return result;
     }
     assert.throws(
       () => instantiate(small, options, unsupported, () => {}),
-      scenario === 'personal' ? /depots personnels/ : /Activer/,
+      scenario === 'unknown' ? /inconnu/ : /Activer/,
     );
     assert.ok(
       !calls.some(
@@ -737,4 +737,80 @@ test('personal repositories and disabled native types fail before creating anyth
       ),
     );
   }
+});
+
+test('personal repositories use labels for creation and additive reruns, never native types', () => {
+  for (const existing of [false, true]) {
+    const { small, run, options } = fixture({ existing });
+    const labels = [];
+    const writes = [];
+    const current = {
+      number: 1,
+      body: marker('WATCH-01'),
+      html_url: 'https://github.com/student/movies/issues/1',
+      labels: [{ name: 'student-label' }],
+    };
+    function personal(args, input) {
+      if (args[1] === 'repos/student/movies' && !input)
+        return JSON.stringify({ owner: { type: 'User' } });
+      if (args[1] === 'orgs/student/issue-types')
+        assert.fail('Personal repositories must not query organization types');
+      if (args[1].includes('/labels?')) return JSON.stringify([[], labels]);
+      if (args[0] === 'api' && args.includes('POST')) {
+        const payload = JSON.parse(input);
+        assert.ok(!Object.hasOwn(payload, 'type'));
+        writes.push({ endpoint: args[1], payload });
+        if (args[1] === 'repos/student/movies/labels') {
+          labels.push({ name: payload.name });
+          return '{}';
+        }
+        if (args[1].endsWith('/1/labels')) {
+          current.labels.push({ name: 'feature' });
+          return '{}';
+        }
+        return JSON.stringify({ html_url: current.html_url });
+      }
+      if (existing && args[1].includes('/issues?'))
+        return JSON.stringify([[current]]);
+      return run(args, input);
+    }
+    instantiate(small, options, personal, () => {});
+    assert.equal(writes.length, 2);
+    assert.equal(labels[0].name, 'feature');
+    assert.deepEqual(writes[1].payload.labels, ['feature']);
+    if (existing) {
+      assert.equal(writes[1].endpoint, 'repos/student/movies/issues/1/labels');
+      assert.ok(current.labels.some((label) => label.name === 'student-label'));
+      instantiate(small, options, personal, () => {});
+      assert.equal(
+        writes.length,
+        2,
+        'Reruns must not recreate labels or relabel existing issues',
+      );
+    }
+  }
+});
+
+test('existing feature labels are preserved regardless of case', () => {
+  const { small, run, options } = fixture({ existing: true });
+  function labeled(args, input) {
+    if (args[1] === 'repos/student/movies')
+      return JSON.stringify({ owner: { type: 'User' } });
+    if (args[1].includes('/labels?'))
+      return JSON.stringify([[{ name: 'Feature' }]]);
+    if (args[1].includes('/issues?'))
+      return JSON.stringify([
+        [
+          {
+            number: 1,
+            body: marker('WATCH-01'),
+            html_url: 'https://github.com/student/movies/issues/1',
+            labels: [{ name: 'Feature' }],
+          },
+        ],
+      ]);
+    assert.ok(!args.includes('POST') && !args.includes('PATCH'));
+    return run(args, input);
+  }
+  instantiate(small, options, labeled, () => {});
 });
