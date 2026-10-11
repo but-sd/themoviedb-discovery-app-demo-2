@@ -1,1 +1,7 @@
-npx devmoji -e --lint
+if [ -z "$1" ]; then
+  echo "prepare-commit-msg: missing commit message file path" >&2
+  exit 1
+fi
+
+tmp_file="${1}.devmoji-tmp"
+npx devmoji --lint < "$1" > "$tmp_file" && mv "$tmp_file" "$1"
