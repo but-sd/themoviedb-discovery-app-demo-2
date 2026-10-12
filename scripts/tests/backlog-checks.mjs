@@ -46,7 +46,7 @@ test('unknown dependencies, duplicated identifiers and cycles are rejected', () 
   unknown.epics[0].tickets[0].dependsOn = ['MISSING-01'];
   assert.throws(() => validateBacklog(unknown), /inconnue/);
   const cycle = structuredClone(config);
-  cycle.epics[0].tickets[0].dependsOn = ['EXP-02'];
+  cycle.epics[0].tickets[0].dependsOn = [cycle.epics[0].tickets[0].id];
   assert.throws(() => validateBacklog(cycle), /Cycle/);
   const duplicate = structuredClone(config);
   duplicate.epics[0].tickets.push(duplicate.epics[0].tickets[0]);
@@ -92,7 +92,7 @@ test('simulation performs no GitHub calls and displays every ticket in Backlog',
 });
 
 test('issue body includes story, size, weight, criteria, dependency URLs and Done', () => {
-  const epic = config.epics[0];
+  const epic = config.epics.find((candidate) => candidate.id === 'EXP');
   const ticket = epic.tickets[0];
   const body = issueBody(
     epic,
@@ -120,7 +120,7 @@ function fixture({
   failEdit = false,
 } = {}) {
   const small = structuredClone(config);
-  small.epics = [small.epics[5]];
+  small.epics = [small.epics.find((epic) => epic.id === 'WATCH')];
   small.epics[0].tickets = [small.epics[0].tickets[0]];
   const ticket = small.epics[0].tickets[0];
   const url = 'https://github.com/student/movies/issues/1';
@@ -145,6 +145,17 @@ function fixture({
     },
   ];
   const calls = [];
+  const typeViews = ['Features', 'Bugs'].map((name, index) => ({
+    id: `type-view-${index}`,
+    name,
+    number: index + 2,
+    filter: `type:${index === 0 ? 'Feature' : 'Bug'}`,
+    configuration: {
+      visibleFields: {
+        nodes: [{ id: 'title' }, { id: 'epic' }, { id: 'size' }],
+      },
+    },
+  }));
   function run(args, input) {
     calls.push({ args, input });
     const command = args.slice(0, 2).join(' ');
@@ -177,7 +188,10 @@ function fixture({
     if (args[0] === 'api' && args[1] === 'repos/student/movies')
       return JSON.stringify({ owner: { type: 'Organization' } });
     if (args[0] === 'api' && args[1] === 'orgs/student/issue-types')
-      return JSON.stringify([{ name: 'Feature', is_enabled: true }]);
+      return JSON.stringify([
+        { name: 'Feature', is_enabled: true },
+        { name: 'Bug', is_enabled: true },
+      ]);
     if (command === 'project field-list') return JSON.stringify({ fields });
     if (command === 'api graphql') {
       const payload = JSON.parse(input);
@@ -205,6 +219,7 @@ function fixture({
             node: {
               views: {
                 nodes: [
+                  ...typeViews,
                   {
                     id: 'view',
                     name: 'Backlog',
@@ -228,7 +243,10 @@ function fixture({
           data: {
             node: {
               views: {
-                nodes: [{ id: 'view', name: 'Backlog', number: 1 }],
+                nodes: [
+                  { id: 'view', name: 'Backlog', number: 1 },
+                  ...typeViews,
+                ],
                 pageInfo: { hasNextPage: false },
               },
             },
@@ -236,6 +254,14 @@ function fixture({
         });
       if (payload.query.includes('updateProjectV2Field'))
         return JSON.stringify({ data: { updateProjectV2Field: {} } });
+      if (payload.query.includes('updateProjectV2View'))
+        return JSON.stringify({
+          data: {
+            updateProjectV2View: {
+              projectV2View: { id: payload.variables.id },
+            },
+          },
+        });
       if (payload.query.includes('dataType'))
         return JSON.stringify({ data: { node: { dataType: 'NUMBER' } } });
       const nodes = existing
@@ -410,7 +436,11 @@ test('resume searches all issue pages and all project item pages', () => {
 
 test('dependencies are created first and linked even when configuration order differs', () => {
   const { small, calls, run, options } = fixture();
-  small.epics[0].tickets.unshift(structuredClone(config.epics[5].tickets[1]));
+  small.epics[0].tickets.unshift(
+    structuredClone(
+      config.epics.find((epic) => epic.id === 'WATCH').tickets[1],
+    ),
+  );
   let issueNumber = 0;
   function numbered(args, input) {
     const result = run(args, input);
@@ -738,14 +768,14 @@ test('update errors are surfaced without a success summary', () => {
   assert.ok(!output.some((line) => line.includes('tickets presents')));
 });
 
-test('every configured ticket has the feature type and invalid types are rejected', () => {
+test('configured tickets have supported types and invalid types are rejected', () => {
   assert.ok(
     config.epics
       .flatMap((epic) => epic.tickets)
-      .every((ticket) => ticket.type === 'feature'),
+      .every((ticket) => ['feature', 'bug'].includes(ticket.type)),
   );
   const invalid = structuredClone(config);
-  invalid.epics[0].tickets[0].type = 'bug';
+  invalid.epics[0].tickets[0].type = 'task';
   assert.throws(() => validateBacklog(invalid), /type attendu feature/);
 });
 
@@ -883,7 +913,17 @@ test('default view is renamed to configured Backlog once, without altering its l
         return JSON.stringify({
           data: {
             node: {
-              views: { nodes: [view], pageInfo: { hasNextPage: false } },
+              views: {
+                nodes: [
+                  view,
+                  ...(view.name === 'Backlog'
+                    ? JSON.parse(run(args, input)).data.node.views.nodes.filter(
+                        (candidate) => candidate.name !== 'Backlog',
+                      )
+                    : []),
+                ],
+                pageInfo: { hasNextPage: false },
+              },
             },
           },
         });
@@ -916,7 +956,19 @@ test('custom views are preserved and a missing Backlog view is created', () => {
       if (query.includes('views(first: 100'))
         return JSON.stringify({
           data: {
-            node: { views: { nodes: views, pageInfo: { hasNextPage: false } } },
+            node: {
+              views: {
+                nodes: [
+                  ...views,
+                  ...(creations
+                    ? JSON.parse(run(args, input)).data.node.views.nodes.filter(
+                        (candidate) => candidate.name !== 'Backlog',
+                      )
+                    : []),
+                ],
+                pageInfo: { hasNextPage: false },
+              },
+            },
           },
         });
 
@@ -953,6 +1005,9 @@ test('Epic and Size follow Title while other columns keep their relative order',
             node: {
               views: {
                 nodes: [
+                  ...JSON.parse(run(args, input)).data.node.views.nodes.filter(
+                    (candidate) => candidate.name !== 'Backlog',
+                  ),
                   {
                     id: 'view',
                     name: 'Backlog',
@@ -1035,4 +1090,150 @@ test('Size palette preserves option IDs, descriptions and custom options and app
     original.map(({ id, name, description }) => ({ id, name, description })),
   );
   assert.deepEqual(sizeOptions.at(-1), original.at(-1));
+});
+
+test('bug tickets require reproduction and render steps in the issue body', () => {
+  const epic = config.epics.find((candidate) => candidate.id === 'BUG');
+  assert.equal(epic.tickets.length, 3);
+  for (const ticket of epic.tickets) {
+    assert.equal(ticket.type, 'bug');
+    const body = issueBody(epic, ticket, config, new Map());
+    assert.ok(body.includes('## Reproduction'));
+    assert.ok(body.includes(`1. ${ticket.reproduction[0]}`));
+  }
+  const invalid = structuredClone(config);
+  delete invalid.epics.find((candidate) => candidate.id === 'BUG').tickets[0]
+    .reproduction;
+  assert.throws(() => validateBacklog(invalid), /reproduction/);
+});
+
+test('mixed feature and bug tickets receive native types or personal labels', () => {
+  for (const personalRepo of [false, true]) {
+    const { small, run, options } = fixture();
+    small.epics[0].tickets.push({
+      ...structuredClone(small.epics[0].tickets[0]),
+      id: 'WATCH-04',
+      type: 'bug',
+      reproduction: ['Simuler une erreur puis observer le defaut.'],
+    });
+    const creations = [];
+    const labelCreations = [];
+    function mixed(args, input) {
+      if (personalRepo && args[1] === 'repos/student/movies')
+        return JSON.stringify({ owner: { type: 'User' } });
+      if (args[1].includes('/labels?')) return JSON.stringify([[]]);
+      if (args.includes('POST')) {
+        const payload = JSON.parse(input);
+        if (args[1].endsWith('/labels')) {
+          labelCreations.push(payload.name);
+          return '{}';
+        }
+        creations.push(payload);
+        return JSON.stringify({
+          html_url: `https://github.com/student/movies/issues/${creations.length}`,
+        });
+      }
+      return run(args, input);
+    }
+    instantiate(small, options, mixed, () => {});
+    assert.equal(creations.length, 2);
+    assert.ok(creations[1].body.includes('## Reproduction'));
+    if (personalRepo) {
+      assert.deepEqual(labelCreations, ['feature', 'bug']);
+      assert.deepEqual(
+        creations.map((issue) => issue.labels),
+        [['feature'], ['bug']],
+      );
+      assert.ok(creations.every((issue) => !Object.hasOwn(issue, 'type')));
+    } else {
+      assert.deepEqual(
+        creations.map((issue) => issue.type),
+        ['Feature', 'Bug'],
+      );
+    }
+  }
+});
+
+test('Features and Bugs views are created and filtered once for each repository kind', () => {
+  for (const personalRepo of [false, true]) {
+    const { small, run, options } = fixture({ existing: true });
+    const views = [{ id: 'view', name: 'Backlog', number: 1, filter: '' }];
+    const filters = [];
+    let creations = 0;
+    function filtered(args, input) {
+      if (personalRepo && args[1] === 'repos/student/movies')
+        return JSON.stringify({ owner: { type: 'User' } });
+      if (args[1].includes('/labels?'))
+        return JSON.stringify([[{ name: 'feature' }]]);
+      if (personalRepo && args[1].includes('/issues?'))
+        return JSON.stringify([
+          [
+            {
+              number: 1,
+              body: marker('WATCH-01'),
+              html_url: 'https://github.com/student/movies/issues/1',
+              labels: [{ name: 'feature' }],
+            },
+          ],
+        ]);
+      if (args[1] === 'graphql') {
+        const { query, variables } = JSON.parse(input);
+        if (query.includes('views(first: 100'))
+          return JSON.stringify({
+            data: {
+              node: {
+                views: {
+                  nodes: views.map((view) => ({
+                    ...view,
+                    configuration: {
+                      visibleFields: {
+                        nodes: [
+                          { id: 'title' },
+                          { id: 'epic' },
+                          { id: 'size' },
+                        ],
+                      },
+                    },
+                  })),
+                  pageInfo: { hasNextPage: false },
+                },
+              },
+            },
+          });
+        if (query.includes('createProjectV2View')) {
+          const view = {
+            id: variables.name,
+            name: variables.name,
+            number: views.length + 1,
+            filter: '',
+          };
+          views.push(view);
+          creations++;
+          return JSON.stringify({
+            data: { createProjectV2View: { projectV2View: view } },
+          });
+        }
+        if (query.includes('updateProjectV2View')) {
+          const view = views.find((candidate) => candidate.id === variables.id);
+          assert.ok(view && view.name !== 'Backlog');
+          view.filter = variables.filter;
+          filters.push(variables.filter);
+          return JSON.stringify({
+            data: { updateProjectV2View: { projectV2View: view } },
+          });
+        }
+      }
+      return run(args, input);
+    }
+    instantiate(small, options, filtered, () => {});
+    instantiate(small, options, filtered, () => {});
+    assert.equal(creations, 2);
+    assert.deepEqual(
+      filters,
+      personalRepo
+        ? ['label:feature', 'label:bug']
+        : ['type:Feature', 'type:Bug'],
+    );
+    assert.equal(views[0].filter, '');
+  }
 });

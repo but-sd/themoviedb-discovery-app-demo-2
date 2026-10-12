@@ -66,6 +66,22 @@ export function validateBacklog(config) {
     Array.isArray(config.epics) && config.epics.length > 0,
     'Aucune evolution.',
   );
+  requireValue(
+    Array.isArray(config.project.typeViews) &&
+      config.project.typeViews.length === 2 &&
+      new Set(config.project.typeViews.map((view) => view.name)).size === 2 &&
+      config.project.typeViews.every(
+        (view) =>
+          typeof view.name === 'string' &&
+          view.name.trim() &&
+          view.name !== config.project.viewName,
+      ) &&
+      config.project.typeViews
+        .map((view) => view.type)
+        .sort()
+        .join(',') === 'bug,feature',
+    'Vues Features et Bugs invalides.',
+  );
   const tickets = new Map();
   const epicIds = new Set();
   for (const epic of config.epics) {
@@ -100,9 +116,18 @@ export function validateBacklog(config) {
         );
       }
       requireValue(
-        ticket.type === 'feature',
-        `${ticket.id} : type attendu feature.`,
+        ['feature', 'bug'].includes(ticket.type),
+        `${ticket.id} : type attendu feature ou bug.`,
       );
+      if (ticket.type === 'bug')
+        requireValue(
+          Array.isArray(ticket.reproduction) &&
+            ticket.reproduction.length > 0 &&
+            ticket.reproduction.every(
+              (step) => typeof step === 'string' && step.trim(),
+            ),
+          `${ticket.id} : etapes de reproduction manquantes.`,
+        );
       requireValue(
         config.sizes.some((size) => size.name === ticket.size),
         `${ticket.id} : taille inconnue.`,
@@ -156,6 +181,14 @@ export function issueBody(epic, ticket, config, issueUrls) {
     marker(ticket.id),
     '## User story',
     ticket.story,
+    ...(ticket.type === 'bug'
+      ? [
+          '## Reproduction',
+          ticket.reproduction
+            .map((step, index) => `${index + 1}. ${step}`)
+            .join('\n'),
+        ]
+      : []),
     '## Objectif pedagogique',
     `${epic.title} : ${epic.objective}`,
     '## Estimation initiale',
@@ -206,6 +239,63 @@ function graphql(run, query, variables) {
 
 function json(run, args) {
   return JSON.parse(run(args));
+}
+
+function ensureTypeViews(
+  run,
+  projectId,
+  definitions,
+  personal,
+  nativeTypes,
+  columns,
+  log,
+) {
+  for (const definition of definitions) {
+    ensureBacklogView(run, projectId, definition.name, log);
+    const data = graphql(
+      run,
+      `
+        query ($id: ID!) {
+          node(id: $id) {
+            ... on ProjectV2 {
+              views(first: 100) {
+                nodes {
+                  id
+                  name
+                  filter
+                }
+              }
+            }
+          }
+        }
+      `,
+      { id: projectId },
+    );
+    const view = data.node?.views?.nodes.find(
+      (candidate) => candidate.name === definition.name,
+    );
+    requireValue(view, `Vue ${definition.name} absente.`);
+    const filter = personal
+      ? `label:${definition.type}`
+      : `type:${nativeTypes.get(definition.type)}`;
+    if (view.filter !== filter) {
+      graphql(
+        run,
+        `
+          mutation ($id: ID!, $filter: String!) {
+            updateProjectV2View(input: { viewId: $id, filter: $filter }) {
+              projectV2View {
+                id
+                filter
+              }
+            }
+          }
+        `,
+        { id: view.id, filter },
+      );
+    }
+    ensureBacklogColumns(run, projectId, definition.name, columns);
+  }
 }
 
 function ensureBacklogView(run, projectId, name, log) {
@@ -601,24 +691,28 @@ export function instantiate(config, options, run = gh, log = console.log) {
     'Type de proprietaire du depot inconnu.',
   );
   const personal = repositoryDetails.owner.type === 'User';
-  let featureType;
+  const nativeTypes = new Map();
   if (!personal) {
     const issueTypes = json(run, [
       'api',
       `orgs/${options.repo.split('/')[0]}/issue-types`,
     ]);
-    featureType = issueTypes.find(
-      (type) => type.name.toLowerCase() === 'feature' && type.is_enabled,
-    );
-    requireValue(
-      featureType,
-      'Activer le type d issue Feature dans les parametres de l organisation avant de generer le backlog.',
-    );
+    for (const type of ['feature', 'bug']) {
+      const native = issueTypes.find(
+        (candidate) =>
+          candidate.name.toLowerCase() === type && candidate.is_enabled,
+      );
+      requireValue(
+        native,
+        `Activer le type d issue ${type} dans les parametres de l organisation avant de generer le backlog.`,
+      );
+      nativeTypes.set(type, native.name);
+    }
   }
   log(
     personal
-      ? 'Depot personnel : le type feature sera represente par un label.'
-      : `Depot d organisation : type natif ${featureType.name}.`,
+      ? 'Depot personnel : les types seront representes par des labels.'
+      : 'Depot d organisation : types natifs Feature et Bug.',
   );
   const issuePages = json(run, [
     'api',
@@ -793,6 +887,15 @@ export function instantiate(config, options, run = gh, log = console.log) {
   });
   ensureSizeColors(run, visibleFields[2], config.sizes);
   ensureBacklogColumns(run, project.id, config.project.viewName, visibleFields);
+  ensureTypeViews(
+    run,
+    project.id,
+    config.project.typeViews,
+    personal,
+    nativeTypes,
+    visibleFields,
+    log,
+  );
   const items = readProjectItems(run, project.id);
   if (personal) {
     const labels = json(run, [
@@ -801,22 +904,27 @@ export function instantiate(config, options, run = gh, log = console.log) {
       '--paginate',
       '--slurp',
     ]).flat();
-    if (!labels.some((label) => label.name.toLowerCase() === 'feature')) {
-      run(
-        [
-          'api',
-          `repos/${options.repo}/labels`,
-          '--method',
-          'POST',
-          '--input',
-          '-',
-        ],
-        JSON.stringify({
-          name: 'feature',
-          color: 'a2eeef',
-          description: 'Nouvelle fonctionnalite du backlog pedagogique',
-        }),
-      );
+    for (const type of new Set(allTickets.map((ticket) => ticket.type))) {
+      if (!labels.some((label) => label.name.toLowerCase() === type)) {
+        run(
+          [
+            'api',
+            `repos/${options.repo}/labels`,
+            '--method',
+            'POST',
+            '--input',
+            '-',
+          ],
+          JSON.stringify({
+            name: type,
+            color: type === 'bug' ? 'd73a4a' : 'a2eeef',
+            description:
+              type === 'bug'
+                ? 'Defaut a corriger'
+                : 'Nouvelle fonctionnalite du backlog pedagogique',
+          }),
+        );
+      }
     }
   }
 
@@ -832,6 +940,7 @@ export function instantiate(config, options, run = gh, log = console.log) {
   for (const ticket of allTickets) enqueue(ticket);
 
   for (const ticket of ordered) {
+    const nativeType = nativeTypes.get(ticket.type);
     const epic = config.epics.find((candidate) =>
       candidate.tickets.includes(ticket),
     );
@@ -849,9 +958,7 @@ export function instantiate(config, options, run = gh, log = console.log) {
           JSON.stringify({
             title: `[${ticket.id}] ${ticket.title}`,
             body: issueBody(epic, ticket, config, issueUrls),
-            ...(personal
-              ? { labels: [ticket.type] }
-              : { type: featureType.name }),
+            ...(personal ? { labels: [ticket.type] } : { type: nativeType }),
           }),
         ),
       );
@@ -866,7 +973,7 @@ export function instantiate(config, options, run = gh, log = console.log) {
         ? !existing.labels?.some(
             (label) => label.name.toLowerCase() === ticket.type,
           )
-        : existing.type?.name !== featureType.name)
+        : existing.type?.name !== nativeType)
     ) {
       requireValue(
         Number.isInteger(existing.number) && existing.number > 0,
@@ -882,11 +989,11 @@ export function instantiate(config, options, run = gh, log = console.log) {
           '-',
         ],
         JSON.stringify(
-          personal ? { labels: [ticket.type] } : { type: featureType.name },
+          personal ? { labels: [ticket.type] } : { type: nativeType },
         ),
       );
       log(
-        `${personal ? 'Label feature ajoute' : `Type ${featureType.name} defini`} : ${existing.html_url}`,
+        `${personal ? `Label ${ticket.type} ajoute` : `Type ${nativeType} defini`} : ${existing.html_url}`,
       );
     }
     const url = issueUrls.get(ticket.id);

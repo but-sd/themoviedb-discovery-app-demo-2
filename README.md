@@ -5,16 +5,20 @@ projet pour des étudiants de BUT Science des données.
 
 ## Backlog pédagogique et GitHub Projects
 
-Les [7 idées d'évolution et leurs 21 tickets](.github/backlog/README.md) sont
+Les [7 idées d'évolution, leurs 21 tickets Feature et 3 tickets Bug](.github/backlog/README.md) sont
 configurés dans [`.github/backlog/backlog.json`](.github/backlog/backlog.json).
 Chaque ticket contient une user story, des critères d'acceptation, des
 dépendances, une priorité et une estimation initiale en taille de T-shirt.
 
 Chaque étudiant peut créer les issues et un GitHub Project dans son propre dépôt :
-le générateur utilise le type d'issue natif **Feature** pour les organisations
-(qui doivent l'activer), et automatiquement un label **feature** pour les dépôts
+le générateur utilise les types d'issue natifs **Feature et Bug** pour les organisations
+(qui doivent les activer), et automatiquement les labels **feature et bug** pour les dépôts
 personnels. Cette classification est appliquée aussi aux issues existantes lors
 d'une relance, sans retirer leurs autres labels.
+
+Les vues **Features** et **Bugs** séparent les deux catégories, tandis que
+**Backlog** conserve tous les tickets. Les bugs incluent des étapes de reproduction
+et des critères de correction, sans modifier le comportement de l'application.
 
 ```sh
 npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --dry-run

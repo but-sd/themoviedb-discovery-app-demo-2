@@ -3,6 +3,10 @@
   "project": {
     "title": "TMDB - Backlog pedagogique",
     "viewName": "Backlog",
+    "typeViews": [
+      { "name": "Features", "type": "feature" },
+      { "name": "Bugs", "type": "bug" }
+    ],
     "stages": ["Backlog", "Ready", "In Progress", "In Review", "Done"]
   },
   "sizes": [
@@ -13,6 +17,68 @@
     { "name": "XL", "weight": 8, "color": "RED" }
   ],
   "epics": [
+    {
+      "id": "BUG",
+      "title": "Corrections de bugs",
+      "objective": "Reproduire un defaut, ecrire un test de regression et verifier sa correction.",
+      "tickets": [
+        {
+          "id": "BUG-01",
+          "type": "bug",
+          "title": "Eviter un chargement indefini apres une erreur reseau",
+          "story": "En tant que visiteur, je veux un message d'erreur plutot qu'un chargement permanent.",
+          "size": "S",
+          "priority": "P1",
+          "dependsOn": [],
+          "reproduction": [
+            "Ouvrir la liste des films avec le serveur API indisponible.",
+            "Observer que Loading reste affiche et que le rejet de fetch n'est pas gere."
+          ],
+          "acceptance": [
+            "Une erreur reseau affiche un message explicite sur la liste et la fiche.",
+            "Un bouton permet de reessayer sans recharger toute l'application.",
+            "Un test avec fetch rejete reproduit puis verifie la correction."
+          ]
+        },
+        {
+          "id": "BUG-02",
+          "type": "bug",
+          "title": "Ne pas traiter une reponse HTTP en erreur comme un film",
+          "story": "En tant que visiteur, je veux une fiche en erreur lisible sans plantage de l'interface.",
+          "size": "M",
+          "priority": "P1",
+          "dependsOn": [],
+          "reproduction": [
+            "Ouvrir une fiche dont l'API renvoie HTTP 500 avec un objet contenant error.",
+            "Observer que response.json est transmis a MovieDetailCard sans verifier response.ok.",
+            "Le composant tente d'acceder a release_date.slice sur une propriete absente."
+          ],
+          "acceptance": [
+            "Les reponses HTTP non reussies ne sont pas utilisees comme des films.",
+            "La fiche affiche une erreur et ne plante pas.",
+            "Un test couvre une reponse HTTP 500 avec un corps JSON."
+          ]
+        },
+        {
+          "id": "BUG-03",
+          "type": "bug",
+          "title": "Conserver le statut introuvable pour un film absent",
+          "story": "En tant que client de l'API, je veux distinguer un film absent d'une panne serveur.",
+          "size": "S",
+          "priority": "P2",
+          "dependsOn": [],
+          "reproduction": [
+            "Simuler une reponse TMDB HTTP 404 sur GET /api/movies/:id.",
+            "Observer que le gestionnaire leve une erreur puis renvoie HTTP 500."
+          ],
+          "acceptance": [
+            "Une reponse TMDB 404 produit une reponse API 404 avec un message explicite.",
+            "Une panne serveur reste distincte d'un film introuvable.",
+            "Un test de regression simule les statuts 404 et 500 sans appel TMDB reel."
+          ]
+        }
+      ]
+    },
     {
       "id": "EXP",
       "title": "Explorer le catalogue",

@@ -1,7 +1,7 @@
 # Un backlog agile pour les étudiants
 
 Le fichier [`backlog.json`](backlog.json) est la source versionnée des **7
-évolutions et 21 tickets**. Chaque étudiant peut l'adapter, puis instancier les
+évolutions et 21 tickets Feature**, plus **3 tickets Bug**. Chaque étudiant peut l'adapter, puis instancier les
 issues et un GitHub Project dans **son propre dépôt personnel ou d'organisation**. Rien n'est créé dans le
 dépôt de l'enseignant automatiquement.
 
@@ -12,11 +12,11 @@ tickets. Chaque ticket possède une user story, une estimation, une priorité, d
 critères d'acceptation et des dépendances. Les identifiants servent aussi à
 reconnaître les issues lors d'une reprise : ne pas les renommer après import.
 
-Chaque ticket porte `"type": "feature"`. Dans une organisation, le générateur
-utilise le **type d'issue natif GitHub Feature** et vérifie qu'il est activé.
-Dans un dépôt personnel, il utilise automatiquement un **label feature**, créé
+Chaque ticket porte `"type": "feature"` ou `"type": "bug"`. Dans une organisation, le générateur
+utilise les **types d'issue natifs GitHub Feature et Bug** et vérifie qu'ils sont activés.
+Dans un dépôt personnel, il utilise automatiquement un **label feature ou bug**, créé
 s'il manque. Ce choix est annoncé pendant l'import. Une erreur d'accès à l'API
-ou un type Feature désactivé dans une organisation reste une erreur explicite,
+ou un type requis désactivé dans une organisation reste une erreur explicite,
 pas un basculement silencieux vers un label.
 
 | Évolution                       | Identifiants        | Estimations initiales |
@@ -28,6 +28,20 @@ pas un basculement silencieux vers un label.
 | Recommandation explicable       | REC-01 à REC-03     | M, L, XL              |
 | Watchlist et notes personnelles | WATCH-01 à WATCH-03 | S, M, M               |
 | Fiabiliser l'application        | REL-01 à REL-03     | S, M, M               |
+| Corrections de bugs             | BUG-01 à BUG-03     | S, M, S               |
+
+Les tickets Bug incluent des étapes de reproduction issues de la lecture du code :
+chargement persistant après erreur réseau, fiche qui reçoit un JSON d'erreur comme
+un film, et réponse TMDB 404 transformée en HTTP 500. Ce sont des corrections à
+réaliser, pas des bugs introduits volontairement. BUG-01 et BUG-02 recoupent REL-01 :
+coordonner ces tickets plutôt que compter deux fois le même travail.
+
+La configuration `project.typeViews` définit deux vues supplémentaires :
+**Features** et **Bugs**. Elles sont filtrées respectivement avec `type:Feature`
+et `type:Bug` en organisation, ou `label:feature` et `label:bug` sur un dépôt
+personnel. **Backlog** reste la vue globale. Les relances ne dupliquent pas ces vues ;
+leurs filtres sont synchronisés avec la configuration, et Title, Epic et Size
+sont visibles dans chacune.
 
 ### Estimer en tailles de T-shirt
 
@@ -62,8 +76,8 @@ sont satisfaits. Le backlog complet n'est pas un engagement à tout réaliser.
 Prérequis :
 
 - Un dépôt GitHub personnel ou d'organisation avec les issues activées et un
-  accès en écriture. Pour une organisation, le type Feature doit être activé ;
-  pour un dépôt personnel, le label feature est géré automatiquement.
+  accès en écriture. Pour une organisation, les types Feature et Bug doivent être activés ;
+  pour un dépôt personnel, les labels feature et bug sont gérés automatiquement.
 - Node.js dans la version prévue par le projet et le CLI `gh` à jour, disponible
   sur le PATH. Aucun paquet npm supplémentaire n'est requis par ce script.
 - Une authentification GitHub autorisant les issues et les Projects. Pour une
@@ -95,8 +109,8 @@ Le script crée un GitHub Project lié au dépôt, les issues et les champs :
 tickets sont initialisés dans **Backlog**. Le champ Status propose ensuite
 **Ready**, **In Progress**, **In Review** et **Done**. Les dépendances sont des
 liens dans les descriptions des issues, pas des blocages natifs GitHub.
-Chaque nouvelle issue reçoit le type natif **Feature** (organisation) ou le label
-**feature** (dépôt personnel). Lors d'une relance, les issues existantes reçoivent
+Chaque nouvelle issue reçoit le type natif **Feature ou Bug** (organisation) ou le label
+**feature ou bug** (dépôt personnel). Lors d'une relance, les issues existantes reçoivent
 également cette classification si nécessaire, sans modifier leurs autres
 propriétés ni retirer leurs labels existants. Cette attribution ne nécessite pas
 `--update-existing`, qui ne concerne que les titres et descriptions.
