@@ -24,6 +24,8 @@
     "dev:client": "vite",
     "dev:server": "tsx watch src/back-end/index.ts",
     "test": "vitest run --coverage",
+    "backlog:instantiate": "node scripts/instantiate-backlog.mjs",
+    "backlog:test": "node --test scripts/tests/backlog-checks.mjs",
     "prepare": "husky"
   },
   "dependencies": {
