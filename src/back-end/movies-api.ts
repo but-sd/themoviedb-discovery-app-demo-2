@@ -3,6 +3,7 @@ import express from 'express';
 import { toSupportedMovie, toSupportedMovieDetails } from './utils';
 import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import { tmdbAccessToken } from './config';
+import { discoverMovies, isValidMovieYear } from './discover-movies';
 import type {
   MovieDetails,
   MoviesApiResponse,
@@ -73,50 +74,18 @@ export function registerMoviesApi(app: Express): void {
     '/api/movies/discover',
     async (_req: express.Request, res: express.Response) => {
       const { language, page, region, year } = _req.query;
-      const currentYear = new Date().getFullYear();
-      if (
-        typeof year !== 'string' ||
-        !/^\d{4}$/.test(year) ||
-        Number(year) < 1870 ||
-        Number(year) > currentYear
-      ) {
+      if (!isValidMovieYear(year)) {
         res.status(400).json({ error: 'Year must be a valid past year.' });
         return;
       }
 
-      const queryParams = new URLSearchParams({
-        language: typeof language === 'string' ? language : DEFAULT_LANGUAGE,
-        page: typeof page === 'string' ? page : DEFAULT_PAGE,
-        region: typeof region === 'string' ? region : DEFAULT_REGION,
-        primary_release_year: year,
-        sort_by: 'popularity.desc',
-      });
-
       try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/discover/movie?${queryParams.toString()}`,
-          {
-            headers: {
-              Authorization: `Bearer ${tmdbAccessToken}`,
-              'Content-Type': 'application/json;charset=utf-8',
-            },
-          },
+        const data = await discoverMovies(
+          year,
+          typeof page === 'string' ? page : DEFAULT_PAGE,
+          typeof language === 'string' ? language : DEFAULT_LANGUAGE,
+          typeof region === 'string' ? region : DEFAULT_REGION,
         );
-
-        if (!response.ok) {
-          throw new Error(
-            `TMDB API request failed with status ${response.status}`,
-          );
-        }
-
-        const rawData = (await response.json()) as TmdbMoviesRawResponse;
-        const data: MoviesApiResponse = {
-          page: rawData.page,
-          results: rawData.results.map(toSupportedMovie),
-          total_pages: rawData.total_pages,
-          total_results: rawData.total_results,
-        };
-
         res.json(data);
       } catch (error) {
         console.error('Error discovering movies:', error);
