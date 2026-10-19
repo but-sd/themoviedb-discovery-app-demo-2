@@ -13,6 +13,8 @@ function isMovieHighlight(value: unknown): value is MovieHighlight | null {
       Number.isSafeInteger(value.id) &&
       'title' in value &&
       typeof value.title === 'string' &&
+      'posterPath' in value &&
+      (value.posterPath === null || typeof value.posterPath === 'string') &&
       'year' in value &&
       typeof value.year === 'number' &&
       Number.isInteger(value.year) &&

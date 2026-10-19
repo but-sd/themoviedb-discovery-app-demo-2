@@ -2,6 +2,11 @@
 
 ## Collecte de films
 
+La vue d'exploration adopte un dashboard cinéma : trois chiffres clés en tête,
+deux films à la une avec leurs affiches TMDB (ou un visuel de remplacement),
+puis les quatre indicateurs de genres. La disposition s'adapte au mobile,
+sans graphiques ; les explications restent accessibles au survol et au clavier.
+
 Le panneau Films affiche aussi le **Film le mieux noté** (au moins 100 votes)
 et le **Film le plus populaire** selon le score TMDB lors de la collecte.
 Les égalités sont départagées par le nombre de votes puis l'identifiant TMDB.

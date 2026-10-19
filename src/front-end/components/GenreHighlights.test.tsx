@@ -10,6 +10,7 @@ it('shows the best rated and most popular films in the film panel', () => {
     rating: 8.5,
     voteCount: 200,
     popularity: 123,
+    posterPath: '/poster.jpg',
   };
   const markup = renderToStaticMarkup(
     <GenreHighlightCards
@@ -27,6 +28,10 @@ it('shows the best rated and most popular films in the film panel', () => {
   expect(markup).toContain('Film le plus populaire');
   expect(markup.match(/Film à la une/g)).toHaveLength(2);
   expect(markup).toContain('100 votes');
+  expect(markup.match(/class="featured-movie-poster"/g)).toHaveLength(2);
+  expect(markup).toContain('https://image.tmdb.org/t/p/w185/poster.jpg');
+  expect(markup).toContain('class="catalog-metrics"');
+  expect(markup).toContain('Films à la une');
 });
 
 it('shows the global average rating and number of rated films', () => {

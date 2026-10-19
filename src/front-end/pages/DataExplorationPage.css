@@ -102,25 +102,17 @@
 .genre-highlights {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: 32px;
   margin-top: 24px;
 }
 
 .highlight-group {
   min-width: 0;
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  padding: 0;
 }
 
 .highlight-group--movies {
   order: -1;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--accent) 14%, var(--surface)),
-    var(--surface)
-  );
 }
 
 .highlight-group-header {
@@ -144,7 +136,7 @@
 .highlight-group-header h2 {
   margin: 0;
   color: var(--heading);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .highlight-group-header p {
@@ -155,14 +147,80 @@
 
 .highlight-group-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.highlight-group--movies .genre-highlight {
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
+.catalog-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.catalog-metrics > .genre-highlight {
+  padding: 24px;
+}
+
+.catalog-metrics .genre-highlight-value {
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  letter-spacing: -0.04em;
+}
+
+.featured-movies {
+  margin-top: 32px;
+}
+
+.featured-movies-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.featured-movie > summary {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.featured-movie-poster,
+.featured-movie-placeholder {
+  flex: 0 0 94px;
+  width: 94px;
+  height: 141px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.featured-movie-placeholder {
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  font-size: 2rem;
+}
+
+.featured-movie-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.featured-movie-image-fallback {
+  display: none;
+}
+
+.featured-movie-poster[hidden] + .featured-movie-image-fallback {
+  display: grid;
+}
+
+.featured-movie-year {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+}
+
+.featured-movie .genre-highlight-name {
+  font-size: 1rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .genre-highlight-period {
@@ -174,14 +232,16 @@
   font-size: 0.8rem;
 }
 
-@media (min-width: 960px) {
-  .genre-highlights {
-    grid-template-columns: minmax(220px, 0.8fr) minmax(0, 2.2fr);
+@media (max-width: 820px) {
+  .highlight-group-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 600px) {
-  .highlight-group-cards {
+  .highlight-group-cards,
+  .catalog-metrics,
+  .featured-movies-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -192,11 +252,7 @@
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: linear-gradient(
-    125deg,
-    color-mix(in srgb, var(--accent) 8%, var(--surface)),
-    var(--surface)
-  );
+  background: var(--surface);
   box-shadow: 0 6px 20px rgb(0 0 0 / 4%);
   transition:
     border-color 160ms ease,
@@ -290,19 +346,19 @@
 
 .genre-highlight .genre-highlight-name {
   color: var(--heading);
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 700;
   margin: 0 0 8px;
 }
 
 .genre-highlight .genre-highlight-value {
   color: var(--accent);
-  font-size: 1.85rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
 }
 
 .genre-highlight-value span {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 400;
 }

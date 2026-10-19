@@ -115,6 +115,8 @@ export function getCollectionSummary(
             rating: Number(row.vote_average),
             voteCount: Number(row.vote_count),
             popularity: Number(row.popularity),
+            posterPath:
+              row.poster_path === null ? null : String(row.poster_path),
           }
         : null;
     }

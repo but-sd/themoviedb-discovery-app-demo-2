@@ -70,6 +70,7 @@ export type ApiErrorResponse = {
   error: string;
 };
 export type MovieHighlight = {
+  posterPath?: string | null;
   id: number;
   title: string;
   year: number;

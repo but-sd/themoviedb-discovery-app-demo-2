@@ -44,7 +44,7 @@ export function GenreHighlightCards({
           </span>
           <div>
             <h2>Genres</h2>
-            <p>Diversité et tendances</p>
+            <p>Les tendances de votre catalogue</p>
           </div>
         </header>
         <div className="highlight-group-cards">
@@ -210,147 +210,196 @@ export function GenreHighlightCards({
               ▤
             </span>
             <div>
-              <h2>Films</h2>
-              <p>Couverture du catalogue</p>
+              <h2>Votre catalogue en un coup d’œil</h2>
+              <p>Les chiffres essentiels, tous films confondus</p>
             </div>
           </header>
-          <details className="genre-highlight">
-            <summary>
-              <span className="genre-highlight-label">
-                Films en base <span aria-hidden="true">↗</span>
-              </span>
-              <p className="genre-highlight-value">
-                {summary.movieCount.toLocaleString('fr-FR')} <span>films</span>
-              </p>
-              <p className="genre-highlight-period">
-                {summary.years.length
-                  ? `${Math.min(...summary.years)} – ${Math.max(...summary.years)}`
-                  : 'Aucune année collectée'}
-              </p>
-            </summary>
-            <div className="genre-highlight-tooltip">
-              <strong>Films enregistrés dans la base</strong>
-              <p>Nombre de films distincts, tous genres confondus.</p>
-              {summary.years.length > 0 && (
-                <>
-                  <p>Année de début : {Math.min(...summary.years)}.</p>
-                  <p>Année de fin : {Math.max(...summary.years)}.</p>
-                  <p>Années déjà collectées : {summary.years.join(', ')}.</p>
-                </>
-              )}
-            </div>
-          </details>
-          <details className="genre-highlight">
-            <summary>
-              <span className="genre-highlight-label">
-                Durée moyenne <span aria-hidden="true">↗</span>
-              </span>
-              <p className="genre-highlight-value">
-                {summary.averageRuntime != null ? (
-                  <>
-                    {Math.round(summary.averageRuntime).toLocaleString('fr-FR')}{' '}
-                    <span>min</span>
-                  </>
-                ) : (
-                  <span>Non disponible</span>
-                )}
-              </p>
-            </summary>
-            <div className="genre-highlight-tooltip">
-              <strong>Durée moyenne d’un film</strong>
-              <p>
-                Moyenne calculée sur {summary.runtimeMovieCount ?? 0} films
-                ayant une durée connue. Les durées absentes ou nulles sont
-                exclues.
-              </p>
-              <p>
-                Mettez à jour la collecte depuis l’administration pour
-                renseigner les durées manquantes.
-              </p>
-            </div>
-          </details>
-          <details className="genre-highlight">
-            <summary>
-              <span className="genre-highlight-label">
-                Note moyenne <span aria-hidden="true">☆</span>
-              </span>
-              <p className="genre-highlight-value">
-                {summary.averageRating != null ? (
-                  <>
-                    {summary.averageRating.toLocaleString('fr-FR', {
-                      maximumFractionDigits: 2,
-                    })}{' '}
-                    <span>/ 10</span>
-                  </>
-                ) : (
-                  <span>Non disponible</span>
-                )}
-              </p>
-            </summary>
-            <div className="genre-highlight-tooltip">
-              <strong>Note moyenne d’un film</strong>
-              <p>
-                Moyenne arithmétique sur {summary.ratedMovieCount ?? 0} films
-                ayant au moins un vote, sans pondération par le nombre de votes.
-                Chaque film est compté une seule fois, tous genres confondus.
-              </p>
-            </div>
-          </details>
-          {[
-            {
-              label: 'Film le mieux noté',
-              movie: summary.bestRatedMovie,
-              rating: true,
-            },
-            {
-              label: 'Film le plus populaire',
-              movie: summary.mostPopularMovie,
-              rating: false,
-            },
-          ].map(({ label, movie, rating }) => (
-            <details className="genre-highlight" key={label}>
+          <div className="catalog-metrics">
+            <details className="genre-highlight">
               <summary>
                 <span className="genre-highlight-label">
-                  {label}
-                  <span aria-hidden="true">↗</span>
+                  Films en base <span aria-hidden="true">↗</span>
                 </span>
-                {movie ? (
-                  <>
-                    <p className="genre-highlight-name">{movie.title}</p>
-                    <p className="genre-highlight-value">
-                      {(rating
-                        ? movie.rating
-                        : movie.popularity
-                      ).toLocaleString('fr-FR', {
-                        maximumFractionDigits: 2,
-                      })}{' '}
-                      <span>{rating ? '/ 10' : 'popularité'}</span>
-                    </p>
-                  </>
-                ) : (
-                  <p>
-                    {rating
-                      ? 'Aucun film avec au moins 100 votes.'
-                      : 'Aucun film disponible.'}
-                  </p>
-                )}
+                <p className="genre-highlight-value">
+                  {summary.movieCount.toLocaleString('fr-FR')}{' '}
+                  <span>films</span>
+                </p>
+                <p className="genre-highlight-period">
+                  {summary.years.length
+                    ? `${Math.min(...summary.years)} – ${Math.max(...summary.years)}`
+                    : 'Aucune année collectée'}
+                </p>
               </summary>
               <div className="genre-highlight-tooltip">
-                <strong>{label}</strong>
-                <p>
-                  {rating
-                    ? 'Classement des films ayant au moins 100 votes. En cas d’égalité, le nombre de votes départage les films.'
-                    : 'Score de popularité TMDB observé lors de la collecte, et non lors de la sortie du film. En cas d’égalité, le nombre de votes départage les films.'}
-                </p>
-                {movie && (
-                  <p>
-                    {movie.year} · Note : {movie.rating.toLocaleString('fr-FR')}{' '}
-                    / 10 · {movie.voteCount.toLocaleString('fr-FR')} votes.
-                  </p>
+                <strong>Films enregistrés dans la base</strong>
+                <p>Nombre de films distincts, tous genres confondus.</p>
+                {summary.years.length > 0 && (
+                  <>
+                    <p>Année de début : {Math.min(...summary.years)}.</p>
+                    <p>Année de fin : {Math.max(...summary.years)}.</p>
+                    <p>Années déjà collectées : {summary.years.join(', ')}.</p>
+                  </>
                 )}
               </div>
             </details>
-          ))}
+            <details className="genre-highlight">
+              <summary>
+                <span className="genre-highlight-label">
+                  Durée moyenne <span aria-hidden="true">↗</span>
+                </span>
+                <p className="genre-highlight-value">
+                  {summary.averageRuntime != null ? (
+                    <>
+                      {Math.round(summary.averageRuntime).toLocaleString(
+                        'fr-FR',
+                      )}{' '}
+                      <span>min</span>
+                    </>
+                  ) : (
+                    <span>Non disponible</span>
+                  )}
+                </p>
+              </summary>
+              <div className="genre-highlight-tooltip">
+                <strong>Durée moyenne d’un film</strong>
+                <p>
+                  Moyenne calculée sur {summary.runtimeMovieCount ?? 0} films
+                  ayant une durée connue. Les durées absentes ou nulles sont
+                  exclues.
+                </p>
+                <p>
+                  Mettez à jour la collecte depuis l’administration pour
+                  renseigner les durées manquantes.
+                </p>
+              </div>
+            </details>
+            <details className="genre-highlight">
+              <summary>
+                <span className="genre-highlight-label">
+                  Note moyenne <span aria-hidden="true">☆</span>
+                </span>
+                <p className="genre-highlight-value">
+                  {summary.averageRating != null ? (
+                    <>
+                      {summary.averageRating.toLocaleString('fr-FR', {
+                        maximumFractionDigits: 2,
+                      })}{' '}
+                      <span>/ 10</span>
+                    </>
+                  ) : (
+                    <span>Non disponible</span>
+                  )}
+                </p>
+              </summary>
+              <div className="genre-highlight-tooltip">
+                <strong>Note moyenne d’un film</strong>
+                <p>
+                  Moyenne arithmétique sur {summary.ratedMovieCount ?? 0} films
+                  ayant au moins un vote, sans pondération par le nombre de
+                  votes. Chaque film est compté une seule fois, tous genres
+                  confondus.
+                </p>
+              </div>
+            </details>
+          </div>
+          <section
+            className="featured-movies"
+            aria-labelledby="featured-movies-title"
+          >
+            <header className="highlight-group-header">
+              <div>
+                <h2 id="featured-movies-title">Films à la une</h2>
+                <p>Deux regards sur les films qui se distinguent</p>
+              </div>
+            </header>
+            <div className="featured-movies-grid">
+              {[
+                {
+                  label: 'Film le mieux noté',
+                  movie: summary.bestRatedMovie,
+                  rating: true,
+                },
+                {
+                  label: 'Film le plus populaire',
+                  movie: summary.mostPopularMovie,
+                  rating: false,
+                },
+              ].map(({ label, movie, rating }) => (
+                <details className="genre-highlight featured-movie" key={label}>
+                  <summary>
+                    {movie?.posterPath ? (
+                      <>
+                        <img
+                          className="featured-movie-poster"
+                          src={`https://image.tmdb.org/t/p/w185${movie.posterPath}`}
+                          alt=""
+                          loading="lazy"
+                          onError={(event) => {
+                            event.currentTarget.hidden = true;
+                          }}
+                        />
+                        <span
+                          className="featured-movie-placeholder featured-movie-image-fallback"
+                          aria-hidden="true"
+                        >
+                          ▤
+                        </span>
+                      </>
+                    ) : (
+                      <span
+                        className="featured-movie-placeholder"
+                        aria-hidden="true"
+                      >
+                        ▤
+                      </span>
+                    )}
+                    <div className="featured-movie-content">
+                      <span className="genre-highlight-label">
+                        {label}
+                        <span aria-hidden="true">↗</span>
+                      </span>
+                      {movie ? (
+                        <>
+                          <p className="genre-highlight-name">{movie.title}</p>
+                          <p className="featured-movie-year">{movie.year}</p>
+                          <p className="genre-highlight-value">
+                            {(rating
+                              ? movie.rating
+                              : movie.popularity
+                            ).toLocaleString('fr-FR', {
+                              maximumFractionDigits: 2,
+                            })}{' '}
+                            <span>{rating ? '/ 10' : 'popularité'}</span>
+                          </p>
+                        </>
+                      ) : (
+                        <p>
+                          {rating
+                            ? 'Aucun film avec au moins 100 votes.'
+                            : 'Aucun film disponible.'}
+                        </p>
+                      )}
+                    </div>
+                  </summary>
+                  <div className="genre-highlight-tooltip">
+                    <strong>{label}</strong>
+                    <p>
+                      {rating
+                        ? 'Classement des films ayant au moins 100 votes. En cas d’égalité, le nombre de votes départage les films.'
+                        : 'Score de popularité TMDB observé lors de la collecte, et non lors de la sortie du film. En cas d’égalité, le nombre de votes départage les films.'}
+                    </p>
+                    {movie && (
+                      <p>
+                        {movie.year} · Note :{' '}
+                        {movie.rating.toLocaleString('fr-FR')} / 10 ·{' '}
+                        {movie.voteCount.toLocaleString('fr-FR')} votes.
+                      </p>
+                    )}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
         </section>
       )}
     </section>
