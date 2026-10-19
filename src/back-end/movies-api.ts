@@ -70,6 +70,62 @@ export function registerMoviesApi(app: Express): void {
   );
 
   app.get(
+    '/api/movies/discover',
+    async (_req: express.Request, res: express.Response) => {
+      const { language, page, region, year } = _req.query;
+      const currentYear = new Date().getFullYear();
+      if (
+        typeof year !== 'string' ||
+        !/^\d{4}$/.test(year) ||
+        Number(year) < 1870 ||
+        Number(year) > currentYear
+      ) {
+        res.status(400).json({ error: 'Year must be a valid past year.' });
+        return;
+      }
+
+      const queryParams = new URLSearchParams({
+        language: typeof language === 'string' ? language : DEFAULT_LANGUAGE,
+        page: typeof page === 'string' ? page : DEFAULT_PAGE,
+        region: typeof region === 'string' ? region : DEFAULT_REGION,
+        primary_release_year: year,
+        sort_by: 'popularity.desc',
+      });
+
+      try {
+        const response = await fetch(
+          `https://api.themoviedb.org/3/discover/movie?${queryParams.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${tmdbAccessToken}`,
+              'Content-Type': 'application/json;charset=utf-8',
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `TMDB API request failed with status ${response.status}`,
+          );
+        }
+
+        const rawData = (await response.json()) as TmdbMoviesRawResponse;
+        const data: MoviesApiResponse = {
+          page: rawData.page,
+          results: rawData.results.map(toSupportedMovie),
+          total_pages: rawData.total_pages,
+          total_results: rawData.total_results,
+        };
+
+        res.json(data);
+      } catch (error) {
+        console.error('Error discovering movies:', error);
+        res.status(500).json({ error: 'Failed to discover movies' });
+      }
+    },
+  );
+
+  app.get(
     '/api/movies/:id',
     async (_req: express.Request, res: express.Response) => {
       const movieId = _req.params.id;
