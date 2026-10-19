@@ -1,9 +1,23 @@
 import type { Express } from 'express';
 import { collectMovies } from './collectMovies';
 import { isValidMovieYear } from './discover-movies';
-import { getCollectionSummary, getGenreDistribution } from './movies-database';
+import {
+  getCollectionSummary,
+  getGenreDistribution,
+  getGenreRatings,
+} from './movies-database';
 
 export function registerCollectionApi(app: Express): void {
+  app.get('/api/movies/genres/ratings', (_req, res) => {
+    try {
+      res.json(getGenreRatings());
+    } catch (error) {
+      console.error('Failed to read genre ratings:', error);
+      res
+        .status(500)
+        .json({ error: 'Impossible de lire les notes par genre.' });
+    }
+  });
   app.get('/api/movies/genres/distribution', (_req, res) => {
     try {
       res.json(getGenreDistribution());

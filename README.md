@@ -11,6 +11,12 @@ Un sélecteur permet de choisir entre barres horizontales, barres verticales,
 anneau et camembert. Les parts des graphiques circulaires représentent les
 associations film/genre, un film pouvant appartenir à plusieurs genres.
 
+Le graphique **Notes moyennes par genre** utilise
+`GET /api/movies/genres/ratings`. Il affiche la moyenne arithmétique des notes
+des films ayant au moins un vote, sans pondération, triée par note décroissante
+sur une échelle de 0 à 10. Le tableau fournit le nombre de films notés et le
+total des votes. Les films sans vote sont exclus.
+
 Avec Node.js 24 ou plus et `TMDB_ACCESS_TOKEN` dans `.env` :
 
 ```sh

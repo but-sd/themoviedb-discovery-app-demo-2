@@ -4,11 +4,42 @@ import { DatabaseSync } from 'node:sqlite';
 import type {
   CollectionSummary,
   GenreDistribution,
+  GenreRating,
   Movie,
 } from './schemas/MoviesTypes';
 
 export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
 export type Genre = { id: number; name: string };
+
+export function getGenreRatings(
+  databasePath = DEFAULT_DATABASE_PATH,
+): GenreRating[] {
+  const database = createMoviesDatabase(databasePath);
+  try {
+    return database
+      .prepare(`
+      SELECT genres.id, genres.name, COUNT(*) AS movie_count,
+        AVG(movies.vote_average) AS average_rating,
+        SUM(movies.vote_count) AS vote_count
+      FROM movie_genres
+      JOIN genres ON genres.id = movie_genres.genre_id
+      JOIN movies ON movies.id = movie_genres.movie_id
+      WHERE movies.vote_count > 0
+      GROUP BY genres.id, genres.name
+      ORDER BY average_rating DESC, genres.id
+    `)
+      .all()
+      .map((row) => ({
+        id: Number(row.id),
+        name: row.name === null ? `Genre ${row.id}` : String(row.name),
+        movieCount: Number(row.movie_count),
+        averageRating: Number(row.average_rating),
+        voteCount: Number(row.vote_count),
+      }));
+  } finally {
+    database.close();
+  }
+}
 
 export function getGenreDistribution(
   databasePath = DEFAULT_DATABASE_PATH,

@@ -11,7 +11,10 @@ import {
   PieController,
   Legend,
 } from 'chart.js';
-import type { GenreDistribution } from '../../back-end/schemas/MoviesTypes';
+import type {
+  GenreDistribution,
+  GenreRating,
+} from '../../back-end/schemas/MoviesTypes';
 
 Chart.register(
   BarController,
@@ -36,21 +39,31 @@ const chartViews: { value: ChartView; label: string }[] = [
 
 export default function GenreDistributionChart({
   revision,
+  metric = 'count',
 }: {
   revision: unknown;
+  metric?: 'count' | 'rating';
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [data, setData] = useState<GenreDistribution[] | null>(null);
+  const [data, setData] = useState<
+    (GenreDistribution & Partial<GenreRating>)[] | null
+  >(null);
   const [error, setError] = useState('');
   const [view, setView] = useState<ChartView>('horizontal');
   const isCircular = view === 'doughnut' || view === 'pie';
+  const isRating = metric === 'rating';
+  const title = isRating
+    ? 'Notes moyennes par genre'
+    : 'Répartition des films par genre';
+  const titleId = isRating ? 'genre-rating-title' : 'genre-chart-title';
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/movies/genres/distribution', { signal: controller.signal })
+    fetch(`/api/movies/genres/${isRating ? 'ratings' : 'distribution'}`, {
+      signal: controller.signal,
+    })
       .then(async (response) => {
-        if (!response.ok)
-          throw new Error('Impossible de charger la répartition par genre.');
+        if (!response.ok) throw new Error(`Impossible de charger : ${title}.`);
         const result: unknown = await response.json();
         if (
           !Array.isArray(result) ||
@@ -65,7 +78,17 @@ export default function GenreDistributionChart({
               'movieCount' in row &&
               typeof row.movieCount === 'number' &&
               Number.isSafeInteger(row.movieCount) &&
-              row.movieCount >= 0,
+              row.movieCount >= 0 &&
+              (!isRating ||
+                ('averageRating' in row &&
+                  typeof row.averageRating === 'number' &&
+                  Number.isFinite(row.averageRating) &&
+                  row.averageRating >= 0 &&
+                  row.averageRating <= 10 &&
+                  'voteCount' in row &&
+                  typeof row.voteCount === 'number' &&
+                  Number.isSafeInteger(row.voteCount) &&
+                  row.voteCount >= 0)),
           )
         )
           throw new Error('Répartition par genre invalide.');
@@ -84,7 +107,7 @@ export default function GenreDistributionChart({
         }
       });
     return () => controller.abort();
-  }, [revision]);
+  }, [revision, isRating, title]);
 
   useEffect(() => {
     if (!canvas.current || !data?.length || error) return;
@@ -95,8 +118,10 @@ export default function GenreDistributionChart({
         labels: data.map((genre) => genre.name),
         datasets: [
           {
-            label: 'Nombre de films',
-            data: data.map((genre) => genre.movieCount),
+            label: isRating ? 'Note moyenne / 10' : 'Nombre de films',
+            data: data.map((genre) =>
+              isRating ? (genre.averageRating ?? 0) : genre.movieCount,
+            ),
             backgroundColor: data.map(
               (_, index) => `hsl(${(index * 137.508 + 190) % 360}, 60%, 48%)`,
             ),
@@ -120,6 +145,7 @@ export default function GenreDistributionChart({
           : {
               x: {
                 beginAtZero: true,
+                max: isRating && view === 'horizontal' ? 10 : undefined,
                 ticks: {
                   precision: 0,
                   color: colors.getPropertyValue('--text-muted'),
@@ -128,6 +154,7 @@ export default function GenreDistributionChart({
               },
               y: {
                 beginAtZero: true,
+                max: isRating && view === 'vertical' ? 10 : undefined,
                 ticks: {
                   precision: 0,
                   color: colors.getPropertyValue('--text-secondary'),
@@ -159,14 +186,20 @@ export default function GenreDistributionChart({
       observer.disconnect();
       chart.destroy();
     };
-  }, [data, error, view, isCircular]);
+  }, [data, error, view, isCircular, isRating]);
 
   return (
-    <section className="genre-distribution" aria-labelledby="genre-chart-title">
-      <h2 id="genre-chart-title">Répartition des films par genre</h2>
+    <section className="genre-distribution" aria-labelledby={titleId}>
+      <h2 id={titleId}>{title}</h2>
       <p>
         Tous les films en base. Un film peut être compté dans plusieurs genres.
       </p>
+      {isRating && (
+        <p>
+          Moyenne arithmétique des notes des films ayant au moins un vote, sans
+          pondération par le nombre de votes.
+        </p>
+      )}
       <label className="genre-chart-selector">
         Type de graphique
         <select
@@ -178,11 +211,18 @@ export default function GenreDistributionChart({
             if (selected) setView(selected.value);
           }}
         >
-          {chartViews.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
+          {chartViews
+            .filter(
+              (item) =>
+                !isRating ||
+                item.value === 'horizontal' ||
+                item.value === 'vertical',
+            )
+            .map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
         </select>
       </label>
       {isCircular && (
@@ -211,17 +251,23 @@ export default function GenreDistributionChart({
             <canvas
               ref={canvas}
               role="img"
-              aria-label="Nombre de films par genre, détaillé dans le tableau ci-dessous"
+              aria-label={`${title}, détaillé dans le tableau ci-dessous`}
             />
           </div>
           <details>
             <summary>Afficher les données du graphique</summary>
             <table>
-              <caption>Nombre de films par genre</caption>
+              <caption>{title}</caption>
               <thead>
                 <tr>
                   <th scope="col">Genre</th>
                   <th scope="col">Films</th>
+                  {isRating && (
+                    <>
+                      <th scope="col">Note moyenne / 10</th>
+                      <th scope="col">Votes</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -229,6 +275,16 @@ export default function GenreDistributionChart({
                   <tr key={genre.id}>
                     <th scope="row">{genre.name}</th>
                     <td>{genre.movieCount}</td>
+                    {isRating && (
+                      <>
+                        <td>
+                          {genre.averageRating?.toLocaleString('fr-FR', {
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                        <td>{genre.voteCount?.toLocaleString('fr-FR')}</td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

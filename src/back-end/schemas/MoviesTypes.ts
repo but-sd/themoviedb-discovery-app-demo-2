@@ -75,3 +75,7 @@ export type GenreDistribution = {
   name: string;
   movieCount: number;
 };
+export type GenreRating = GenreDistribution & {
+  averageRating: number;
+  voteCount: number;
+};

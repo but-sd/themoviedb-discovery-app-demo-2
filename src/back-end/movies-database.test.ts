@@ -6,6 +6,7 @@ import {
   createMoviesDatabase,
   getCollectionSummary,
   getGenreDistribution,
+  getGenreRatings,
   upsertMovies,
 } from './movies-database';
 import type { Movie } from './schemas/MoviesTypes';
@@ -24,6 +25,50 @@ const movie: Movie = {
   backdrop_path: null,
   genre_ids: [18],
 };
+
+it('averages rated movies per genre without weighting or including unrated films', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'genre-ratings-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getGenreRatings(path)).toEqual([]);
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [
+          { ...movie, vote_average: 8, vote_count: 10, genre_ids: [18, 12] },
+          { ...movie, id: 2, vote_average: 4, vote_count: 100 },
+          { ...movie, id: 3, vote_average: 0, vote_count: 0 },
+        ],
+        2020,
+        [
+          { id: 18, name: 'Drame' },
+          { id: 12, name: 'Aventure' },
+        ],
+      );
+    } finally {
+      database.close();
+    }
+    expect(getGenreRatings(path)).toEqual([
+      {
+        id: 12,
+        name: 'Aventure',
+        movieCount: 1,
+        averageRating: 8,
+        voteCount: 10,
+      },
+      {
+        id: 18,
+        name: 'Drame',
+        movieCount: 2,
+        averageRating: 6,
+        voteCount: 110,
+      },
+    ]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 it('counts each movie once per genre and sorts by descending count', () => {
   const directory = mkdtempSync(join(tmpdir(), 'genre-distribution-'));

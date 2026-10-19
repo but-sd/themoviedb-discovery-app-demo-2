@@ -7,6 +7,7 @@ vi.mock('./config', () => ({ tmdbAccessToken: 'test-access-token' }));
 vi.mock('./movies-database', () => ({
   getCollectionSummary: vi.fn(),
   getGenreDistribution: vi.fn(),
+  getGenreRatings: vi.fn(),
 }));
 
 import { collectMovies } from './collectMovies';

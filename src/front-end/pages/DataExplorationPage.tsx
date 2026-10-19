@@ -221,6 +221,7 @@ export default function DataExplorationPage() {
         {error && <p role="alert">{error}</p>}
       </form>
       <GenreDistributionChart revision={summary} />
+      <GenreDistributionChart revision={summary} metric="rating" />
     </main>
   );
 }
