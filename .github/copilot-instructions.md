@@ -6,6 +6,7 @@
 - Types autorisés : feat, fix, docs, style, refactor, test, chore.
 - Format : `<type>: <message en anglais>`.
 - Exemple : "feat: add new feature to the application"
+- L'entête du commit ne doit pas dépasser 100 caractères, si nécessaire, détailler les informations supplémentaires dans le corps du commit.
 
 ## Utilisation de GitHub Copilot
 
