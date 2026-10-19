@@ -153,9 +153,27 @@ it('averages only known runtimes and updates them without duplicates', () => {
         runtimeMovieCount: 2,
       });
       upsertMovies(database, [movie], 2020, [], new Map([[1, 110]]));
+      expect(
+        database
+          .prepare('SELECT runtime_minutes FROM movies WHERE id = 1')
+          .get(),
+      ).toMatchObject({ runtime_minutes: 110 });
+      expect(
+        database
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE name = 'movie_runtimes'",
+          )
+          .all(),
+      ).toEqual([]);
+      upsertMovies(database, [movie], 2020);
       expect(getCollectionSummary(path)).toMatchObject({
         averageRuntime: 130,
         runtimeMovieCount: 2,
+      });
+      upsertMovies(database, [movie], 2020, [], new Map([[1, null]]));
+      expect(getCollectionSummary(path)).toMatchObject({
+        averageRuntime: 150,
+        runtimeMovieCount: 1,
       });
     } finally {
       database.close();

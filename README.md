@@ -25,10 +25,12 @@ Le nombre de films notés est précisé au survol.
 Une carte **Durée moyenne** dans le panneau Films affiche la durée moyenne
 en minutes, arrondie, des films ayant une durée connue. Le survol indique
 le nombre de films pris en compte. La collecte récupère désormais les détails
-TMDB de chaque film pour enregistrer sa durée dans `movie_runtimes`.
+TMDB de chaque film pour enregistrer sa durée dans `movies.runtime_minutes`.
 Une nouvelle collecte enrichit les films existants ; sans durée renseignée,
 la carte indique « Non disponible ». Les durées nulles ou égales à zéro
 sont exclues du calcul. Cette récupération ajoute une requête par film.
+Ce schéma nécessite une nouvelle base ; aucune migration de l'ancienne table
+de durées n'est effectuée.
 
 La page d'exploration affiche quatre cartes de synthèse : le nombre de films en base
 avec les années de début et de fin de collecte, le nombre de genres représentés,

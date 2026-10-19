@@ -99,9 +99,7 @@ describe('collectMovies', () => {
       });
       expect(
         database
-          .prepare(
-            'SELECT runtime_minutes FROM movie_runtimes WHERE movie_id = 42',
-          )
+          .prepare('SELECT runtime_minutes FROM movies WHERE id = 42')
           .get(),
       ).toMatchObject({ runtime_minutes: 120 });
       expect(

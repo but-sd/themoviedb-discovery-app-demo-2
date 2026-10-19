@@ -86,7 +86,7 @@ export function getCollectionSummary(
     const runtime = database
       .prepare(`
       SELECT AVG(runtime_minutes) AS average, COUNT(*) AS count
-      FROM movie_runtimes WHERE runtime_minutes > 0
+      FROM movies WHERE runtime_minutes > 0
     `)
       .get();
     const rating = database
@@ -156,6 +156,7 @@ export function createMoviesDatabase(
         vote_count INTEGER NOT NULL,
         poster_path TEXT,
         backdrop_path TEXT,
+        runtime_minutes INTEGER CHECK(runtime_minutes > 0),
         collected_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS movies_release_year ON movies(release_year);
@@ -172,10 +173,6 @@ export function createMoviesDatabase(
       CREATE TABLE IF NOT EXISTS collection_years (
         year INTEGER PRIMARY KEY,
         collected_at TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS movie_runtimes (
-        movie_id INTEGER PRIMARY KEY REFERENCES movies(id) ON DELETE CASCADE,
-        runtime_minutes INTEGER CHECK(runtime_minutes > 0)
       );
     `);
     database.exec('COMMIT');
@@ -197,8 +194,8 @@ export function upsertMovies(
       INSERT INTO movies (
         id, title, original_title, original_language, overview, release_date,
         release_year, popularity, vote_average, vote_count, poster_path,
-        backdrop_path, collected_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        backdrop_path, runtime_minutes, collected_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         original_title = excluded.original_title,
@@ -211,6 +208,7 @@ export function upsertMovies(
         vote_count = excluded.vote_count,
         poster_path = excluded.poster_path,
         backdrop_path = excluded.backdrop_path,
+        runtime_minutes = CASE WHEN ? THEN excluded.runtime_minutes ELSE movies.runtime_minutes END,
         collected_at = excluded.collected_at
     `);
   database.exec('BEGIN');
@@ -232,10 +230,6 @@ export function upsertMovies(
       'INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?, ?)',
     );
     const collectedAt = new Date().toISOString();
-    const upsertRuntime = database.prepare(`
-      INSERT INTO movie_runtimes (movie_id, runtime_minutes) VALUES (?, ?)
-      ON CONFLICT(movie_id) DO UPDATE SET runtime_minutes = excluded.runtime_minutes
-    `);
     for (const movie of movies) {
       insert.run(
         movie.id,
@@ -250,12 +244,11 @@ export function upsertMovies(
         movie.vote_count,
         movie.poster_path,
         movie.backdrop_path,
+        runtimes.get(movie.id) ?? null,
         collectedAt,
+        Number(runtimes.has(movie.id)),
       );
       deleteLinks.run(movie.id);
-      if (runtimes.has(movie.id)) {
-        upsertRuntime.run(movie.id, runtimes.get(movie.id) ?? null);
-      }
       for (const genreId of movie.genre_ids) {
         ensureGenre.run(genreId);
         insertLink.run(movie.id, genreId);
