@@ -12,6 +12,7 @@ vi.mock('./discover-movies', async (importOriginal) => ({
     { id: 12, name: 'Aventure' },
     { id: 18, name: 'Drame' },
   ]),
+  fetchMovieRuntime: vi.fn().mockResolvedValue(120),
 }));
 
 import { collectMovies } from './collectMovies';
@@ -96,6 +97,13 @@ describe('collectMovies', () => {
         release_year: 2020,
         vote_average: 7.5,
       });
+      expect(
+        database
+          .prepare(
+            'SELECT runtime_minutes FROM movie_runtimes WHERE movie_id = 42',
+          )
+          .get(),
+      ).toMatchObject({ runtime_minutes: 120 });
       expect(
         database
           .prepare(`

@@ -80,9 +80,25 @@ export function getCollectionSummary(
       ORDER BY year
     `)
       .all();
+    const runtime = database
+      .prepare(`
+      SELECT AVG(runtime_minutes) AS average, COUNT(*) AS count
+      FROM movie_runtimes WHERE runtime_minutes > 0
+    `)
+      .get();
+    const rating = database
+      .prepare(`
+      SELECT AVG(vote_average) AS average, COUNT(*) AS count
+      FROM movies WHERE vote_count > 0
+    `)
+      .get();
     return {
       movieCount: Number(count?.count),
       years: years.map((row) => Number(row.year)),
+      averageRuntime: runtime?.average == null ? null : Number(runtime.average),
+      runtimeMovieCount: Number(runtime?.count),
+      averageRating: rating?.average == null ? null : Number(rating.average),
+      ratedMovieCount: Number(rating?.count),
     };
   } finally {
     database.close();
@@ -127,6 +143,10 @@ export function createMoviesDatabase(
         year INTEGER PRIMARY KEY,
         collected_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS movie_runtimes (
+        movie_id INTEGER PRIMARY KEY REFERENCES movies(id) ON DELETE CASCADE,
+        runtime_minutes INTEGER CHECK(runtime_minutes > 0)
+      );
     `);
     database.exec('COMMIT');
     return database;
@@ -141,6 +161,7 @@ export function upsertMovies(
   movies: Iterable<Movie>,
   year: number,
   genres: Iterable<Genre> = [],
+  runtimes: ReadonlyMap<number, number | null> = new Map(),
 ): void {
   const insert = database.prepare(`
       INSERT INTO movies (
@@ -181,6 +202,10 @@ export function upsertMovies(
       'INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?, ?)',
     );
     const collectedAt = new Date().toISOString();
+    const upsertRuntime = database.prepare(`
+      INSERT INTO movie_runtimes (movie_id, runtime_minutes) VALUES (?, ?)
+      ON CONFLICT(movie_id) DO UPDATE SET runtime_minutes = excluded.runtime_minutes
+    `);
     for (const movie of movies) {
       insert.run(
         movie.id,
@@ -198,6 +223,9 @@ export function upsertMovies(
         collectedAt,
       );
       deleteLinks.run(movie.id);
+      if (runtimes.has(movie.id)) {
+        upsertRuntime.run(movie.id, runtimes.get(movie.id) ?? null);
+      }
       for (const genreId of movie.genre_ids) {
         ensureGenre.run(genreId);
         insertLink.run(movie.id, genreId);

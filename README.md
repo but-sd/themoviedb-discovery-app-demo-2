@@ -2,20 +2,35 @@
 
 ## Collecte de films
 
-La page d'exploration affiche un graphique en barres Chart.js du nombre de
-films par genre, calculé depuis SQLite via
-`GET /api/movies/genres/distribution` et actualisé après la collecte.
-Un film appartenant à plusieurs genres est compté dans chacun d'eux.
-Les données sont aussi consultables dans le tableau sous le graphique.
-Un sélecteur permet de choisir entre barres horizontales, barres verticales,
-anneau et camembert. Les parts des graphiques circulaires représentent les
-associations film/genre, un film pouvant appartenir à plusieurs genres.
+La carte **Note moyenne** du panneau Films présente la moyenne arithmétique
+des notes des films ayant au moins un vote, sur 10, sans pondération.
+Chaque film est compté une seule fois, indépendamment de ses genres.
+Le nombre de films notés est précisé au survol.
 
-Le graphique **Notes moyennes par genre** utilise
-`GET /api/movies/genres/ratings`. Il affiche la moyenne arithmétique des notes
-des films ayant au moins un vote, sans pondération, triée par note décroissante
-sur une échelle de 0 à 10. Le tableau fournit le nombre de films notés et le
-total des votes. Les films sans vote sont exclus.
+Une carte **Durée moyenne** dans le panneau Films affiche la durée moyenne
+en minutes, arrondie, des films ayant une durée connue. Le survol indique
+le nombre de films pris en compte. La collecte récupère désormais les détails
+TMDB de chaque film pour enregistrer sa durée dans `movie_runtimes`.
+Une nouvelle collecte enrichit les films existants ; sans durée renseignée,
+la carte indique « Non disponible ». Les durées nulles ou égales à zéro
+sont exclues du calcul. Cette récupération ajoute une requête par film.
+
+La page d'exploration affiche quatre cartes de synthèse : le nombre de films en base
+avec les années de début et de fin de collecte, le nombre de genres représentés,
+le genre le plus représenté
+avec son nombre de films et le genre ayant la meilleure moyenne non pondérée
+(films sans vote exclus). Elles affichent tous les ex æquo et sont actualisées
+après la collecte.
+Les cartes affichent uniquement le genre et sa valeur ; les explications et
+les ex æquo apparaissent au survol, au focus clavier ou en touchant la carte.
+Les indicateurs sont regroupés dans deux panneaux : **Films** pour la couverture
+du catalogue et **Genres** pour la diversité, le genre dominant et la meilleure note.
+
+Les cartes utilisent `GET /api/movies/genres/distribution` et
+`GET /api/movies/genres/ratings`, calculés depuis SQLite.
+Un film appartenant à plusieurs genres est compté dans chacun d'eux.
+Les notes moyennes sont arithmétiques, sans pondération, sur une échelle
+de 0 à 10 ; les films sans vote sont exclus.
 
 Avec Node.js 24 ou plus et `TMDB_ACCESS_TOKEN` dans `.env` :
 
@@ -31,7 +46,8 @@ année (de 1870 à l'année courante) et stocke les films dans
 `data/movies.sqlite`. Il partage sa recherche avec
 `GET /api/movies/discover?year=2020`. Aucun serveur local n'est nécessaire.
 
-Dans la page **Exploration des données**, le formulaire **Collecte data**
+Dans la page **Administration** (`/administration`), accessible depuis la navigation,
+le formulaire de collecte
 permet de sélectionner une année de début et une année de fin.
 Avec le serveur démarré (`npm run dev`), il collecte séquentiellement jusqu'à
 100 films par année, bornes incluses, via `POST /api/movies/collect?year=2020`.

@@ -69,7 +69,14 @@ export type MovieDetails = Omit<
 export type ApiErrorResponse = {
   error: string;
 };
-export type CollectionSummary = { movieCount: number; years: number[] };
+export type CollectionSummary = {
+  movieCount: number;
+  years: number[];
+  averageRuntime?: number | null;
+  runtimeMovieCount?: number;
+  averageRating?: number | null;
+  ratedMovieCount?: number;
+};
 export type GenreDistribution = {
   id: number;
   name: string;

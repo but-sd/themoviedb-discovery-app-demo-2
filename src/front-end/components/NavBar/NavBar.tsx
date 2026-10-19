@@ -39,6 +39,14 @@ export default function NavBar({ theme, onToggleTheme }: NavBarProps) {
             À propos
           </NavLink>
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          <NavLink
+            className={({ isActive }) =>
+              `app-nav-link${isActive ? ' app-nav-link-active' : ''}`
+            }
+            to="/administration"
+          >
+            Administration
+          </NavLink>
         </div>
       </div>
     </nav>

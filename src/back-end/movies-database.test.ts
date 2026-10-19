@@ -106,7 +106,12 @@ it('summarizes unique films and successful years including empty collections', (
   const directory = mkdtempSync(join(tmpdir(), 'collection-summary-'));
   const path = join(directory, 'movies.sqlite');
   try {
-    expect(getCollectionSummary(path)).toEqual({ movieCount: 0, years: [] });
+    expect(getCollectionSummary(path)).toMatchObject({
+      movieCount: 0,
+      years: [],
+      averageRuntime: null,
+      runtimeMovieCount: 0,
+    });
     const database = createMoviesDatabase(path);
     try {
       upsertMovies(database, [movie], 2020);
@@ -115,9 +120,74 @@ it('summarizes unique films and successful years including empty collections', (
     } finally {
       database.close();
     }
-    expect(getCollectionSummary(path)).toEqual({
+    expect(getCollectionSummary(path)).toMatchObject({
       movieCount: 1,
       years: [2020, 2021],
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('averages only known runtimes and updates them without duplicates', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'movie-runtimes-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [movie, { ...movie, id: 2 }, { ...movie, id: 3 }],
+        2020,
+        [],
+        new Map([
+          [1, 90],
+          [2, 150],
+          [3, null],
+        ]),
+      );
+      expect(getCollectionSummary(path)).toMatchObject({
+        averageRuntime: 120,
+        runtimeMovieCount: 2,
+      });
+      upsertMovies(database, [movie], 2020, [], new Map([[1, 110]]));
+      expect(getCollectionSummary(path)).toMatchObject({
+        averageRuntime: 130,
+        runtimeMovieCount: 2,
+      });
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('summarizes film ratings without weighting, genre duplication, or unrated films', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'film-ratings-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getCollectionSummary(path)).toMatchObject({
+      averageRating: null,
+      ratedMovieCount: 0,
+    });
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [
+          { ...movie, vote_average: 8, vote_count: 10, genre_ids: [18, 12] },
+          { ...movie, id: 2, vote_average: 4, vote_count: 100 },
+          { ...movie, id: 3, vote_average: 0, vote_count: 0 },
+        ],
+        2020,
+      );
+    } finally {
+      database.close();
+    }
+    expect(getCollectionSummary(path)).toMatchObject({
+      averageRating: 6,
+      ratedMovieCount: 2,
     });
   } finally {
     rmSync(directory, { recursive: true, force: true });

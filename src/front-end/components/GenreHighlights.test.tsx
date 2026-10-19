@@ -1,0 +1,149 @@
+import { renderToStaticMarkup } from 'react-dom/server';
+import { expect, it } from 'vitest';
+import { GenreHighlightCards } from './GenreHighlights';
+
+it('shows the global average rating and number of rated films', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{
+        movieCount: 10,
+        years: [2020],
+        averageRating: 7.25,
+        ratedMovieCount: 8,
+      }}
+    />,
+  );
+  expect(markup).toContain('Note moyenne');
+  expect(markup).toContain('7,25');
+  expect(markup).toContain('8 films');
+});
+
+it('shows average runtime in the film group', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{
+        movieCount: 10,
+        years: [2020],
+        averageRuntime: 112.6,
+        runtimeMovieCount: 8,
+      }}
+    />,
+  );
+  expect(markup).toContain('Durée moyenne');
+  expect(markup).toContain('113');
+  expect(markup).toContain('8 films');
+});
+
+it('groups genre indicators separately from movie coverage', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{ movieCount: 0, years: [] }}
+    />,
+  );
+  expect(markup).toContain('aria-label="Indicateurs des genres"');
+  expect(markup).toContain('aria-label="Indicateurs des films"');
+  const genreGroup = markup.split('aria-label="Indicateurs des films"')[0];
+  expect(genreGroup).toContain('Genres représentés');
+  expect(genreGroup).toContain('Genre dominant');
+  expect(genreGroup).toContain('Meilleure note');
+  expect(genreGroup).not.toContain('Films en base');
+});
+
+it('shows the number of represented genres and their names in the details', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[
+        { id: 1, name: 'Action', movieCount: 10 },
+        { id: 2, name: 'Drame', movieCount: 5 },
+      ]}
+      ratings={[]}
+    />,
+  );
+  expect(markup).toContain('Genres représentés');
+  expect(markup).toContain('2 <span>genres</span>');
+  expect(markup).toContain('Action, Drame');
+});
+
+it('shows the database count and collected year bounds without implying continuous coverage', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{ movieCount: 300, years: [2024, 2020, 2022] }}
+    />,
+  );
+  expect(markup).toContain('Films en base');
+  expect(markup).toContain('300');
+  expect(markup).toContain('2020 – 2024');
+  expect(markup).toContain('Années déjà collectées : 2024, 2020, 2022');
+});
+
+it('shows an empty database without invalid year bounds', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{ movieCount: 0, years: [] }}
+    />,
+  );
+  expect(markup).toContain('Aucune année collectée');
+  expect(markup).not.toContain('Infinity');
+});
+
+it('selects the highest count and rating even when data is not sorted', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[
+        { id: 1, name: 'Action', movieCount: 12 },
+        { id: 2, name: 'Drame', movieCount: 35 },
+      ]}
+      ratings={[
+        {
+          id: 2,
+          name: 'Drame',
+          movieCount: 35,
+          averageRating: 6,
+          voteCount: 100,
+        },
+        {
+          id: 1,
+          name: 'Action',
+          movieCount: 12,
+          averageRating: 8.25,
+          voteCount: 50,
+        },
+      ]}
+    />,
+  );
+  expect(markup).toContain('Drame');
+  expect(markup).toContain('35');
+  expect(markup).toContain('8,25');
+  expect(markup).toContain('Action');
+});
+
+it('shows empty states rather than invalid values', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards distribution={[]} ratings={[]} />,
+  );
+  expect(markup).toContain('Aucun genre disponible');
+  expect(markup).toContain('Aucun film noté disponible');
+  expect(markup).not.toContain('Infinity');
+});
+
+it('includes all tied genres', () => {
+  const genres = [
+    { id: 1, name: 'Action', movieCount: 10, averageRating: 7, voteCount: 20 },
+    { id: 2, name: 'Drame', movieCount: 10, averageRating: 7, voteCount: 30 },
+  ];
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards distribution={genres} ratings={genres} />,
+  );
+  expect(markup.match(/Genres ex æquo : Action, Drame/g)).toHaveLength(2);
+  expect(markup.match(/Genres ex æquo/g)).toHaveLength(2);
+});

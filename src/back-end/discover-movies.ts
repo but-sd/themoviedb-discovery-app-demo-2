@@ -68,3 +68,32 @@ export async function discoverMovies(
   const data = (await response.json()) as TmdbMoviesRawResponse;
   return { ...data, results: data.results.map(toSupportedMovie) };
 }
+export async function fetchMovieRuntime(
+  movieId: number,
+): Promise<number | null> {
+  const response = await fetch(
+    `https://api.themoviedb.org/3/movie/${movieId}`,
+    {
+      headers: { Authorization: `Bearer ${tmdbAccessToken}` },
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `TMDB runtime request failed for movie ${movieId} with status ${response.status}`,
+    );
+  }
+  const data: unknown = await response.json();
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('runtime' in data) ||
+    (data.runtime !== null &&
+      (typeof data.runtime !== 'number' ||
+        !Number.isSafeInteger(data.runtime) ||
+        data.runtime < 0))
+  ) {
+    throw new Error(`TMDB returned an invalid runtime for movie ${movieId}.`);
+  }
+  return data.runtime === 0 ? null : data.runtime;
+}
