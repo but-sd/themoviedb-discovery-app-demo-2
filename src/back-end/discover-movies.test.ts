@@ -2,9 +2,46 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 vi.mock('./config', () => ({ tmdbAccessToken: 'test-access-token' }));
 
-import { fetchMovieGenres, fetchMovieRuntime } from './discover-movies';
+import {
+  fetchMovieGenres,
+  fetchMovieCollectionDetails,
+} from './discover-movies';
 
 afterEach(() => vi.unstubAllGlobals());
+
+it.each([0, null])(
+  'normalizes unknown financial amounts %s',
+  async (amount) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ runtime: 120, budget: amount, revenue: amount }),
+      }),
+    );
+    expect(await fetchMovieCollectionDetails(42)).toEqual({
+      runtime: 120,
+      budget: null,
+      revenue: null,
+    });
+  },
+);
+
+it.each([-1, 1.5, '100', undefined])(
+  'rejects invalid financial data %s',
+  async (budget) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ runtime: 120, budget, revenue: 100 }),
+      }),
+    );
+    await expect(fetchMovieCollectionDetails(42)).rejects.toThrow(
+      'financial data',
+    );
+  },
+);
 
 it.each([
   [120, 120],
@@ -15,10 +52,14 @@ it.each([
     'fetch',
     vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ runtime }),
+      json: async () => ({ runtime, budget: 1000, revenue: 2000 }),
     }),
   );
-  expect(await fetchMovieRuntime(42)).toBe(expected);
+  expect(await fetchMovieCollectionDetails(42)).toEqual({
+    runtime: expected,
+    budget: 1000,
+    revenue: 2000,
+  });
   expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('/movie/42');
 });
 
@@ -30,7 +71,9 @@ it('rejects invalid runtime responses', async () => {
       json: async () => ({ runtime: -1 }),
     }),
   );
-  await expect(fetchMovieRuntime(42)).rejects.toThrow('invalid runtime');
+  await expect(fetchMovieCollectionDetails(42)).rejects.toThrow(
+    'invalid runtime',
+  );
 });
 
 it('fetches the French TMDB movie genre catalog', async () => {

@@ -2,6 +2,7 @@ import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import { tmdbAccessToken } from './config';
 import type {
   MoviesApiResponse,
+  MovieCollectionDetails,
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 import { toSupportedMovie } from './utils';
@@ -68,9 +69,9 @@ export async function discoverMovies(
   const data = (await response.json()) as TmdbMoviesRawResponse;
   return { ...data, results: data.results.map(toSupportedMovie) };
 }
-export async function fetchMovieRuntime(
+export async function fetchMovieCollectionDetails(
   movieId: number,
-): Promise<number | null> {
+): Promise<MovieCollectionDetails> {
   const response = await fetch(
     `https://api.themoviedb.org/3/movie/${movieId}`,
     {
@@ -95,5 +96,28 @@ export async function fetchMovieRuntime(
   ) {
     throw new Error(`TMDB returned an invalid runtime for movie ${movieId}.`);
   }
-  return data.runtime === 0 ? null : data.runtime;
+  if (!('budget' in data) || !('revenue' in data)) {
+    throw new Error(
+      `TMDB returned missing financial data for movie ${movieId}.`,
+    );
+  }
+  const { budget, revenue } = data;
+  function isAmount(amount: unknown): amount is number | null {
+    return (
+      amount === null ||
+      (typeof amount === 'number' &&
+        Number.isSafeInteger(amount) &&
+        amount >= 0)
+    );
+  }
+  if (!isAmount(budget) || !isAmount(revenue)) {
+    throw new Error(
+      `TMDB returned invalid financial data for movie ${movieId}.`,
+    );
+  }
+  return {
+    runtime: data.runtime === 0 ? null : data.runtime,
+    budget: budget === 0 ? null : budget,
+    revenue: revenue === 0 ? null : revenue,
+  };
 }

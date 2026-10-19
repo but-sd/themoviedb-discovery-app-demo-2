@@ -69,6 +69,12 @@ export type MovieDetails = Omit<
 export type ApiErrorResponse = {
   error: string;
 };
+export type MovieCollectionDetails = {
+  runtime: number | null;
+  budget: number | null;
+  revenue: number | null;
+};
+
 export type MovieHighlight = {
   posterPath?: string | null;
   id: number;

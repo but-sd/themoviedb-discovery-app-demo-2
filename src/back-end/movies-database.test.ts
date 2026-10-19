@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { expect, it } from 'vitest';
 import {
   createMoviesDatabase,
@@ -143,21 +144,29 @@ it('averages only known runtimes and updates them without duplicates', () => {
         2020,
         [],
         new Map([
-          [1, 90],
-          [2, 150],
-          [3, null],
+          [1, { runtime: 90, budget: 1000, revenue: 2000 }],
+          [2, { runtime: 150, budget: null, revenue: null }],
+          [3, { runtime: null, budget: null, revenue: null }],
         ]),
       );
       expect(getCollectionSummary(path)).toMatchObject({
         averageRuntime: 120,
         runtimeMovieCount: 2,
       });
-      upsertMovies(database, [movie], 2020, [], new Map([[1, 110]]));
+      upsertMovies(
+        database,
+        [movie],
+        2020,
+        [],
+        new Map([[1, { runtime: 110, budget: 3000, revenue: 4000 }]]),
+      );
       expect(
         database
-          .prepare('SELECT runtime_minutes FROM movies WHERE id = 1')
+          .prepare(
+            'SELECT runtime_minutes, budget, revenue FROM movies WHERE id = 1',
+          )
           .get(),
-      ).toMatchObject({ runtime_minutes: 110 });
+      ).toMatchObject({ runtime_minutes: 110, budget: 3000, revenue: 4000 });
       expect(
         database
           .prepare(
@@ -170,7 +179,23 @@ it('averages only known runtimes and updates them without duplicates', () => {
         averageRuntime: 130,
         runtimeMovieCount: 2,
       });
-      upsertMovies(database, [movie], 2020, [], new Map([[1, null]]));
+      expect(
+        database
+          .prepare('SELECT budget, revenue FROM movies WHERE id = 1')
+          .get(),
+      ).toMatchObject({ budget: 3000, revenue: 4000 });
+      upsertMovies(
+        database,
+        [movie],
+        2020,
+        [],
+        new Map([[1, { runtime: null, budget: null, revenue: null }]]),
+      );
+      expect(
+        database
+          .prepare('SELECT budget, revenue FROM movies WHERE id = 1')
+          .get(),
+      ).toMatchObject({ budget: null, revenue: null });
       expect(getCollectionSummary(path)).toMatchObject({
         averageRuntime: 150,
         runtimeMovieCount: 1,
@@ -360,6 +385,50 @@ it('creates the database schema and can reopen an initialized database', () => {
 
     const reopenedDatabase = createMoviesDatabase(databasePath);
     reopenedDatabase.close();
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('adds missing optional movie columns on an existing legacy table', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'movies-legacy-schema-'));
+  const databasePath = join(directory, 'movies.sqlite');
+  try {
+    const legacyDatabase = new DatabaseSync(databasePath);
+    try {
+      legacyDatabase.exec(`
+        CREATE TABLE movies (
+          id INTEGER PRIMARY KEY,
+          title TEXT NOT NULL,
+          original_title TEXT NOT NULL,
+          original_language TEXT NOT NULL,
+          overview TEXT NOT NULL,
+          release_date TEXT NOT NULL,
+          release_year INTEGER NOT NULL,
+          popularity REAL NOT NULL,
+          vote_average REAL NOT NULL,
+          vote_count INTEGER NOT NULL,
+          poster_path TEXT,
+          backdrop_path TEXT,
+          collected_at TEXT NOT NULL
+        );
+      `);
+    } finally {
+      legacyDatabase.close();
+    }
+
+    const database = createMoviesDatabase(databasePath);
+    try {
+      const columns = database
+        .prepare('PRAGMA table_info(movies)')
+        .all()
+        .map((column) => String(column.name));
+      expect(columns).toContain('runtime_minutes');
+      expect(columns).toContain('budget');
+      expect(columns).toContain('revenue');
+    } finally {
+      database.close();
+    }
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

@@ -1,7 +1,7 @@
 import {
   discoverMovies,
   fetchMovieGenres,
-  fetchMovieRuntime,
+  fetchMovieCollectionDetails,
   isValidMovieYear,
 } from './discover-movies';
 import {
@@ -9,7 +9,7 @@ import {
   DEFAULT_DATABASE_PATH,
   upsertMovies,
 } from './movies-database';
-import type { Movie } from './schemas/MoviesTypes';
+import type { Movie, MovieCollectionDetails } from './schemas/MoviesTypes';
 
 export async function collectMovies(
   year: number,
@@ -49,13 +49,13 @@ export async function collectMovies(
   }
 
   const genres = await fetchMovieGenres();
-  const runtimes = new Map<number, number | null>();
+  const details = new Map<number, MovieCollectionDetails>();
   for (const movie of movies.values()) {
-    runtimes.set(movie.id, await fetchMovieRuntime(movie.id));
+    details.set(movie.id, await fetchMovieCollectionDetails(movie.id));
   }
   const database = createMoviesDatabase(databasePath);
   try {
-    upsertMovies(database, movies.values(), year, genres, runtimes);
+    upsertMovies(database, movies.values(), year, genres, details);
   } finally {
     database.close();
   }

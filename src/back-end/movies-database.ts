@@ -6,6 +6,7 @@ import type {
   GenreDistribution,
   GenreRating,
   Movie,
+  MovieCollectionDetails,
   MovieHighlight,
 } from './schemas/MoviesTypes';
 
@@ -157,6 +158,8 @@ export function createMoviesDatabase(
         poster_path TEXT,
         backdrop_path TEXT,
         runtime_minutes INTEGER CHECK(runtime_minutes > 0),
+        budget INTEGER CHECK(budget > 0),
+        revenue INTEGER CHECK(revenue > 0),
         collected_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS movies_release_year ON movies(release_year);
@@ -175,6 +178,7 @@ export function createMoviesDatabase(
         collected_at TEXT NOT NULL
       );
     `);
+    ensureMovieOptionalColumns(database);
     database.exec('COMMIT');
     return database;
   } catch (error) {
@@ -183,19 +187,43 @@ export function createMoviesDatabase(
   }
 }
 
+function ensureMovieOptionalColumns(database: DatabaseSync): void {
+  const columns = new Set(
+    database
+      .prepare('PRAGMA table_info(movies)')
+      .all()
+      .map((column) => String(column.name)),
+  );
+  if (!columns.has('runtime_minutes')) {
+    database.exec(
+      'ALTER TABLE movies ADD COLUMN runtime_minutes INTEGER CHECK(runtime_minutes > 0)',
+    );
+  }
+  if (!columns.has('budget')) {
+    database.exec(
+      'ALTER TABLE movies ADD COLUMN budget INTEGER CHECK(budget > 0)',
+    );
+  }
+  if (!columns.has('revenue')) {
+    database.exec(
+      'ALTER TABLE movies ADD COLUMN revenue INTEGER CHECK(revenue > 0)',
+    );
+  }
+}
+
 export function upsertMovies(
   database: DatabaseSync,
   movies: Iterable<Movie>,
   year: number,
   genres: Iterable<Genre> = [],
-  runtimes: ReadonlyMap<number, number | null> = new Map(),
+  details: ReadonlyMap<number, MovieCollectionDetails> = new Map(),
 ): void {
   const insert = database.prepare(`
       INSERT INTO movies (
         id, title, original_title, original_language, overview, release_date,
         release_year, popularity, vote_average, vote_count, poster_path,
-        backdrop_path, runtime_minutes, collected_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        backdrop_path, runtime_minutes, budget, revenue, collected_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         original_title = excluded.original_title,
@@ -209,6 +237,8 @@ export function upsertMovies(
         poster_path = excluded.poster_path,
         backdrop_path = excluded.backdrop_path,
         runtime_minutes = CASE WHEN ? THEN excluded.runtime_minutes ELSE movies.runtime_minutes END,
+        budget = CASE WHEN ? THEN excluded.budget ELSE movies.budget END,
+        revenue = CASE WHEN ? THEN excluded.revenue ELSE movies.revenue END,
         collected_at = excluded.collected_at
     `);
   database.exec('BEGIN');
@@ -244,9 +274,13 @@ export function upsertMovies(
         movie.vote_count,
         movie.poster_path,
         movie.backdrop_path,
-        runtimes.get(movie.id) ?? null,
+        details.get(movie.id)?.runtime ?? null,
+        details.get(movie.id)?.budget ?? null,
+        details.get(movie.id)?.revenue ?? null,
         collectedAt,
-        Number(runtimes.has(movie.id)),
+        Number(details.has(movie.id)),
+        Number(details.has(movie.id)),
+        Number(details.has(movie.id)),
       );
       deleteLinks.run(movie.id);
       for (const genreId of movie.genre_ids) {

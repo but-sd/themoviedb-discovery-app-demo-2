@@ -2,6 +2,12 @@
 
 ## Collecte de films
 
+La collecte enregistre aussi `movies.budget` et `movies.revenue` en dollars US,
+depuis la même requête de détails TMDB que la durée. Les montants à zéro ou
+non renseignés sont stockés à `NULL` (inconnus, pas des budgets ou recettes nuls).
+Les valeurs sont actualisées à chaque collecte. Ces colonnes nécessitent une
+nouvelle base ; aucune migration n'est effectuée.
+
 La vue d'exploration adopte un dashboard cinéma : trois chiffres clés en tête,
 deux films à la une avec leurs affiches TMDB (ou un visuel de remplacement),
 puis les quatre indicateurs de genres. La disposition s'adapte au mobile,

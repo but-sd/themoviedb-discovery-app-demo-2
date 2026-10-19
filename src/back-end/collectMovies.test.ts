@@ -12,7 +12,9 @@ vi.mock('./discover-movies', async (importOriginal) => ({
     { id: 12, name: 'Aventure' },
     { id: 18, name: 'Drame' },
   ]),
-  fetchMovieRuntime: vi.fn().mockResolvedValue(120),
+  fetchMovieCollectionDetails: vi
+    .fn()
+    .mockResolvedValue({ runtime: 120, budget: 1000000, revenue: 2000000 }),
 }));
 
 import { collectMovies } from './collectMovies';
@@ -99,9 +101,15 @@ describe('collectMovies', () => {
       });
       expect(
         database
-          .prepare('SELECT runtime_minutes FROM movies WHERE id = 42')
+          .prepare(
+            'SELECT runtime_minutes, budget, revenue FROM movies WHERE id = 42',
+          )
           .get(),
-      ).toMatchObject({ runtime_minutes: 120 });
+      ).toMatchObject({
+        runtime_minutes: 120,
+        budget: 1000000,
+        revenue: 2000000,
+      });
       expect(
         database
           .prepare(`
