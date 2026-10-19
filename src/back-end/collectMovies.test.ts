@@ -6,8 +6,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TmdbMovie } from './schemas/MoviesTypes';
 
 vi.mock('./config', () => ({ tmdbAccessToken: 'test-access-token' }));
+vi.mock('./discover-movies', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./discover-movies')>()),
+  fetchMovieGenres: vi.fn().mockResolvedValue([
+    { id: 12, name: 'Aventure' },
+    { id: 18, name: 'Drame' },
+  ]),
+}));
 
 import { collectMovies } from './collectMovies';
+import { fetchMovieGenres } from './discover-movies';
 
 const movie: TmdbMovie = {
   id: 42,
@@ -46,6 +54,10 @@ describe('collectMovies', () => {
     directory = mkdtempSync(join(tmpdir(), 'collect-movies-'));
     databasePath = join(directory, 'movies.sqlite');
     vi.stubGlobal('fetch', vi.fn());
+    vi.mocked(fetchMovieGenres).mockResolvedValue([
+      { id: 12, name: 'Aventure' },
+      { id: 18, name: 'Drame' },
+    ]);
   });
 
   afterEach(() => {
@@ -82,9 +94,17 @@ describe('collectMovies', () => {
       ).toMatchObject({
         title: 'Titre actualisé',
         release_year: 2020,
-        genre_ids: '[12,18]',
         vote_average: 7.5,
       });
+      expect(
+        database
+          .prepare(`
+        SELECT genres.name FROM movie_genres
+        JOIN genres ON genres.id = movie_genres.genre_id
+        WHERE movie_id = 42 ORDER BY genres.id
+      `)
+          .all(),
+      ).toEqual([{ name: 'Aventure' }, { name: 'Drame' }]);
     } finally {
       database.close();
     }
@@ -122,6 +142,28 @@ describe('collectMovies', () => {
       'Year',
     );
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not update movies when fetching genres fails', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(pageResponse(1, 1) as Response);
+    await collectMovies(2020, 100, databasePath);
+    vi.mocked(fetch).mockResolvedValueOnce(
+      pageResponse(1, 1, [{ ...movie, title: 'Not saved' }]) as Response,
+    );
+    vi.mocked(fetchMovieGenres).mockRejectedValueOnce(
+      new Error('Genres unavailable'),
+    );
+    await expect(collectMovies(2020, 100, databasePath)).rejects.toThrow(
+      'Genres unavailable',
+    );
+    const database = new DatabaseSync(databasePath);
+    try {
+      expect(
+        database.prepare('SELECT title FROM movies WHERE id = 42').get(),
+      ).toMatchObject({ title: movie.title });
+    } finally {
+      database.close();
+    }
   });
 
   it('can collect a limited selection from a year with more than 500 pages', async () => {

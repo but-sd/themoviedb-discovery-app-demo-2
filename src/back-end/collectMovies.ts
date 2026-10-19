@@ -1,4 +1,8 @@
-import { discoverMovies, isValidMovieYear } from './discover-movies';
+import {
+  discoverMovies,
+  fetchMovieGenres,
+  isValidMovieYear,
+} from './discover-movies';
 import {
   createMoviesDatabase,
   DEFAULT_DATABASE_PATH,
@@ -43,9 +47,10 @@ export async function collectMovies(
     }
   }
 
+  const genres = await fetchMovieGenres();
   const database = createMoviesDatabase(databasePath);
   try {
-    upsertMovies(database, movies.values(), year);
+    upsertMovies(database, movies.values(), year, genres);
   } finally {
     database.close();
   }

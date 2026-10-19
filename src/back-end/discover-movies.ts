@@ -5,6 +5,26 @@ import type {
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 import { toSupportedMovie } from './utils';
+import type { Genre } from './movies-database';
+
+export async function fetchMovieGenres(): Promise<Genre[]> {
+  const query = new URLSearchParams({ language: DEFAULT_LANGUAGE });
+  const response = await fetch(
+    `https://api.themoviedb.org/3/genre/movie/list?${query}`,
+    {
+      headers: {
+        Authorization: `Bearer ${tmdbAccessToken}`,
+        'Content-Type': 'application/json;charset=utf-8',
+      },
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`TMDB genre request failed with status ${response.status}`);
+  }
+  const data = (await response.json()) as { genres: Genre[] };
+  return data.genres;
+}
 
 export function isValidMovieYear(year: unknown): year is string {
   return (

@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import type { Movie } from './schemas/MoviesTypes';
 
 export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
+export type Genre = { id: number; name: string };
 
 export function createMoviesDatabase(
   databasePath = DEFAULT_DATABASE_PATH,
@@ -11,6 +12,7 @@ export function createMoviesDatabase(
   mkdirSync(dirname(databasePath), { recursive: true });
   const database = new DatabaseSync(databasePath);
   try {
+    database.exec('PRAGMA foreign_keys = ON; BEGIN');
     database.exec(`
       CREATE TABLE IF NOT EXISTS movies (
         id INTEGER PRIMARY KEY,
@@ -25,11 +27,21 @@ export function createMoviesDatabase(
         vote_count INTEGER NOT NULL,
         poster_path TEXT,
         backdrop_path TEXT,
-        genre_ids TEXT NOT NULL,
         collected_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS movies_release_year ON movies(release_year);
+      CREATE TABLE IF NOT EXISTS genres (
+        id INTEGER PRIMARY KEY,
+        name TEXT
+      );
+      CREATE TABLE IF NOT EXISTS movie_genres (
+        movie_id INTEGER NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
+        genre_id INTEGER NOT NULL REFERENCES genres(id),
+        PRIMARY KEY (movie_id, genre_id)
+      );
+      CREATE INDEX IF NOT EXISTS movie_genres_genre_id ON movie_genres(genre_id);
     `);
+    database.exec('COMMIT');
     return database;
   } catch (error) {
     database.close();
@@ -41,13 +53,14 @@ export function upsertMovies(
   database: DatabaseSync,
   movies: Iterable<Movie>,
   year: number,
+  genres: Iterable<Genre> = [],
 ): void {
   const insert = database.prepare(`
       INSERT INTO movies (
         id, title, original_title, original_language, overview, release_date,
         release_year, popularity, vote_average, vote_count, poster_path,
-        backdrop_path, genre_ids, collected_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        backdrop_path, collected_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         original_title = excluded.original_title,
@@ -60,11 +73,26 @@ export function upsertMovies(
         vote_count = excluded.vote_count,
         poster_path = excluded.poster_path,
         backdrop_path = excluded.backdrop_path,
-        genre_ids = excluded.genre_ids,
         collected_at = excluded.collected_at
     `);
   database.exec('BEGIN');
   try {
+    const upsertGenre = database.prepare(`
+      INSERT INTO genres (id, name) VALUES (?, ?)
+      ON CONFLICT(id) DO UPDATE SET name = excluded.name
+    `);
+    for (const genre of genres) {
+      upsertGenre.run(genre.id, genre.name);
+    }
+    const ensureGenre = database.prepare(
+      'INSERT OR IGNORE INTO genres (id) VALUES (?)',
+    );
+    const deleteLinks = database.prepare(
+      'DELETE FROM movie_genres WHERE movie_id = ?',
+    );
+    const insertLink = database.prepare(
+      'INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?, ?)',
+    );
     const collectedAt = new Date().toISOString();
     for (const movie of movies) {
       insert.run(
@@ -80,9 +108,13 @@ export function upsertMovies(
         movie.vote_count,
         movie.poster_path,
         movie.backdrop_path,
-        JSON.stringify(movie.genre_ids),
         collectedAt,
       );
+      deleteLinks.run(movie.id);
+      for (const genreId of movie.genre_ids) {
+        ensureGenre.run(genreId);
+        insertLink.run(movie.id, genreId);
+      }
     }
     database.exec('COMMIT');
   } catch (error) {

@@ -33,8 +33,38 @@ it('inserts and updates movies without duplicates', () => {
     ).toMatchObject({
       title: 'Updated title',
       release_year: 2020,
-      genre_ids: '[18]',
     });
+  } finally {
+    database.close();
+  }
+});
+
+it('synchronizes genre names and replaces associations without duplicates', () => {
+  const database = createMoviesDatabase(':memory:');
+  try {
+    upsertMovies(database, [movie, { ...movie, id: 2 }], 2020, [
+      { id: 18, name: 'Drama' },
+    ]);
+    upsertMovies(database, [{ ...movie, genre_ids: [12, 12] }], 2020, [
+      { id: 18, name: 'Drame' },
+      { id: 12, name: 'Aventure' },
+    ]);
+    expect(
+      database.prepare('SELECT * FROM movie_genres ORDER BY movie_id').all(),
+    ).toEqual([
+      { movie_id: 1, genre_id: 12 },
+      { movie_id: 2, genre_id: 18 },
+    ]);
+    expect(
+      database.prepare('SELECT name FROM genres WHERE id = 18').get(),
+    ).toMatchObject({ name: 'Drame' });
+    upsertMovies(database, [{ ...movie, genre_ids: [] }], 2020);
+    expect(
+      database.prepare('SELECT * FROM movie_genres WHERE movie_id = 1').all(),
+    ).toEqual([]);
+    expect(() =>
+      database.prepare('INSERT INTO movie_genres VALUES (999, 18)').run(),
+    ).toThrow();
   } finally {
     database.close();
   }
@@ -53,7 +83,7 @@ it('rolls back all changes when a write fails and keeps the connection usable', 
       upsertMovies(
         database,
         [
-          { ...movie, title: 'Not saved' },
+          { ...movie, title: 'Not saved', genre_ids: [12] },
           { ...movie, id: 2 },
         ],
         2020,
@@ -62,6 +92,12 @@ it('rolls back all changes when a write fails and keeps the connection usable', 
     expect(
       database.prepare('SELECT title FROM movies WHERE id = 1').get(),
     ).toMatchObject({ title: movie.title });
+    expect(database.prepare('SELECT * FROM movie_genres').all()).toEqual([
+      { movie_id: 1, genre_id: 18 },
+    ]);
+    expect(
+      database.prepare('SELECT * FROM genres WHERE id = 12').all(),
+    ).toEqual([]);
     upsertMovies(database, [{ ...movie, title: 'Saved after rollback' }], 2020);
     expect(
       database.prepare('SELECT title FROM movies WHERE id = 1').get(),

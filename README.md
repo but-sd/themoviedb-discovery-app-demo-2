@@ -17,7 +17,12 @@ année (de 1870 à l'année courante) et stocke les films dans
 `GET /api/movies/discover?year=2020`. Aucun serveur local n'est nécessaire.
 
 La table `movies` contient les informations des films, leur année, leurs
-statistiques et la date de collecte. `genre_ids` contient un tableau JSON.
+statistiques et la date de collecte. La table `genres` contient les identifiants
+TMDB et les libellés français récupérés pendant la collecte.
+La table `movie_genres` relie les films aux genres avec une clé primaire
+composée et des clés étrangères ; un film peut avoir plusieurs genres.
+Les associations sont synchronisées à chaque collecte, dans la même transaction
+que les films et les libellés.
 Une nouvelle collecte met à jour les films existants, identifiés par leur ID
 TMDB, sans doublons ni suppression des autres années.
 
@@ -32,5 +37,19 @@ Le troisième argument optionnel du service permet de choisir le chemin SQLite.
 La création du fichier SQLite, de la table et de son index est centralisée
 dans `src/back-end/movies-database.ts` via `createMoviesDatabase()`.
 Les insertions et mises à jour transactionnelles sont exposées par
-`upsertMovies(database, movies, year)` dans le même module.
+`upsertMovies(database, movies, year, genres)` dans le même module.
 Le service de collecte appelle ces fonctions et ferme la connexion.
+
+Ce schéma nécessite une nouvelle base SQLite ; aucune migration des anciennes
+bases utilisant `movies.genre_ids` n'est effectuée.
+
+Exemple d'exploitation :
+
+```sql
+SELECT genres.name, COUNT(*) AS movie_count
+FROM movie_genres
+JOIN genres ON genres.id = movie_genres.genre_id
+JOIN movies ON movies.id = movie_genres.movie_id
+WHERE movies.release_year = 2020
+GROUP BY genres.id, genres.name;
+```
