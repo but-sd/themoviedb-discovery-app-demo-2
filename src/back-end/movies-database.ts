@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type {
   CollectionSummary,
+  FinancialMovieHighlight,
   GenreDistribution,
   GenreRating,
   Movie,
@@ -121,6 +122,26 @@ export function getCollectionSummary(
           }
         : null;
     }
+    function financialHighlight(
+      direction: 'ASC' | 'DESC',
+    ): FinancialMovieHighlight | null {
+      const row = database
+        .prepare(`
+        SELECT *, (1.0 * revenue / budget - 1) * 100 AS roi
+        FROM movies WHERE budget > 0 AND revenue > 0
+        ORDER BY roi ${direction}, id LIMIT 1
+      `)
+        .get();
+      const highlight = toHighlight(row);
+      return row && highlight
+        ? {
+            ...highlight,
+            budget: Number(row.budget),
+            revenue: Number(row.revenue),
+            returnOnInvestment: Number(row.roi),
+          }
+        : null;
+    }
     return {
       movieCount: Number(count?.count),
       years: years.map((row) => Number(row.year)),
@@ -130,6 +151,8 @@ export function getCollectionSummary(
       ratedMovieCount: Number(rating?.count),
       bestRatedMovie: toHighlight(bestRated),
       mostPopularMovie: toHighlight(mostPopular),
+      mostProfitableMovie: financialHighlight('DESC'),
+      leastProfitableMovie: financialHighlight('ASC'),
     };
   } finally {
     database.close();

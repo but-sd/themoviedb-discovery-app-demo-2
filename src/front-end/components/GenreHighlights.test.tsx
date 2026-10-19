@@ -2,6 +2,66 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
 import { GenreHighlightCards } from './GenreHighlights';
 
+it('shows financial highlights with ROI, amounts and the calculation limits', () => {
+  const movie = {
+    id: 1,
+    title: 'Film rentable',
+    year: 2020,
+    rating: 7,
+    voteCount: 10,
+    popularity: 5,
+    budget: 1000,
+    revenue: 4500,
+    returnOnInvestment: 350,
+  };
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{
+        movieCount: 2,
+        years: [2020],
+        mostProfitableMovie: movie,
+        leastProfitableMovie: {
+          ...movie,
+          id: 2,
+          title: 'Film déficitaire',
+          revenue: 250,
+          returnOnInvestment: -75,
+        },
+      }}
+    />,
+  );
+  expect(markup).toContain('Film le plus rentable');
+  expect(markup).toContain('Film le moins rentable');
+  expect(markup).toContain('Film rentable');
+  expect(markup).toContain('Film déficitaire');
+  expect(markup).toContain('350 <span>% ROI</span>');
+  expect(markup).toContain('-75 <span>% ROI</span>');
+  expect(markup).toContain('Budget :');
+  expect(markup).toContain('Recettes :');
+  expect(markup).toContain('marketing');
+});
+
+it('shows an explicit empty state for both financial cards', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{
+        movieCount: 0,
+        years: [],
+        mostProfitableMovie: null,
+        leastProfitableMovie: null,
+      }}
+    />,
+  );
+  expect(
+    markup.match(/Aucun film avec budget et recettes connus./g),
+  ).toHaveLength(2);
+  expect(markup).not.toContain('NaN');
+});
+
 it('shows the best rated and most popular films in the film panel', () => {
   const movie = {
     id: 1,

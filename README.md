@@ -8,6 +8,14 @@ non renseignés sont stockés à `NULL` (inconnus, pas des budgets ou recettes n
 Les valeurs sont actualisées à chaque collecte. Ces colonnes nécessitent une
 nouvelle base ; aucune migration n'est effectuée.
 
+La page d’exploration présente le film le plus rentable et le moins rentable
+selon le retour sur investissement : `(revenue - budget) / budget × 100`.
+Seuls les films dont le budget et les recettes sont connus et positifs sont
+classés ; les égalités sont départagées par identifiant croissant.
+Les cartes affichent le ROI en pourcentage et détaillent les montants en dollars US.
+Cet indicateur ne tient compte ni du marketing, ni des frais de distribution,
+ni du partage des recettes.
+
 La vue d'exploration adopte un dashboard cinéma : trois chiffres clés en tête,
 deux films à la une avec leurs affiches TMDB (ou un visuel de remplacement),
 puis les quatre indicateurs de genres. La disposition s'adapte au mobile,

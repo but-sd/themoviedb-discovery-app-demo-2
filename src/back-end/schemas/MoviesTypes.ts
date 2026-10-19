@@ -94,6 +94,13 @@ export type CollectionSummary = {
   ratedMovieCount?: number;
   bestRatedMovie?: MovieHighlight | null;
   mostPopularMovie?: MovieHighlight | null;
+  mostProfitableMovie?: FinancialMovieHighlight | null;
+  leastProfitableMovie?: FinancialMovieHighlight | null;
+};
+export type FinancialMovieHighlight = MovieHighlight & {
+  budget: number;
+  revenue: number;
+  returnOnInvestment: number;
 };
 export type GenreDistribution = {
   id: number;

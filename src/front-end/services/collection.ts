@@ -1,5 +1,6 @@
 import type {
   CollectionSummary,
+  FinancialMovieHighlight,
   MovieHighlight,
 } from '../../back-end/schemas/MoviesTypes';
 
@@ -31,6 +32,28 @@ function isMovieHighlight(value: unknown): value is MovieHighlight | null {
       typeof value.popularity === 'number' &&
       Number.isFinite(value.popularity) &&
       value.popularity >= 0)
+  );
+}
+
+function isFinancialMovieHighlight(
+  value: unknown,
+): value is FinancialMovieHighlight | null {
+  return (
+    value === null ||
+    (isMovieHighlight(value) &&
+      value !== null &&
+      'budget' in value &&
+      typeof value.budget === 'number' &&
+      Number.isSafeInteger(value.budget) &&
+      value.budget > 0 &&
+      'revenue' in value &&
+      typeof value.revenue === 'number' &&
+      Number.isSafeInteger(value.revenue) &&
+      value.revenue > 0 &&
+      'returnOnInvestment' in value &&
+      typeof value.returnOnInvestment === 'number' &&
+      Number.isFinite(value.returnOnInvestment) &&
+      value.returnOnInvestment > -100)
   );
 }
 
@@ -92,6 +115,14 @@ export async function fetchCollectionSummary(
   ) {
     throw new Error('Les informations des films à la une sont invalides.');
   }
+  if (
+    !('mostProfitableMovie' in data) ||
+    !isFinancialMovieHighlight(data.mostProfitableMovie) ||
+    !('leastProfitableMovie' in data) ||
+    !isFinancialMovieHighlight(data.leastProfitableMovie)
+  ) {
+    throw new Error('Les informations de rentabilité sont invalides.');
+  }
   return {
     movieCount: data.movieCount,
     years: data.years,
@@ -101,5 +132,7 @@ export async function fetchCollectionSummary(
     ratedMovieCount: data.ratedMovieCount,
     bestRatedMovie: data.bestRatedMovie,
     mostPopularMovie: data.mostPopularMovie,
+    mostProfitableMovie: data.mostProfitableMovie,
+    leastProfitableMovie: data.leastProfitableMovie,
   };
 }

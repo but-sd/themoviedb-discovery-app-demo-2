@@ -27,6 +27,54 @@ const movie: Movie = {
   genre_ids: [18],
 };
 
+it('ranks profitability by ROI, excludes unknown amounts and breaks ties by id', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'movie-profitability-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getCollectionSummary(path)).toMatchObject({
+      mostProfitableMovie: null,
+      leastProfitableMovie: null,
+    });
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [movie, ...[2, 3, 4, 5, 6].map((id) => ({ ...movie, id }))],
+        2020,
+        [],
+        new Map([
+          [1, { runtime: null, budget: 200, revenue: 900 }],
+          [2, { runtime: null, budget: 10000, revenue: 20000 }],
+          [3, { runtime: null, budget: 1000, revenue: 250 }],
+          [4, { runtime: null, budget: null, revenue: 1000000 }],
+          [5, { runtime: null, budget: 1000000, revenue: null }],
+          [6, { runtime: null, budget: 400, revenue: 1800 }],
+        ]),
+      );
+    } finally {
+      database.close();
+    }
+    expect(getCollectionSummary(path)).toMatchObject({
+      mostProfitableMovie: {
+        id: 1,
+        budget: 200,
+        revenue: 900,
+        returnOnInvestment: 350,
+        title: movie.title,
+        posterPath: null,
+      },
+      leastProfitableMovie: {
+        id: 3,
+        budget: 1000,
+        revenue: 250,
+        returnOnInvestment: -75,
+      },
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 it('averages rated movies per genre without weighting or including unrated films', () => {
   const directory = mkdtempSync(join(tmpdir(), 'genre-ratings-'));
   const path = join(directory, 'movies.sqlite');

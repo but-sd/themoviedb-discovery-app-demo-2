@@ -309,7 +309,7 @@ export function GenreHighlightCards({
             <header className="highlight-group-header">
               <div>
                 <h2 id="featured-movies-title">Films à la une</h2>
-                <p>Deux regards sur les films qui se distinguent</p>
+                <p>Les films qui se distinguent dans votre catalogue</p>
               </div>
             </header>
             <div className="featured-movies-grid">
@@ -318,13 +318,31 @@ export function GenreHighlightCards({
                   label: 'Film le mieux noté',
                   movie: summary.bestRatedMovie,
                   rating: true,
+                  financial: null,
+                  profitability: false,
                 },
                 {
                   label: 'Film le plus populaire',
                   movie: summary.mostPopularMovie,
                   rating: false,
+                  financial: null,
+                  profitability: false,
                 },
-              ].map(({ label, movie, rating }) => (
+                {
+                  label: 'Film le plus rentable',
+                  movie: summary.mostProfitableMovie,
+                  rating: false,
+                  financial: summary.mostProfitableMovie ?? null,
+                  profitability: true,
+                },
+                {
+                  label: 'Film le moins rentable',
+                  movie: summary.leastProfitableMovie,
+                  rating: false,
+                  financial: summary.leastProfitableMovie ?? null,
+                  profitability: true,
+                },
+              ].map(({ label, movie, rating, financial, profitability }) => (
                 <details className="genre-highlight featured-movie" key={label}>
                   <summary>
                     {movie?.posterPath ? (
@@ -363,20 +381,30 @@ export function GenreHighlightCards({
                           <p className="genre-highlight-name">{movie.title}</p>
                           <p className="featured-movie-year">{movie.year}</p>
                           <p className="genre-highlight-value">
-                            {(rating
-                              ? movie.rating
-                              : movie.popularity
+                            {(financial
+                              ? financial.returnOnInvestment
+                              : rating
+                                ? movie.rating
+                                : movie.popularity
                             ).toLocaleString('fr-FR', {
                               maximumFractionDigits: 2,
                             })}{' '}
-                            <span>{rating ? '/ 10' : 'popularité'}</span>
+                            <span>
+                              {financial
+                                ? '% ROI'
+                                : rating
+                                  ? '/ 10'
+                                  : 'popularité'}
+                            </span>
                           </p>
                         </>
                       ) : (
                         <p>
-                          {rating
-                            ? 'Aucun film avec au moins 100 votes.'
-                            : 'Aucun film disponible.'}
+                          {profitability
+                            ? 'Aucun film avec budget et recettes connus.'
+                            : rating
+                              ? 'Aucun film avec au moins 100 votes.'
+                              : 'Aucun film disponible.'}
                         </p>
                       )}
                     </div>
@@ -384,10 +412,29 @@ export function GenreHighlightCards({
                   <div className="genre-highlight-tooltip">
                     <strong>{label}</strong>
                     <p>
-                      {rating
-                        ? 'Classement des films ayant au moins 100 votes. En cas d’égalité, le nombre de votes départage les films.'
-                        : 'Score de popularité TMDB observé lors de la collecte, et non lors de la sortie du film. En cas d’égalité, le nombre de votes départage les films.'}
+                      {profitability
+                        ? 'Retour sur investissement : (recettes − budget) / budget × 100. Seuls les budgets et recettes connus et positifs sont inclus. En cas d’égalité, l’identifiant du film départage les films. Cet indicateur ne tient pas compte du marketing, des frais de distribution ni du partage des recettes.'
+                        : rating
+                          ? 'Classement des films ayant au moins 100 votes. En cas d’égalité, le nombre de votes départage les films.'
+                          : 'Score de popularité TMDB observé lors de la collecte, et non lors de la sortie du film. En cas d’égalité, le nombre de votes départage les films.'}
                     </p>
+                    {financial && (
+                      <p>
+                        Budget :{' '}
+                        {financial.budget.toLocaleString('fr-FR', {
+                          style: 'currency',
+                          currency: 'USD',
+                          maximumFractionDigits: 0,
+                        })}{' '}
+                        · Recettes :{' '}
+                        {financial.revenue.toLocaleString('fr-FR', {
+                          style: 'currency',
+                          currency: 'USD',
+                          maximumFractionDigits: 0,
+                        })}
+                        .
+                      </p>
+                    )}
                     {movie && (
                       <p>
                         {movie.year} · Note :{' '}
