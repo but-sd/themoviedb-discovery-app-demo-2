@@ -2,6 +2,33 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
 import { GenreHighlightCards } from './GenreHighlights';
 
+it('shows the best rated and most popular films in the film panel', () => {
+  const movie = {
+    id: 1,
+    title: 'Film à la une',
+    year: 2020,
+    rating: 8.5,
+    voteCount: 200,
+    popularity: 123,
+  };
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{
+        movieCount: 1,
+        years: [2020],
+        bestRatedMovie: movie,
+        mostPopularMovie: movie,
+      }}
+    />,
+  );
+  expect(markup).toContain('Film le mieux noté');
+  expect(markup).toContain('Film le plus populaire');
+  expect(markup.match(/Film à la une/g)).toHaveLength(2);
+  expect(markup).toContain('100 votes');
+});
+
 it('shows the global average rating and number of rated films', () => {
   const markup = renderToStaticMarkup(
     <GenreHighlightCards
@@ -109,6 +136,7 @@ it('selects the highest count and rating even when data is not sorted', () => {
           name: 'Drame',
           movieCount: 35,
           averageRating: 6,
+          weightedAverageRating: 8.5,
           voteCount: 100,
         },
         {
@@ -116,6 +144,7 @@ it('selects the highest count and rating even when data is not sorted', () => {
           name: 'Action',
           movieCount: 12,
           averageRating: 8.25,
+          weightedAverageRating: 7,
           voteCount: 50,
         },
       ]}
@@ -125,6 +154,10 @@ it('selects the highest count and rating even when data is not sorted', () => {
   expect(markup).toContain('35');
   expect(markup).toContain('8,25');
   expect(markup).toContain('Action');
+  const weightedCard = markup.split('Meilleure note pondérée')[1];
+  expect(weightedCard).toContain('Drame');
+  expect(weightedCard).toContain('8,5');
+  expect(weightedCard).not.toContain('Action');
 });
 
 it('shows empty states rather than invalid values', () => {
@@ -138,12 +171,26 @@ it('shows empty states rather than invalid values', () => {
 
 it('includes all tied genres', () => {
   const genres = [
-    { id: 1, name: 'Action', movieCount: 10, averageRating: 7, voteCount: 20 },
-    { id: 2, name: 'Drame', movieCount: 10, averageRating: 7, voteCount: 30 },
+    {
+      id: 1,
+      name: 'Action',
+      movieCount: 10,
+      averageRating: 7,
+      weightedAverageRating: 7,
+      voteCount: 20,
+    },
+    {
+      id: 2,
+      name: 'Drame',
+      movieCount: 10,
+      averageRating: 7,
+      weightedAverageRating: 7,
+      voteCount: 30,
+    },
   ];
   const markup = renderToStaticMarkup(
     <GenreHighlightCards distribution={genres} ratings={genres} />,
   );
-  expect(markup.match(/Genres ex æquo : Action, Drame/g)).toHaveLength(2);
-  expect(markup.match(/Genres ex æquo/g)).toHaveLength(2);
+  expect(markup.match(/Genres ex æquo : Action, Drame/g)).toHaveLength(3);
+  expect(markup.match(/Genres ex æquo/g)).toHaveLength(3);
 });

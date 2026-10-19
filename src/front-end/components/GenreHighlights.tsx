@@ -16,6 +16,12 @@ export function GenreHighlightCards({
 }) {
   const maxCount = Math.max(...distribution.map((genre) => genre.movieCount));
   const maxRating = Math.max(...ratings.map((genre) => genre.averageRating));
+  const maxWeightedRating = Math.max(
+    ...ratings.map((genre) => genre.weightedAverageRating),
+  );
+  const highestWeightedRated = ratings.filter(
+    (genre) => genre.weightedAverageRating === maxWeightedRating,
+  );
   const mostRepresented = distribution.filter(
     (genre) => genre.movieCount === maxCount,
   );
@@ -146,6 +152,52 @@ export function GenreHighlightCards({
               )}
             </div>
           </details>
+          <details className="genre-highlight genre-highlight--rating">
+            <summary>
+              <span className="genre-highlight-label">
+                Meilleure note pondérée <span aria-hidden="true">☆</span>
+              </span>
+              {highestWeightedRated.length ? (
+                <>
+                  <p className="genre-highlight-name">
+                    {highestWeightedRated[0].name}
+                    {highestWeightedRated.length > 1 && (
+                      <span className="genre-highlight-badge">
+                        +{highestWeightedRated.length - 1}
+                      </span>
+                    )}
+                  </p>
+                  <p className="genre-highlight-value">
+                    {maxWeightedRating.toLocaleString('fr-FR', {
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    <span>/ 10</span>
+                  </p>
+                </>
+              ) : (
+                <p>Aucun film noté disponible.</p>
+              )}
+            </summary>
+            <div className="genre-highlight-tooltip">
+              <strong>Genre avec la meilleure moyenne pondérée</strong>
+              <p>
+                Somme des notes multipliées par le nombre de votes, divisée par
+                le total des votes. Les films sans vote sont exclus.
+              </p>
+              {highestWeightedRated.map((genre) => (
+                <p key={genre.id}>
+                  {genre.name} : {genre.movieCount.toLocaleString('fr-FR')}{' '}
+                  films notés · {genre.voteCount.toLocaleString('fr-FR')} votes.
+                </p>
+              ))}
+              {highestWeightedRated.length > 1 && (
+                <p>
+                  Genres ex æquo :{' '}
+                  {highestWeightedRated.map((genre) => genre.name).join(', ')}.
+                </p>
+              )}
+            </div>
+          </details>
         </div>
       </section>
       {summary && (
@@ -244,6 +296,61 @@ export function GenreHighlightCards({
               </p>
             </div>
           </details>
+          {[
+            {
+              label: 'Film le mieux noté',
+              movie: summary.bestRatedMovie,
+              rating: true,
+            },
+            {
+              label: 'Film le plus populaire',
+              movie: summary.mostPopularMovie,
+              rating: false,
+            },
+          ].map(({ label, movie, rating }) => (
+            <details className="genre-highlight" key={label}>
+              <summary>
+                <span className="genre-highlight-label">
+                  {label}
+                  <span aria-hidden="true">↗</span>
+                </span>
+                {movie ? (
+                  <>
+                    <p className="genre-highlight-name">{movie.title}</p>
+                    <p className="genre-highlight-value">
+                      {(rating
+                        ? movie.rating
+                        : movie.popularity
+                      ).toLocaleString('fr-FR', {
+                        maximumFractionDigits: 2,
+                      })}{' '}
+                      <span>{rating ? '/ 10' : 'popularité'}</span>
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    {rating
+                      ? 'Aucun film avec au moins 100 votes.'
+                      : 'Aucun film disponible.'}
+                  </p>
+                )}
+              </summary>
+              <div className="genre-highlight-tooltip">
+                <strong>{label}</strong>
+                <p>
+                  {rating
+                    ? 'Classement des films ayant au moins 100 votes. En cas d’égalité, le nombre de votes départage les films.'
+                    : 'Score de popularité TMDB observé lors de la collecte, et non lors de la sortie du film. En cas d’égalité, le nombre de votes départage les films.'}
+                </p>
+                {movie && (
+                  <p>
+                    {movie.year} · Note : {movie.rating.toLocaleString('fr-FR')}{' '}
+                    / 10 · {movie.voteCount.toLocaleString('fr-FR')} votes.
+                  </p>
+                )}
+              </div>
+            </details>
+          ))}
         </section>
       )}
     </section>
@@ -283,6 +390,11 @@ async function fetchHighlights(signal: AbortSignal) {
       Number.isFinite(value.averageRating) &&
       value.averageRating >= 0 &&
       value.averageRating <= 10 &&
+      'weightedAverageRating' in value &&
+      typeof value.weightedAverageRating === 'number' &&
+      Number.isFinite(value.weightedAverageRating) &&
+      value.weightedAverageRating >= 0 &&
+      value.weightedAverageRating <= 10 &&
       'voteCount' in value &&
       typeof value.voteCount === 'number' &&
       Number.isSafeInteger(value.voteCount) &&

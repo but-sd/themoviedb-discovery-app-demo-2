@@ -1,4 +1,36 @@
-import type { CollectionSummary } from '../../back-end/schemas/MoviesTypes';
+import type {
+  CollectionSummary,
+  MovieHighlight,
+} from '../../back-end/schemas/MoviesTypes';
+
+function isMovieHighlight(value: unknown): value is MovieHighlight | null {
+  return (
+    value === null ||
+    (typeof value === 'object' &&
+      value !== null &&
+      'id' in value &&
+      typeof value.id === 'number' &&
+      Number.isSafeInteger(value.id) &&
+      'title' in value &&
+      typeof value.title === 'string' &&
+      'year' in value &&
+      typeof value.year === 'number' &&
+      Number.isInteger(value.year) &&
+      'rating' in value &&
+      typeof value.rating === 'number' &&
+      Number.isFinite(value.rating) &&
+      value.rating >= 0 &&
+      value.rating <= 10 &&
+      'voteCount' in value &&
+      typeof value.voteCount === 'number' &&
+      Number.isSafeInteger(value.voteCount) &&
+      value.voteCount >= 0 &&
+      'popularity' in value &&
+      typeof value.popularity === 'number' &&
+      Number.isFinite(value.popularity) &&
+      value.popularity >= 0)
+  );
+}
 
 export async function fetchCollectionSummary(
   signal?: AbortSignal,
@@ -50,6 +82,14 @@ export async function fetchCollectionSummary(
   ) {
     throw new Error('Les informations de notation sont invalides.');
   }
+  if (
+    !('bestRatedMovie' in data) ||
+    !isMovieHighlight(data.bestRatedMovie) ||
+    !('mostPopularMovie' in data) ||
+    !isMovieHighlight(data.mostPopularMovie)
+  ) {
+    throw new Error('Les informations des films à la une sont invalides.');
+  }
   return {
     movieCount: data.movieCount,
     years: data.years,
@@ -57,5 +97,7 @@ export async function fetchCollectionSummary(
     runtimeMovieCount: data.runtimeMovieCount,
     averageRating: data.averageRating,
     ratedMovieCount: data.ratedMovieCount,
+    bestRatedMovie: data.bestRatedMovie,
+    mostPopularMovie: data.mostPopularMovie,
   };
 }

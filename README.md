@@ -2,6 +2,16 @@
 
 ## Collecte de films
 
+Le panneau Films affiche aussi le **Film le mieux noté** (au moins 100 votes)
+et le **Film le plus populaire** selon le score TMDB lors de la collecte.
+Les égalités sont départagées par le nombre de votes puis l'identifiant TMDB.
+Le survol précise l'année, la note et le nombre de votes.
+
+Le panneau Genres inclut une vignette **Meilleure note pondérée**, en complément
+de la moyenne simple : `SUM(note × nombre de votes) / SUM(nombre de votes)`.
+Les films sans vote sont exclus ; les détails et les ex æquo sont accessibles
+au survol, au clavier ou au toucher.
+
 La carte **Note moyenne** du panneau Films présente la moyenne arithmétique
 des notes des films ayant au moins un vote, sur 10, sans pondération.
 Chaque film est compté une seule fois, indépendamment de ses genres.

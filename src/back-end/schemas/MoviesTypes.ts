@@ -69,6 +69,15 @@ export type MovieDetails = Omit<
 export type ApiErrorResponse = {
   error: string;
 };
+export type MovieHighlight = {
+  id: number;
+  title: string;
+  year: number;
+  rating: number;
+  voteCount: number;
+  popularity: number;
+};
+
 export type CollectionSummary = {
   movieCount: number;
   years: number[];
@@ -76,6 +85,8 @@ export type CollectionSummary = {
   runtimeMovieCount?: number;
   averageRating?: number | null;
   ratedMovieCount?: number;
+  bestRatedMovie?: MovieHighlight | null;
+  mostPopularMovie?: MovieHighlight | null;
 };
 export type GenreDistribution = {
   id: number;
@@ -84,5 +95,6 @@ export type GenreDistribution = {
 };
 export type GenreRating = GenreDistribution & {
   averageRating: number;
+  weightedAverageRating: number;
   voteCount: number;
 };

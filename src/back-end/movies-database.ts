@@ -6,6 +6,7 @@ import type {
   GenreDistribution,
   GenreRating,
   Movie,
+  MovieHighlight,
 } from './schemas/MoviesTypes';
 
 export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
@@ -20,6 +21,7 @@ export function getGenreRatings(
       .prepare(`
       SELECT genres.id, genres.name, COUNT(*) AS movie_count,
         AVG(movies.vote_average) AS average_rating,
+        SUM(movies.vote_average * movies.vote_count) / SUM(movies.vote_count) AS weighted_average_rating,
         SUM(movies.vote_count) AS vote_count
       FROM movie_genres
       JOIN genres ON genres.id = movie_genres.genre_id
@@ -34,6 +36,7 @@ export function getGenreRatings(
         name: row.name === null ? `Genre ${row.id}` : String(row.name),
         movieCount: Number(row.movie_count),
         averageRating: Number(row.average_rating),
+        weightedAverageRating: Number(row.weighted_average_rating),
         voteCount: Number(row.vote_count),
       }));
   } finally {
@@ -92,6 +95,29 @@ export function getCollectionSummary(
       FROM movies WHERE vote_count > 0
     `)
       .get();
+    const bestRated = database
+      .prepare(`
+      SELECT * FROM movies WHERE vote_count >= 100
+      ORDER BY vote_average DESC, vote_count DESC, id LIMIT 1
+    `)
+      .get();
+    const mostPopular = database
+      .prepare(`
+      SELECT * FROM movies ORDER BY popularity DESC, vote_count DESC, id LIMIT 1
+    `)
+      .get();
+    function toHighlight(row: typeof bestRated): MovieHighlight | null {
+      return row
+        ? {
+            id: Number(row.id),
+            title: String(row.title),
+            year: Number(row.release_year),
+            rating: Number(row.vote_average),
+            voteCount: Number(row.vote_count),
+            popularity: Number(row.popularity),
+          }
+        : null;
+    }
     return {
       movieCount: Number(count?.count),
       years: years.map((row) => Number(row.year)),
@@ -99,6 +125,8 @@ export function getCollectionSummary(
       runtimeMovieCount: Number(runtime?.count),
       averageRating: rating?.average == null ? null : Number(rating.average),
       ratedMovieCount: Number(rating?.count),
+      bestRatedMovie: toHighlight(bestRated),
+      mostPopularMovie: toHighlight(mostPopular),
     };
   } finally {
     database.close();

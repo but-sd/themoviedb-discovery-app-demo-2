@@ -55,6 +55,7 @@ it('averages rated movies per genre without weighting or including unrated films
         name: 'Aventure',
         movieCount: 1,
         averageRating: 8,
+        weightedAverageRating: 8,
         voteCount: 10,
       },
       {
@@ -62,6 +63,7 @@ it('averages rated movies per genre without weighting or including unrated films
         name: 'Drame',
         movieCount: 2,
         averageRating: 6,
+        weightedAverageRating: 480 / 110,
         voteCount: 110,
       },
     ]);
@@ -188,6 +190,43 @@ it('summarizes film ratings without weighting, genre duplication, or unrated fil
     expect(getCollectionSummary(path)).toMatchObject({
       averageRating: 6,
       ratedMovieCount: 2,
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('selects top movies with a minimum vote count and deterministic ties', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'top-movies-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getCollectionSummary(path)).toMatchObject({
+      bestRatedMovie: null,
+      mostPopularMovie: null,
+    });
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [
+          {
+            ...movie,
+            id: 1,
+            vote_average: 10,
+            vote_count: 99,
+            popularity: 500,
+          },
+          { ...movie, id: 2, vote_average: 8, vote_count: 100, popularity: 20 },
+          { ...movie, id: 3, vote_average: 8, vote_count: 200, popularity: 30 },
+        ],
+        2020,
+      );
+    } finally {
+      database.close();
+    }
+    expect(getCollectionSummary(path)).toMatchObject({
+      bestRatedMovie: { id: 3, rating: 8, voteCount: 200, year: 2020 },
+      mostPopularMovie: { id: 1, popularity: 500 },
     });
   } finally {
     rmSync(directory, { recursive: true, force: true });
