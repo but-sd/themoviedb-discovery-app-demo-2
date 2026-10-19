@@ -4,6 +4,7 @@ import type {
   GenreDistribution,
   GenreRating,
 } from '../../back-end/schemas/MoviesTypes';
+import { AverageRuntimeCard } from './AverageRuntimeCard/AverageRuntimeCard';
 import { MoviesInDatabaseCard } from './MoviesInDatabaseCard/MoviesInDatabaseCard';
 
 export function GenreHighlightCards({
@@ -160,25 +161,7 @@ export function GenreHighlightCards({
               movieCount={summary.movieCount}
               years={summary.years}
             />
-            <details className="genre-highlight">
-              <summary>
-                <span className="genre-highlight-label">
-                  Durée moyenne <span aria-hidden="true">↗</span>
-                </span>
-                <p className="genre-highlight-value">
-                  {summary.averageRuntime != null ? (
-                    <>
-                      {Math.round(summary.averageRuntime).toLocaleString(
-                        'fr-FR',
-                      )}{' '}
-                      <span>min</span>
-                    </>
-                  ) : (
-                    <span>Non disponible</span>
-                  )}
-                </p>
-              </summary>
-            </details>
+            <AverageRuntimeCard averageRuntime={summary.averageRuntime} />
             <details className="genre-highlight">
               <summary>
                 <span className="genre-highlight-label">
