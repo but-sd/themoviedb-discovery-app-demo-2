@@ -5,6 +5,7 @@ import { expect, it } from 'vitest';
 import {
   createMoviesDatabase,
   getCollectionSummary,
+  getGenreDistribution,
   upsertMovies,
 } from './movies-database';
 import type { Movie } from './schemas/MoviesTypes';
@@ -23,6 +24,38 @@ const movie: Movie = {
   backdrop_path: null,
   genre_ids: [18],
 };
+
+it('counts each movie once per genre and sorts by descending count', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'genre-distribution-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getGenreDistribution(path)).toEqual([]);
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [
+          { ...movie, genre_ids: [18, 18, 12] },
+          { ...movie, id: 2, genre_ids: [18] },
+          { ...movie, id: 3, genre_ids: [] },
+        ],
+        2020,
+        [
+          { id: 18, name: 'Drame' },
+          { id: 12, name: 'Aventure' },
+        ],
+      );
+    } finally {
+      database.close();
+    }
+    expect(getGenreDistribution(path)).toEqual([
+      { id: 18, name: 'Drame', movieCount: 2 },
+      { id: 12, name: 'Aventure', movieCount: 1 },
+    ]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 it('summarizes unique films and successful years including empty collections', () => {
   const directory = mkdtempSync(join(tmpdir(), 'collection-summary-'));

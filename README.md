@@ -2,6 +2,12 @@
 
 ## Collecte de films
 
+La page d'exploration affiche un graphique en barres Chart.js du nombre de
+films par genre, calculé depuis SQLite via
+`GET /api/movies/genres/distribution` et actualisé après la collecte.
+Un film appartenant à plusieurs genres est compté dans chacun d'eux.
+Les données sont aussi consultables dans le tableau sous le graphique.
+
 Avec Node.js 24 ou plus et `TMDB_ACCESS_TOKEN` dans `.env` :
 
 ```sh

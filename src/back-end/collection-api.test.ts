@@ -4,27 +4,44 @@ import { beforeEach, expect, it, vi } from 'vitest';
 
 vi.mock('./collectMovies', () => ({ collectMovies: vi.fn() }));
 vi.mock('./config', () => ({ tmdbAccessToken: 'test-access-token' }));
-vi.mock('./movies-database', () => ({ getCollectionSummary: vi.fn() }));
+vi.mock('./movies-database', () => ({
+  getCollectionSummary: vi.fn(),
+  getGenreDistribution: vi.fn(),
+}));
 
 import { collectMovies } from './collectMovies';
 import { registerCollectionApi } from './collection-api';
 import { registerMoviesApi } from './movies-api';
-import { getCollectionSummary } from './movies-database';
+import { getCollectionSummary, getGenreDistribution } from './movies-database';
 
 const app = express();
 const post = vi.spyOn(app, 'post');
 const get = vi.spyOn(app, 'get');
 registerCollectionApi(app);
-const summaryHandler = get.mock.calls[0][1] as (
-  req: Request,
-  res: Response,
-) => void;
+const summaryHandler = get.mock.calls.find(
+  ([path]) => path === '/api/movies/collection',
+)?.[1] as (req: Request, res: Response) => void;
 const handler = post.mock.calls[0][1] as (
   req: Request,
   res: Response,
 ) => Promise<void>;
 
 beforeEach(() => vi.clearAllMocks());
+
+it('returns genre counts from SQLite', () => {
+  vi.mocked(getGenreDistribution).mockReturnValue([
+    { id: 18, name: 'Drame', movieCount: 5 },
+  ]);
+  const serverApp = express();
+  const register = vi.spyOn(serverApp, 'get');
+  registerCollectionApi(serverApp);
+  const route = register.mock.calls.find(
+    ([path]) => path === '/api/movies/genres/distribution',
+  )?.[1] as (req: Request, res: Response) => void;
+  const json = vi.fn();
+  route({} as Request, { json } as unknown as Response);
+  expect(json).toHaveBeenCalledWith([{ id: 18, name: 'Drame', movieCount: 5 }]);
+});
 
 it('serves the summary over HTTP instead of matching the movie detail route', async () => {
   const serverApp = express();

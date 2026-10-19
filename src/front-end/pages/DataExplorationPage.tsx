@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { SubmitEvent } from 'react';
 import type { CollectionSummary } from '../../back-end/schemas/MoviesTypes';
 import './DataExplorationPage.css';
+import GenreDistributionChart from '../components/GenreDistributionChart';
 
 export default function DataExplorationPage() {
   const currentYear = new Date().getFullYear();
@@ -219,6 +220,7 @@ export default function DataExplorationPage() {
         <p role="status">{status}</p>
         {error && <p role="alert">{error}</p>}
       </form>
+      <GenreDistributionChart revision={summary} />
     </main>
   );
 }

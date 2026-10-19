@@ -70,3 +70,8 @@ export type ApiErrorResponse = {
   error: string;
 };
 export type CollectionSummary = { movieCount: number; years: number[] };
+export type GenreDistribution = {
+  id: number;
+  name: string;
+  movieCount: number;
+};

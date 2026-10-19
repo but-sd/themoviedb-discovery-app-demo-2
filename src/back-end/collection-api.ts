@@ -1,9 +1,19 @@
 import type { Express } from 'express';
 import { collectMovies } from './collectMovies';
 import { isValidMovieYear } from './discover-movies';
-import { getCollectionSummary } from './movies-database';
+import { getCollectionSummary, getGenreDistribution } from './movies-database';
 
 export function registerCollectionApi(app: Express): void {
+  app.get('/api/movies/genres/distribution', (_req, res) => {
+    try {
+      res.json(getGenreDistribution());
+    } catch (error) {
+      console.error('Failed to read genre distribution:', error);
+      res
+        .status(500)
+        .json({ error: 'Impossible de lire la répartition par genre.' });
+    }
+  });
   app.get('/api/movies/collection', (_req, res) => {
     try {
       res.json(getCollectionSummary());

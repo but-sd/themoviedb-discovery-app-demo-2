@@ -54,3 +54,31 @@
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+.genre-distribution {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.genre-distribution h2 {
+  color: var(--heading);
+}
+
+.genre-distribution p {
+  color: var(--text-muted);
+}
+
+.genre-distribution table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.genre-distribution th,
+.genre-distribution td {
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+}
