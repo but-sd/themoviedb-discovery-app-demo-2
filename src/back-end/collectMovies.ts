@@ -8,15 +8,24 @@ import type { Movie } from './schemas/MoviesTypes';
 
 export async function collectMovies(
   year: number,
+  limit = 100,
   databasePath = DEFAULT_DATABASE_PATH,
 ): Promise<{ year: number; collected: number; databasePath: string }> {
   if (!Number.isInteger(year) || !isValidMovieYear(String(year))) {
     throw new Error('Year must be a valid past year.');
   }
+  if (!Number.isSafeInteger(limit) || limit <= 0) {
+    throw new Error('Movie limit must be a positive integer.');
+  }
 
   const movies = new Map<number, Movie>();
   let totalPages = 1;
-  for (let page = 1; page <= totalPages; page++) {
+  for (let page = 1; page <= totalPages && movies.size < limit; page++) {
+    if (page > 500) {
+      throw new Error(
+        'TMDB limits discovery to 500 pages. The requested count cannot be reached; no movies were saved.',
+      );
+    }
     const result = await discoverMovies(String(year), String(page));
     if (
       result.page !== page ||
@@ -25,14 +34,12 @@ export async function collectMovies(
     ) {
       throw new Error('TMDB returned invalid pagination.');
     }
-    if (result.total_pages > 500) {
-      throw new Error(
-        'TMDB limits discovery to 500 pages. This year requires a narrower search; no movies were saved.',
-      );
-    }
     totalPages = Math.max(totalPages, result.total_pages);
     for (const movie of result.results) {
       movies.set(movie.id, movie);
+      if (movies.size === limit) {
+        break;
+      }
     }
   }
 

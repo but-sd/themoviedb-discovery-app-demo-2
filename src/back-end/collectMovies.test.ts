@@ -65,12 +65,12 @@ describe('collectMovies', () => {
         ]) as Response,
       );
 
-    expect(await collectMovies(2020, databasePath)).toEqual({
+    expect(await collectMovies(2020, undefined, databasePath)).toEqual({
       year: 2020,
       collected: 2,
       databasePath,
     });
-    await collectMovies(2020, databasePath);
+    await collectMovies(2020, undefined, databasePath);
 
     const database = new DatabaseSync(databasePath);
     try {
@@ -97,14 +97,16 @@ describe('collectMovies', () => {
 
   it('does not change saved data when a later page fails', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(pageResponse(1, 1) as Response);
-    await collectMovies(2020, databasePath);
+    await collectMovies(2020, undefined, databasePath);
     vi.mocked(fetch)
       .mockResolvedValueOnce(
         pageResponse(1, 2, [{ ...movie, title: 'Not saved' }]) as Response,
       )
       .mockResolvedValueOnce({ ok: false, status: 503 } as Response);
 
-    await expect(collectMovies(2020, databasePath)).rejects.toThrow('503');
+    await expect(collectMovies(2020, undefined, databasePath)).rejects.toThrow(
+      '503',
+    );
     const database = new DatabaseSync(databasePath);
     try {
       expect(
@@ -116,20 +118,86 @@ describe('collectMovies', () => {
   });
 
   it('rejects invalid years before making requests', async () => {
-    await expect(collectMovies(20.5, databasePath)).rejects.toThrow('Year');
+    await expect(collectMovies(20.5, undefined, databasePath)).rejects.toThrow(
+      'Year',
+    );
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('explicitly rejects years exceeding the TMDB page limit', async () => {
+  it('can collect a limited selection from a year with more than 500 pages', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(pageResponse(1, 501) as Response);
-    await expect(collectMovies(2020, databasePath)).rejects.toThrow(
+    expect(await collectMovies(2020, 1, databasePath)).toMatchObject({
+      collected: 1,
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('defaults to exactly 100 unique films and stops fetching once reached', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const page = Number(new URL(String(url)).searchParams.get('page'));
+      return pageResponse(
+        page,
+        10,
+        Array.from({ length: 20 }, (_, index) => ({
+          ...movie,
+          id: (page - 1) * 20 + index,
+        })),
+      ) as Response;
+    });
+    expect(await collectMovies(2020, undefined, databasePath)).toMatchObject({
+      collected: 100,
+    });
+    expect(fetch).toHaveBeenCalledTimes(5);
+  });
+
+  it('stores no more than the requested count when a page exceeds the limit', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(pageResponse(1, 3) as Response)
+      .mockResolvedValueOnce(
+        pageResponse(2, 3, [
+          movie,
+          { ...movie, id: 43 },
+          { ...movie, id: 44 },
+        ]) as Response,
+      );
+    expect(await collectMovies(2020, 2, databasePath)).toMatchObject({
+      collected: 2,
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const database = new DatabaseSync(databasePath);
+    try {
+      expect(
+        database.prepare('SELECT COUNT(*) AS count FROM movies').get(),
+      ).toMatchObject({ count: 2 });
+    } finally {
+      database.close();
+    }
+  });
+
+  it.each([0, -1, 1.5, NaN, Infinity])(
+    'rejects invalid count %s',
+    async (limit) => {
+      await expect(collectMovies(2020, limit, databasePath)).rejects.toThrow(
+        'positive integer',
+      );
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it('fails explicitly if the requested count requires more than 500 pages', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const page = Number(new URL(String(url)).searchParams.get('page'));
+      return pageResponse(page, 501, [{ ...movie, id: page }]) as Response;
+    });
+    await expect(collectMovies(2020, 501, databasePath)).rejects.toThrow(
       '500 pages',
     );
+    expect(fetch).toHaveBeenCalledTimes(500);
   });
 
   it('persists an empty year successfully', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(pageResponse(1, 0, []) as Response);
-    expect(await collectMovies(2020, databasePath)).toMatchObject({
+    expect(await collectMovies(2020, undefined, databasePath)).toMatchObject({
       collected: 0,
     });
     const database = new DatabaseSync(databasePath);
