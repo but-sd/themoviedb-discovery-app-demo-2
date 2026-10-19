@@ -307,39 +307,6 @@
   vertical-align: middle;
 }
 
-.genre-highlight-tooltip {
-  position: absolute;
-  top: calc(100% - 4px);
-  left: 0;
-  right: 0;
-  z-index: 5;
-  padding: 16px 20px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--heading);
-  box-shadow: 0 12px 28px rgb(0 0 0 / 15%);
-  font-size: 0.85rem;
-}
-
-.genre-highlight-tooltip p {
-  margin: 8px 0 0;
-  line-height: 1.5;
-}
-
-.genre-highlight:not([open]) > .genre-highlight-tooltip {
-  display: none;
-}
-
-.genre-highlight:hover > .genre-highlight-tooltip,
-.genre-highlight:focus-within > .genre-highlight-tooltip {
-  display: block;
-}
-
-.genre-highlight::details-content {
-  content-visibility: visible;
-}
-
 .genre-highlight p {
   color: var(--text-muted);
 }

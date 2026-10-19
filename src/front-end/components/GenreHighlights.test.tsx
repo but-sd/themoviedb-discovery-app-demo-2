@@ -38,9 +38,6 @@ it('shows financial highlights with ROI, amounts and the calculation limits', ()
   expect(markup).toContain('Film déficitaire');
   expect(markup).toContain('350 <span>% ROI</span>');
   expect(markup).toContain('-75 <span>% ROI</span>');
-  expect(markup).toContain('Budget :');
-  expect(markup).toContain('Recettes :');
-  expect(markup).toContain('marketing');
 });
 
 it('shows an explicit empty state for both financial cards', () => {
@@ -87,7 +84,6 @@ it('shows the best rated and most popular films in the film panel', () => {
   expect(markup).toContain('Film le mieux noté');
   expect(markup).toContain('Film le plus populaire');
   expect(markup.match(/Film à la une/g)).toHaveLength(2);
-  expect(markup).toContain('100 votes');
   expect(markup.match(/class="featured-movie-poster"/g)).toHaveLength(2);
   expect(markup).toContain('https://image.tmdb.org/t/p/w185/poster.jpg');
   expect(markup).toContain('class="catalog-metrics"');
@@ -109,7 +105,6 @@ it('shows the global average rating and number of rated films', () => {
   );
   expect(markup).toContain('Note moyenne');
   expect(markup).toContain('7,25');
-  expect(markup).toContain('8 films');
 });
 
 it('shows average runtime in the film group', () => {
@@ -127,7 +122,6 @@ it('shows average runtime in the film group', () => {
   );
   expect(markup).toContain('Durée moyenne');
   expect(markup).toContain('113');
-  expect(markup).toContain('8 films');
 });
 
 it('groups genre indicators separately from movie coverage', () => {
@@ -159,7 +153,7 @@ it('shows the number of represented genres and their names in the details', () =
   );
   expect(markup).toContain('Genres représentés');
   expect(markup).toContain('2 <span>genres</span>');
-  expect(markup).toContain('Action, Drame');
+  expect(markup).toContain('Diversité du catalogue');
 });
 
 it('shows the database count and collected year bounds without implying continuous coverage', () => {
@@ -173,7 +167,6 @@ it('shows the database count and collected year bounds without implying continuo
   expect(markup).toContain('Films en base');
   expect(markup).toContain('300');
   expect(markup).toContain('2020 – 2024');
-  expect(markup).toContain('Années déjà collectées : 2024, 2020, 2022');
 });
 
 it('shows an empty database without invalid year bounds', () => {
@@ -256,6 +249,5 @@ it('includes all tied genres', () => {
   const markup = renderToStaticMarkup(
     <GenreHighlightCards distribution={genres} ratings={genres} />,
   );
-  expect(markup.match(/Genres ex æquo : Action, Drame/g)).toHaveLength(3);
-  expect(markup.match(/Genres ex æquo/g)).toHaveLength(3);
+  expect(markup.match(/genre-highlight-badge/g)).toHaveLength(3);
 });

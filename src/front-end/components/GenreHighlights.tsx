@@ -4,6 +4,7 @@ import type {
   GenreDistribution,
   GenreRating,
 } from '../../back-end/schemas/MoviesTypes';
+import { MoviesInDatabaseCard } from './MoviesInDatabaseCard/MoviesInDatabaseCard';
 
 export function GenreHighlightCards({
   distribution,
@@ -59,18 +60,6 @@ export function GenreHighlightCards({
                 <span>genres</span>
               </p>
             </summary>
-            <div className="genre-highlight-tooltip">
-              <strong>Genres représentés en base</strong>
-              <p>
-                Nombre de genres distincts associés à au moins un film
-                enregistré.
-              </p>
-              <p>
-                {distribution.length
-                  ? distribution.map((genre) => genre.name).join(', ')
-                  : 'Aucun genre disponible.'}
-              </p>
-            </div>
           </details>
           <details className="genre-highlight">
             <summary>
@@ -95,19 +84,6 @@ export function GenreHighlightCards({
                 <p>Aucun genre disponible.</p>
               )}
             </summary>
-            <div className="genre-highlight-tooltip">
-              <strong>Genre le plus représenté</strong>
-              <p>
-                Nombre de films en base associés à ce genre. Un film peut
-                appartenir à plusieurs genres.
-              </p>
-              {mostRepresented.length > 1 && (
-                <p>
-                  Genres ex æquo :{' '}
-                  {mostRepresented.map((genre) => genre.name).join(', ')}.
-                </p>
-              )}
-            </div>
           </details>
           <details className="genre-highlight genre-highlight--rating">
             <summary>
@@ -135,22 +111,6 @@ export function GenreHighlightCards({
                 <p>Aucun film noté disponible.</p>
               )}
             </summary>
-            <div className="genre-highlight-tooltip">
-              <strong>Genre avec la meilleure moyenne</strong>
-              <p>Films ayant au moins un vote, moyenne non pondérée.</p>
-              {highestRated.map((genre) => (
-                <p key={genre.id}>
-                  {genre.name} : {genre.movieCount.toLocaleString('fr-FR')}{' '}
-                  films notés · {genre.voteCount.toLocaleString('fr-FR')} votes.
-                </p>
-              ))}
-              {highestRated.length > 1 && (
-                <p>
-                  Genres ex æquo :{' '}
-                  {highestRated.map((genre) => genre.name).join(', ')}.
-                </p>
-              )}
-            </div>
           </details>
           <details className="genre-highlight genre-highlight--rating">
             <summary>
@@ -178,25 +138,6 @@ export function GenreHighlightCards({
                 <p>Aucun film noté disponible.</p>
               )}
             </summary>
-            <div className="genre-highlight-tooltip">
-              <strong>Genre avec la meilleure moyenne pondérée</strong>
-              <p>
-                Somme des notes multipliées par le nombre de votes, divisée par
-                le total des votes. Les films sans vote sont exclus.
-              </p>
-              {highestWeightedRated.map((genre) => (
-                <p key={genre.id}>
-                  {genre.name} : {genre.movieCount.toLocaleString('fr-FR')}{' '}
-                  films notés · {genre.voteCount.toLocaleString('fr-FR')} votes.
-                </p>
-              ))}
-              {highestWeightedRated.length > 1 && (
-                <p>
-                  Genres ex æquo :{' '}
-                  {highestWeightedRated.map((genre) => genre.name).join(', ')}.
-                </p>
-              )}
-            </div>
           </details>
         </div>
       </section>
@@ -215,33 +156,10 @@ export function GenreHighlightCards({
             </div>
           </header>
           <div className="catalog-metrics">
-            <details className="genre-highlight">
-              <summary>
-                <span className="genre-highlight-label">
-                  Films en base <span aria-hidden="true">↗</span>
-                </span>
-                <p className="genre-highlight-value">
-                  {summary.movieCount.toLocaleString('fr-FR')}{' '}
-                  <span>films</span>
-                </p>
-                <p className="genre-highlight-period">
-                  {summary.years.length
-                    ? `${Math.min(...summary.years)} – ${Math.max(...summary.years)}`
-                    : 'Aucune année collectée'}
-                </p>
-              </summary>
-              <div className="genre-highlight-tooltip">
-                <strong>Films enregistrés dans la base</strong>
-                <p>Nombre de films distincts, tous genres confondus.</p>
-                {summary.years.length > 0 && (
-                  <>
-                    <p>Année de début : {Math.min(...summary.years)}.</p>
-                    <p>Année de fin : {Math.max(...summary.years)}.</p>
-                    <p>Années déjà collectées : {summary.years.join(', ')}.</p>
-                  </>
-                )}
-              </div>
-            </details>
+            <MoviesInDatabaseCard
+              movieCount={summary.movieCount}
+              years={summary.years}
+            />
             <details className="genre-highlight">
               <summary>
                 <span className="genre-highlight-label">
@@ -260,18 +178,6 @@ export function GenreHighlightCards({
                   )}
                 </p>
               </summary>
-              <div className="genre-highlight-tooltip">
-                <strong>Durée moyenne d’un film</strong>
-                <p>
-                  Moyenne calculée sur {summary.runtimeMovieCount ?? 0} films
-                  ayant une durée connue. Les durées absentes ou nulles sont
-                  exclues.
-                </p>
-                <p>
-                  Mettez à jour la collecte depuis l’administration pour
-                  renseigner les durées manquantes.
-                </p>
-              </div>
             </details>
             <details className="genre-highlight">
               <summary>
@@ -291,15 +197,6 @@ export function GenreHighlightCards({
                   )}
                 </p>
               </summary>
-              <div className="genre-highlight-tooltip">
-                <strong>Note moyenne d’un film</strong>
-                <p>
-                  Moyenne arithmétique sur {summary.ratedMovieCount ?? 0} films
-                  ayant au moins un vote, sans pondération par le nombre de
-                  votes. Chaque film est compté une seule fois, tous genres
-                  confondus.
-                </p>
-              </div>
             </details>
           </div>
           <section
@@ -409,40 +306,6 @@ export function GenreHighlightCards({
                       )}
                     </div>
                   </summary>
-                  <div className="genre-highlight-tooltip">
-                    <strong>{label}</strong>
-                    <p>
-                      {profitability
-                        ? 'Retour sur investissement : (recettes − budget) / budget × 100. Seuls les budgets et recettes connus et positifs sont inclus. En cas d’égalité, l’identifiant du film départage les films. Cet indicateur ne tient pas compte du marketing, des frais de distribution ni du partage des recettes.'
-                        : rating
-                          ? 'Classement des films ayant au moins 100 votes. En cas d’égalité, le nombre de votes départage les films.'
-                          : 'Score de popularité TMDB observé lors de la collecte, et non lors de la sortie du film. En cas d’égalité, le nombre de votes départage les films.'}
-                    </p>
-                    {financial && (
-                      <p>
-                        Budget :{' '}
-                        {financial.budget.toLocaleString('fr-FR', {
-                          style: 'currency',
-                          currency: 'USD',
-                          maximumFractionDigits: 0,
-                        })}{' '}
-                        · Recettes :{' '}
-                        {financial.revenue.toLocaleString('fr-FR', {
-                          style: 'currency',
-                          currency: 'USD',
-                          maximumFractionDigits: 0,
-                        })}
-                        .
-                      </p>
-                    )}
-                    {movie && (
-                      <p>
-                        {movie.year} · Note :{' '}
-                        {movie.rating.toLocaleString('fr-FR')} / 10 ·{' '}
-                        {movie.voteCount.toLocaleString('fr-FR')} votes.
-                      </p>
-                    )}
-                  </div>
                 </details>
               ))}
             </div>
