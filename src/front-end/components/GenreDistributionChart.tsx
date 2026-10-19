@@ -6,10 +6,33 @@ import {
   CategoryScale,
   LinearScale,
   Tooltip,
+  ArcElement,
+  DoughnutController,
+  PieController,
+  Legend,
 } from 'chart.js';
 import type { GenreDistribution } from '../../back-end/schemas/MoviesTypes';
 
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
+Chart.register(
+  BarController,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  ArcElement,
+  DoughnutController,
+  PieController,
+  Legend,
+);
+
+type ChartView = 'horizontal' | 'vertical' | 'doughnut' | 'pie';
+
+const chartViews: { value: ChartView; label: string }[] = [
+  { value: 'horizontal', label: 'Barres horizontales' },
+  { value: 'vertical', label: 'Barres verticales' },
+  { value: 'doughnut', label: 'Anneau' },
+  { value: 'pie', label: 'Camembert' },
+];
 
 export default function GenreDistributionChart({
   revision,
@@ -19,6 +42,8 @@ export default function GenreDistributionChart({
   const canvas = useRef<HTMLCanvasElement>(null);
   const [data, setData] = useState<GenreDistribution[] | null>(null);
   const [error, setError] = useState('');
+  const [view, setView] = useState<ChartView>('horizontal');
+  const isCircular = view === 'doughnut' || view === 'pie';
 
   useEffect(() => {
     const controller = new AbortController();
@@ -65,47 +90,66 @@ export default function GenreDistributionChart({
     if (!canvas.current || !data?.length || error) return;
     const colors = getComputedStyle(document.documentElement);
     const chart = new Chart(canvas.current, {
-      type: 'bar',
+      type: isCircular ? view : 'bar',
       data: {
         labels: data.map((genre) => genre.name),
         datasets: [
           {
             label: 'Nombre de films',
             data: data.map((genre) => genre.movieCount),
-            backgroundColor: '#2789a5',
+            backgroundColor: data.map(
+              (_, index) => `hsl(${(index * 137.508 + 190) % 360}, 60%, 48%)`,
+            ),
             borderRadius: 4,
           },
         ],
       },
       options: {
-        indexAxis: 'y',
+        indexAxis: view === 'horizontal' ? 'y' : 'x',
         responsive: true,
         maintainAspectRatio: false,
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: {
-              precision: 0,
-              color: colors.getPropertyValue('--text-muted'),
-            },
-            grid: { color: colors.getPropertyValue('--line') },
-          },
-          y: {
-            ticks: { color: colors.getPropertyValue('--text-secondary') },
-            grid: { display: false },
+        plugins: {
+          legend: {
+            display: isCircular,
+            position: 'bottom',
+            labels: { color: colors.getPropertyValue('--text-secondary') },
           },
         },
+        scales: isCircular
+          ? {}
+          : {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0,
+                  color: colors.getPropertyValue('--text-muted'),
+                },
+                grid: { color: colors.getPropertyValue('--line') },
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0,
+                  color: colors.getPropertyValue('--text-secondary'),
+                },
+                grid: { display: false },
+              },
+            },
       },
     });
     const observer = new MutationObserver(() => {
       const theme = getComputedStyle(document.documentElement);
       const scales = chart.options.scales;
+      const legend = chart.options.plugins?.legend;
+      if (legend?.labels) {
+        legend.labels.color = theme.getPropertyValue('--text-secondary');
+      }
       if (scales?.x?.ticks && scales.y?.ticks && scales.x.grid) {
         scales.x.ticks.color = theme.getPropertyValue('--text-muted');
         scales.y.ticks.color = theme.getPropertyValue('--text-secondary');
         scales.x.grid.color = theme.getPropertyValue('--line');
-        chart.update();
       }
+      chart.update();
     });
     observer.observe(document.documentElement, {
       attributes: true,
@@ -115,7 +159,7 @@ export default function GenreDistributionChart({
       observer.disconnect();
       chart.destroy();
     };
-  }, [data, error]);
+  }, [data, error, view, isCircular]);
 
   return (
     <section className="genre-distribution" aria-labelledby="genre-chart-title">
@@ -123,6 +167,30 @@ export default function GenreDistributionChart({
       <p>
         Tous les films en base. Un film peut être compté dans plusieurs genres.
       </p>
+      <label className="genre-chart-selector">
+        Type de graphique
+        <select
+          value={view}
+          onChange={(event) => {
+            const selected = chartViews.find(
+              (item) => item.value === event.target.value,
+            );
+            if (selected) setView(selected.value);
+          }}
+        >
+          {chartViews.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {isCircular && (
+        <p>
+          Les parts représentent les associations film/genre, pas des films
+          distincts.
+        </p>
+      )}
       {error ? (
         <p role="alert">{error}</p>
       ) : data === null ? (
@@ -134,7 +202,12 @@ export default function GenreDistributionChart({
         </p>
       ) : (
         <>
-          <div style={{ height: Math.max(280, data.length * 32) }}>
+          <div
+            style={{
+              height:
+                view === 'horizontal' ? Math.max(280, data.length * 32) : 480,
+            }}
+          >
             <canvas
               ref={canvas}
               role="img"

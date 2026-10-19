@@ -7,6 +7,9 @@ films par genre, calculé depuis SQLite via
 `GET /api/movies/genres/distribution` et actualisé après la collecte.
 Un film appartenant à plusieurs genres est compté dans chacun d'eux.
 Les données sont aussi consultables dans le tableau sous le graphique.
+Un sélecteur permet de choisir entre barres horizontales, barres verticales,
+anneau et camembert. Les parts des graphiques circulaires représentent les
+associations film/genre, un film pouvant appartenir à plusieurs genres.
 
 Avec Node.js 24 ou plus et `TMDB_ACCESS_TOKEN` dans `.env` :
 

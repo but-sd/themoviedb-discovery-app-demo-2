@@ -82,3 +82,20 @@
   padding: 8px;
   border-bottom: 1px solid var(--line);
 }
+.genre-chart-selector {
+  display: grid;
+  gap: 8px;
+  max-width: 280px;
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+}
+
+.genre-chart-selector select {
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--page-foreground);
+  font: inherit;
+}
