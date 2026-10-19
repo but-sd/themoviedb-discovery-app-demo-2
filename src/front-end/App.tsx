@@ -7,6 +7,7 @@ import MoviesListPage from './pages/MoviesListPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AboutPage from './pages/AboutPage';
 import NavBar from './components/NavBar/NavBar';
+import DataExplorationPage from './pages/DataExplorationPage';
 
 type Theme = 'light' | 'dark';
 
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/movies" replace />} />
         <Route path="/movies" element={<MoviesListPage />} />
         <Route path="/movies/:id" element={<MovieDetailPage />} />
+        <Route path="/exploration" element={<DataExplorationPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
