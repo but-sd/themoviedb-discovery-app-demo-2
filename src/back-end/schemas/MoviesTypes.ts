@@ -69,3 +69,4 @@ export type MovieDetails = Omit<
 export type ApiErrorResponse = {
   error: string;
 };
+export type CollectionSummary = { movieCount: number; years: number[] };

@@ -2,7 +2,11 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { createMoviesDatabase, upsertMovies } from './movies-database';
+import {
+  createMoviesDatabase,
+  getCollectionSummary,
+  upsertMovies,
+} from './movies-database';
 import type { Movie } from './schemas/MoviesTypes';
 
 const movie: Movie = {
@@ -19,6 +23,28 @@ const movie: Movie = {
   backdrop_path: null,
   genre_ids: [18],
 };
+
+it('summarizes unique films and successful years including empty collections', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'collection-summary-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getCollectionSummary(path)).toEqual({ movieCount: 0, years: [] });
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(database, [movie], 2020);
+      upsertMovies(database, [movie], 2020);
+      upsertMovies(database, [], 2021);
+    } finally {
+      database.close();
+    }
+    expect(getCollectionSummary(path)).toEqual({
+      movieCount: 1,
+      years: [2020, 2021],
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 it('inserts and updates movies without duplicates', () => {
   const database = createMoviesDatabase(':memory:');

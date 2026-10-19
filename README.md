@@ -23,6 +23,14 @@ Avec le serveur démarré (`npm run dev`), il collecte séquentiellement jusqu'�
 La progression est affichée et les années déjà enregistrées sont conservées
 si une année échoue. Gardez la page ouverte pendant la collecte.
 
+La page affiche le nombre de films stockés et les années déjà collectées,
+via `GET /api/movies/collection`. Le bouton indique **Instancier** si la base
+est vide, ou **Mettre à jour** sinon. Ces informations sont actualisées à la
+fin de chaque lancement, y compris en cas d'échec partiel.
+La table `collection_years` enregistre les années collectées avec succès,
+même lorsqu'aucun film n'est disponible. Les années des films déjà présents
+sont également incluses dans le récapitulatif.
+
 La table `movies` contient les informations des films, leur année, leurs
 statistiques et la date de collecte. La table `genres` contient les identifiants
 TMDB et les libellés français récupérés pendant la collecte.

@@ -8,8 +8,8 @@ const app = express();
 
 // Register API routes from dedicated modules
 registerHealthApi(app);
-registerMoviesApi(app);
 registerCollectionApi(app);
+registerMoviesApi(app);
 
 // Start the server and listen on the specified port
 const port: number = 3000;

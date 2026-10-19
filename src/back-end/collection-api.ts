@@ -1,8 +1,19 @@
 import type { Express } from 'express';
 import { collectMovies } from './collectMovies';
 import { isValidMovieYear } from './discover-movies';
+import { getCollectionSummary } from './movies-database';
 
 export function registerCollectionApi(app: Express): void {
+  app.get('/api/movies/collection', (_req, res) => {
+    try {
+      res.json(getCollectionSummary());
+    } catch (error) {
+      console.error('Failed to read collection summary:', error);
+      res
+        .status(500)
+        .json({ error: 'Impossible de lire les informations de la base.' });
+    }
+  });
   app.post('/api/movies/collect', async (req, res) => {
     const { year } = req.query;
     if (!isValidMovieYear(year)) {

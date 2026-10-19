@@ -1,10 +1,34 @@
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import type { Movie } from './schemas/MoviesTypes';
+import type { CollectionSummary, Movie } from './schemas/MoviesTypes';
 
 export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
 export type Genre = { id: number; name: string };
+
+export function getCollectionSummary(
+  databasePath = DEFAULT_DATABASE_PATH,
+): CollectionSummary {
+  const database = createMoviesDatabase(databasePath);
+  try {
+    const count = database
+      .prepare('SELECT COUNT(*) AS count FROM movies')
+      .get();
+    const years = database
+      .prepare(`
+      SELECT year FROM collection_years
+      UNION SELECT release_year AS year FROM movies
+      ORDER BY year
+    `)
+      .all();
+    return {
+      movieCount: Number(count?.count),
+      years: years.map((row) => Number(row.year)),
+    };
+  } finally {
+    database.close();
+  }
+}
 
 export function createMoviesDatabase(
   databasePath = DEFAULT_DATABASE_PATH,
@@ -40,6 +64,10 @@ export function createMoviesDatabase(
         PRIMARY KEY (movie_id, genre_id)
       );
       CREATE INDEX IF NOT EXISTS movie_genres_genre_id ON movie_genres(genre_id);
+      CREATE TABLE IF NOT EXISTS collection_years (
+        year INTEGER PRIMARY KEY,
+        collected_at TEXT NOT NULL
+      );
     `);
     database.exec('COMMIT');
     return database;
@@ -116,6 +144,12 @@ export function upsertMovies(
         insertLink.run(movie.id, genreId);
       }
     }
+    database
+      .prepare(`
+      INSERT INTO collection_years (year, collected_at) VALUES (?, ?)
+      ON CONFLICT(year) DO UPDATE SET collected_at = excluded.collected_at
+    `)
+      .run(year, collectedAt);
     database.exec('COMMIT');
   } catch (error) {
     database.exec('ROLLBACK');
