@@ -16,6 +16,13 @@ année (de 1870 à l'année courante) et stocke les films dans
 `data/movies.sqlite`. Il partage sa recherche avec
 `GET /api/movies/discover?year=2020`. Aucun serveur local n'est nécessaire.
 
+Dans la page **Exploration des données**, le formulaire **Collecte data**
+permet de sélectionner une année de début et une année de fin.
+Avec le serveur démarré (`npm run dev`), il collecte séquentiellement jusqu'à
+100 films par année, bornes incluses, via `POST /api/movies/collect?year=2020`.
+La progression est affichée et les années déjà enregistrées sont conservées
+si une année échoue. Gardez la page ouverte pendant la collecte.
+
 La table `movies` contient les informations des films, leur année, leurs
 statistiques et la date de collecte. La table `genres` contient les identifiants
 TMDB et les libellés français récupérés pendant la collecte.

@@ -9,6 +9,7 @@ const { getMock, listenMock } = vi.hoisted(() => ({
 vi.mock('express', () => ({
   default: vi.fn(() => ({
     get: getMock,
+    post: vi.fn(),
     listen: listenMock,
   })),
 }));
