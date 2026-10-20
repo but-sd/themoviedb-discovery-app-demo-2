@@ -8,7 +8,11 @@ import { AverageRatingCard } from './AverageRatingCard/AverageRatingCard';
 import { AverageRuntimeCard } from './AverageRuntimeCard/AverageRuntimeCard';
 import { BestGenreRatingCard } from './BestGenreRatingCard/BestGenreRatingCard';
 import { BestWeightedGenreRatingCard } from './BestWeightedGenreRatingCard/BestWeightedGenreRatingCard';
+import { BestRatedMovieCard } from './BestRatedMovieCard/BestRatedMovieCard';
 import { DominantGenreCard } from './DominantGenreCard/DominantGenreCard';
+import { LeastProfitableMovieCard } from './LeastProfitableMovieCard/LeastProfitableMovieCard';
+import { MostPopularMovieCard } from './MostPopularMovieCard/MostPopularMovieCard';
+import { MostProfitableMovieCard } from './MostProfitableMovieCard/MostProfitableMovieCard';
 import { MoviesInDatabaseCard } from './MoviesInDatabaseCard/MoviesInDatabaseCard';
 import { RepresentedGenresCard } from './RepresentedGenresCard/RepresentedGenresCard';
 
@@ -79,104 +83,10 @@ export function GenreHighlightCards({
               </div>
             </header>
             <div className="featured-movies-grid">
-              {[
-                {
-                  label: 'Film le mieux noté',
-                  movie: summary.bestRatedMovie,
-                  rating: true,
-                  financial: null,
-                  profitability: false,
-                },
-                {
-                  label: 'Film le plus populaire',
-                  movie: summary.mostPopularMovie,
-                  rating: false,
-                  financial: null,
-                  profitability: false,
-                },
-                {
-                  label: 'Film le plus rentable',
-                  movie: summary.mostProfitableMovie,
-                  rating: false,
-                  financial: summary.mostProfitableMovie ?? null,
-                  profitability: true,
-                },
-                {
-                  label: 'Film le moins rentable',
-                  movie: summary.leastProfitableMovie,
-                  rating: false,
-                  financial: summary.leastProfitableMovie ?? null,
-                  profitability: true,
-                },
-              ].map(({ label, movie, rating, financial, profitability }) => (
-                <details className="genre-highlight featured-movie" key={label}>
-                  <summary>
-                    {movie?.posterPath ? (
-                      <>
-                        <img
-                          className="featured-movie-poster"
-                          src={`https://image.tmdb.org/t/p/w185${movie.posterPath}`}
-                          alt=""
-                          loading="lazy"
-                          onError={(event) => {
-                            event.currentTarget.hidden = true;
-                          }}
-                        />
-                        <span
-                          className="featured-movie-placeholder featured-movie-image-fallback"
-                          aria-hidden="true"
-                        >
-                          ▤
-                        </span>
-                      </>
-                    ) : (
-                      <span
-                        className="featured-movie-placeholder"
-                        aria-hidden="true"
-                      >
-                        ▤
-                      </span>
-                    )}
-                    <div className="featured-movie-content">
-                      <span className="genre-highlight-label">
-                        {label}
-                        <span aria-hidden="true">↗</span>
-                      </span>
-                      {movie ? (
-                        <>
-                          <p className="genre-highlight-name">{movie.title}</p>
-                          <p className="featured-movie-year">{movie.year}</p>
-                          <p className="genre-highlight-value">
-                            {(financial
-                              ? financial.returnOnInvestment
-                              : rating
-                                ? movie.rating
-                                : movie.popularity
-                            ).toLocaleString('fr-FR', {
-                              maximumFractionDigits: 2,
-                            })}{' '}
-                            <span>
-                              {financial
-                                ? '% ROI'
-                                : rating
-                                  ? '/ 10'
-                                  : 'popularité'}
-                            </span>
-                          </p>
-                        </>
-                      ) : (
-                        <p>
-                          {profitability
-                            ? 'Aucun film avec budget et recettes connus.'
-                            : rating
-                              ? 'Aucun film avec au moins 100 votes.'
-                              : 'Aucun film disponible.'}
-                        </p>
-                      )}
-                    </div>
-                  </summary>
-                </details>
-              ))}
+              <BestRatedMovieCard movie={summary.bestRatedMovie} />
+              <MostPopularMovieCard movie={summary.mostPopularMovie} />
+              <MostProfitableMovieCard movie={summary.mostProfitableMovie} />
+              <LeastProfitableMovieCard movie={summary.leastProfitableMovie} />
             </div>
           </section>
         </section>
