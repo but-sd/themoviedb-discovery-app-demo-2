@@ -15,6 +15,7 @@ import { MostPopularMovieCard } from './MostPopularMovieCard/MostPopularMovieCar
 import { MostProfitableMovieCard } from './MostProfitableMovieCard/MostProfitableMovieCard';
 import { MoviesInDatabaseCard } from './MoviesInDatabaseCard/MoviesInDatabaseCard';
 import { RepresentedGenresCard } from './RepresentedGenresCard/RepresentedGenresCard';
+import { TopProductionCountryCard } from './TopProductionCountryCard/TopProductionCountryCard';
 
 export function GenreHighlightCards({
   distribution,
@@ -71,6 +72,7 @@ export function GenreHighlightCards({
             />
             <AverageRuntimeCard averageRuntime={summary.averageRuntime} />
             <AverageRatingCard averageRating={summary.averageRating} />
+            <TopProductionCountryCard country={summary.topProductionCountry} />
           </div>
           <section
             className="featured-movies"

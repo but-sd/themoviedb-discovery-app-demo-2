@@ -27,6 +27,42 @@ const movie: Movie = {
   genre_ids: [18],
 };
 
+it('counts coproductions per country and deterministically ranks the leading country', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'top-country-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getCollectionSummary(path).topProductionCountry).toBeNull();
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [movie, { ...movie, id: 2 }, { ...movie, id: 3 }],
+        2020,
+      );
+      expect(getCollectionSummary(path).topProductionCountry).toBeNull();
+      database.exec(`
+        INSERT INTO countries VALUES ('US', 'United States of America'), ('FR', 'France');
+        INSERT INTO production_countries VALUES (1, 'US'), (1, 'FR'), (2, 'FR');
+      `);
+      expect(getCollectionSummary(path).topProductionCountry).toEqual({
+        code: 'FR',
+        name: 'France',
+        movieCount: 2,
+      });
+      database.exec("INSERT INTO production_countries VALUES (2, 'US')");
+      expect(getCollectionSummary(path).topProductionCountry).toEqual({
+        code: 'FR',
+        name: 'France',
+        movieCount: 2,
+      });
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 it('ranks profitability by ROI, excludes unknown amounts and breaks ties by id', () => {
   const directory = mkdtempSync(join(tmpdir(), 'movie-profitability-'));
   const path = join(directory, 'movies.sqlite');

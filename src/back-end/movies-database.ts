@@ -108,6 +108,16 @@ export function getCollectionSummary(
       SELECT * FROM movies ORDER BY popularity DESC, vote_count DESC, id LIMIT 1
     `)
       .get();
+    const topCountry = database
+      .prepare(`
+      SELECT countries.code, countries.name, COUNT(*) AS movie_count
+      FROM production_countries
+      JOIN countries ON countries.code = production_countries.country_code
+      GROUP BY countries.code, countries.name
+      ORDER BY movie_count DESC, countries.code
+      LIMIT 1
+    `)
+      .get();
     function toHighlight(row: typeof bestRated): MovieHighlight | null {
       return row
         ? {
@@ -144,6 +154,13 @@ export function getCollectionSummary(
     }
     return {
       movieCount: Number(count?.count),
+      topProductionCountry: topCountry
+        ? {
+            code: String(topCountry.code),
+            name: String(topCountry.name),
+            movieCount: Number(topCountry.movie_count),
+          }
+        : null,
       years: years.map((row) => Number(row.year)),
       averageRuntime: runtime?.average == null ? null : Number(runtime.average),
       runtimeMovieCount: Number(runtime?.count),

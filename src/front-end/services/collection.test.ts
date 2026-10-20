@@ -17,6 +17,7 @@ const movie = {
 };
 const summary = {
   movieCount: 1,
+  topProductionCountry: { code: 'FR', name: 'France', movieCount: 1 },
   years: [2020],
   averageRuntime: null,
   runtimeMovieCount: 0,
@@ -27,6 +28,32 @@ const summary = {
   mostProfitableMovie: movie,
   leastProfitableMovie: movie,
 };
+
+it('accepts a null top country when none are collected', async () => {
+  const empty = { ...summary, topProductionCountry: null };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({ ok: true, json: async () => empty }),
+  );
+  expect(await fetchCollectionSummary()).toEqual(empty);
+});
+
+it.each([
+  undefined,
+  { code: 'FRA', name: 'France', movieCount: 1 },
+  { code: 'FR', name: '', movieCount: 1 },
+  { code: 'FR', name: 'France', movieCount: 0 },
+  { code: 'FR', name: 'France', movieCount: 1.5 },
+])('rejects an invalid top country', async (topProductionCountry) => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ...summary, topProductionCountry }),
+    }),
+  );
+  await expect(fetchCollectionSummary()).rejects.toThrow('pays de production');
+});
 
 it('reads financial highlights including negative ROI', async () => {
   vi.stubGlobal(

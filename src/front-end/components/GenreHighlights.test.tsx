@@ -2,6 +2,24 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
 import { GenreHighlightCards } from './GenreHighlights';
 
+it('shows the leading production country in the film indicators', () => {
+  const markup = renderToStaticMarkup(
+    <GenreHighlightCards
+      distribution={[]}
+      ratings={[]}
+      summary={{
+        movieCount: 20,
+        years: [2026],
+        topProductionCountry: { code: 'FR', name: 'France', movieCount: 12 },
+      }}
+    />,
+  );
+  const filmGroup = markup.split('aria-label="Indicateurs des films"')[1];
+  expect(filmGroup).toContain('Pays le plus représenté');
+  expect(filmGroup).toContain('France');
+  expect(filmGroup).toContain('12 <span>films</span>');
+});
+
 it('shows financial highlights with ROI, amounts and the calculation limits', () => {
   const movie = {
     id: 1,

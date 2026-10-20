@@ -102,6 +102,10 @@ La table `production_countries` relie les films aux codes pays TMDB, sans
 dupliquer les libellés. La table `countries` associe chaque code ISO 3166-1
 alpha-2 à son libellé TMDB. Les pays de production et leurs libellés sont
 synchronisés lors de la collecte des détails du film.
+La carte « Pays le plus représenté » affiche le pays associé au plus grand
+nombre de films du catalogue en base. Une coproduction compte une fois par
+pays ; les films sans pays connu sont exclus. En cas d’égalité, le code pays
+croissant départage les pays.
 Les associations sont synchronisées à chaque collecte, dans la même transaction
 que les films et les libellés.
 Une nouvelle collecte met à jour les films existants, identifiés par leur ID

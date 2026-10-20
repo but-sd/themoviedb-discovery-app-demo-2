@@ -82,6 +82,10 @@ export type ProductionCountry = {
   name: string;
 };
 
+export type ProductionCountryHighlight = ProductionCountry & {
+  movieCount: number;
+};
+
 export type MovieHighlight = {
   posterPath?: string | null;
   id: number;
@@ -95,6 +99,7 @@ export type MovieHighlight = {
 export type CollectionSummary = {
   movieCount: number;
   years: number[];
+  topProductionCountry?: ProductionCountryHighlight | null;
   averageRuntime?: number | null;
   runtimeMovieCount?: number;
   averageRating?: number | null;

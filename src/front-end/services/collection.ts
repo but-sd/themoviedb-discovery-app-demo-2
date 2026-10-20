@@ -2,6 +2,7 @@ import type {
   CollectionSummary,
   FinancialMovieHighlight,
   MovieHighlight,
+  ProductionCountryHighlight,
 } from '../../back-end/schemas/MoviesTypes';
 
 function isMovieHighlight(value: unknown): value is MovieHighlight | null {
@@ -32,6 +33,26 @@ function isMovieHighlight(value: unknown): value is MovieHighlight | null {
       typeof value.popularity === 'number' &&
       Number.isFinite(value.popularity) &&
       value.popularity >= 0)
+  );
+}
+
+function isProductionCountryHighlight(
+  value: unknown,
+): value is ProductionCountryHighlight | null {
+  return (
+    value === null ||
+    (typeof value === 'object' &&
+      value !== null &&
+      'code' in value &&
+      typeof value.code === 'string' &&
+      /^[A-Z]{2}$/.test(value.code) &&
+      'name' in value &&
+      typeof value.name === 'string' &&
+      value.name.trim().length > 0 &&
+      'movieCount' in value &&
+      typeof value.movieCount === 'number' &&
+      Number.isSafeInteger(value.movieCount) &&
+      value.movieCount > 0)
   );
 }
 
@@ -123,9 +144,16 @@ export async function fetchCollectionSummary(
   ) {
     throw new Error('Les informations de rentabilité sont invalides.');
   }
+  if (
+    !('topProductionCountry' in data) ||
+    !isProductionCountryHighlight(data.topProductionCountry)
+  ) {
+    throw new Error('Les informations des pays de production sont invalides.');
+  }
   return {
     movieCount: data.movieCount,
     years: data.years,
+    topProductionCountry: data.topProductionCountry,
     averageRuntime: data.averageRuntime,
     runtimeMovieCount: data.runtimeMovieCount,
     averageRating: data.averageRating,
