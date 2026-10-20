@@ -4,7 +4,7 @@ import type {
   GenreDistribution,
   GenreRating,
 } from '../../back-end/schemas/MoviesTypes';
-import { AverageRatingCard } from './AverageRatingCard/AverageRatingCard';
+import { AverageRatingCard } from './discovery/AverageRatingCard/AverageRatingCard';
 import { AverageRuntimeCard } from './AverageRuntimeCard/AverageRuntimeCard';
 import { BestGenreRatingCard } from './BestGenreRatingCard/BestGenreRatingCard';
 import { BestWeightedGenreRatingCard } from './BestWeightedGenreRatingCard/BestWeightedGenreRatingCard';
