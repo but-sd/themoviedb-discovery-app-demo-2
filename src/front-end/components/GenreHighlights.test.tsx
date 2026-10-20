@@ -1,6 +1,12 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+import type { ReactNode } from 'react';
+import { renderToStaticMarkup as renderMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import { expect, it } from 'vitest';
 import { GenreHighlightCards } from './GenreHighlights';
+
+function renderToStaticMarkup(element: ReactNode) {
+  return renderMarkup(<MemoryRouter>{element}</MemoryRouter>);
+}
 
 it('shows the leading production country in the film indicators', () => {
   const markup = renderToStaticMarkup(

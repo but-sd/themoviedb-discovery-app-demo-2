@@ -1,5 +1,31 @@
 # themoviedb-discovery-app-demo-2
 
+## Développement des composants avec Storybook
+
+```bash
+npm run storybook
+```
+
+Storybook est disponible sur <http://localhost:6006>. Les stories sont placées
+à côté des composants dans des fichiers `*.stories.tsx`. Elles couvrent les
+cartes du catalogue, les genres, les films, la fiche film et le tableau de bord,
+avec des états renseignés, vides et des cas d’égalité.
+Les contrôles permettent de modifier les propriétés des composants et la barre
+d’outils permet de basculer entre les thèmes clair et sombre.
+Les styles de l’application et le contexte React Router sont chargés
+automatiquement. Les liens des cartes ouvrent un écran de démonstration ;
+ils n’appellent pas l’API. Aucune clé TMDB ni serveur backend n’est nécessaire.
+
+```bash
+npm run build-storybook
+```
+
+Cette commande génère le site statique dans `storybook-static/` (ignoré par Git).
+Les données fictives partagées se trouvent dans
+`src/front-end/stories/fixtures.ts`. Pour ajouter une story, exporter une
+configuration `Meta` et des états `StoryObj` depuis `@storybook/react-vite`,
+en suivant les fichiers existants.
+
 ## Collecte de films
 
 La collecte enregistre aussi `movies.budget` et `movies.revenue` en dollars US,
