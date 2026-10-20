@@ -1,7 +1,7 @@
 /**
- * Card displaying the average runtime of movies in the database.
- * @param averageRuntime The average runtime in minutes, or null when unknown.
- * @returns A JSX element representing the average runtime card.
+ * Carte affichant la durée moyenne des films dans la base de données.
+ * @param averageRuntime La durée moyenne en minutes, ou null si elle est inconnue.
+ * @returns Un élément JSX représentant la carte de la durée moyenne.
  */
 export function AverageRuntimeCard({
   averageRuntime,
