@@ -20,9 +20,7 @@ export function BestWeightedGenreRatingCard({
   return (
     <details className="genre-highlight genre-highlight--rating">
       <summary>
-        <span className="genre-highlight-label">
-          Meilleure note pondérée <span aria-hidden="true">☆</span>
-        </span>
+        <span className="genre-highlight-label">Meilleure note pondérée</span>
         {highestWeightedRated.length ? (
           <>
             <p className="genre-highlight-name">

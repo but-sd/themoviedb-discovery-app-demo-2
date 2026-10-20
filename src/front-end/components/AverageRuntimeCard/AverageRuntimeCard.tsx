@@ -11,9 +11,7 @@ export function AverageRuntimeCard({
   return (
     <details className="genre-highlight">
       <summary>
-        <span className="genre-highlight-label">
-          Durée moyenne <span aria-hidden="true">↗</span>
-        </span>
+        <span className="genre-highlight-label">Durée moyenne</span>
         <p className="genre-highlight-value">
           {averageRuntime != null ? (
             <>

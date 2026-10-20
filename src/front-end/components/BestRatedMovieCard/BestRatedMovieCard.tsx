@@ -37,10 +37,7 @@ export function BestRatedMovieCard({
           </span>
         )}
         <div className="featured-movie-content">
-          <span className="genre-highlight-label">
-            Film le mieux noté
-            <span aria-hidden="true">↗</span>
-          </span>
+          <span className="genre-highlight-label">Film le mieux noté</span>
           {movie ? (
             <>
               <p className="genre-highlight-name">{movie.title}</p>

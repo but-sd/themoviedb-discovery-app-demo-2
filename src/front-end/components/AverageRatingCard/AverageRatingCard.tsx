@@ -11,9 +11,7 @@ export function AverageRatingCard({
   return (
     <details className="genre-highlight">
       <summary>
-        <span className="genre-highlight-label">
-          Note moyenne <span aria-hidden="true">☆</span>
-        </span>
+        <span className="genre-highlight-label">Note moyenne</span>
         <p className="genre-highlight-value">
           {averageRating != null ? (
             <>

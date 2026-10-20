@@ -14,9 +14,7 @@ export function MoviesInDatabaseCard({
   return (
     <details className="genre-highlight">
       <summary>
-        <span className="genre-highlight-label">
-          Films en base <span aria-hidden="true">↗</span>
-        </span>
+        <span className="genre-highlight-label">Films en base</span>
         <p className="genre-highlight-value">
           {movieCount.toLocaleString('fr-FR')} <span>films</span>
         </p>

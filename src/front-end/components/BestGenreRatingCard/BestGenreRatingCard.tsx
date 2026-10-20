@@ -18,9 +18,7 @@ export function BestGenreRatingCard({
   return (
     <details className="genre-highlight genre-highlight--rating">
       <summary>
-        <span className="genre-highlight-label">
-          Meilleure note <span aria-hidden="true">☆</span>
-        </span>
+        <span className="genre-highlight-label">Meilleure note</span>
         {highestRated.length ? (
           <>
             <p className="genre-highlight-name">

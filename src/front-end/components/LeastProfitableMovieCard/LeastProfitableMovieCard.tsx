@@ -37,10 +37,7 @@ export function LeastProfitableMovieCard({
           </span>
         )}
         <div className="featured-movie-content">
-          <span className="genre-highlight-label">
-            Film le moins rentable
-            <span aria-hidden="true">↗</span>
-          </span>
+          <span className="genre-highlight-label">Film le moins rentable</span>
           {movie ? (
             <>
               <p className="genre-highlight-name">{movie.title}</p>

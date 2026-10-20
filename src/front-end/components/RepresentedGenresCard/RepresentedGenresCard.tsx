@@ -13,9 +13,7 @@ export function RepresentedGenresCard({
   return (
     <details className="genre-highlight">
       <summary>
-        <span className="genre-highlight-label">
-          Genres représentés <span aria-hidden="true">↗</span>
-        </span>
+        <span className="genre-highlight-label">Genres représentés</span>
         <p className="genre-highlight-name">Diversité du catalogue</p>
         <p className="genre-highlight-value">
           {distribution.length.toLocaleString('fr-FR')} <span>genres</span>

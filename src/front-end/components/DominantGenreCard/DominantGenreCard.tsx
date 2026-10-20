@@ -18,9 +18,7 @@ export function DominantGenreCard({
   return (
     <details className="genre-highlight">
       <summary>
-        <span className="genre-highlight-label">
-          Genre dominant <span aria-hidden="true">↗</span>
-        </span>
+        <span className="genre-highlight-label">Genre dominant</span>
         {mostRepresented.length ? (
           <>
             <p className="genre-highlight-name">
