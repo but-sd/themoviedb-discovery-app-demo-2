@@ -98,6 +98,10 @@ statistiques et la date de collecte. La table `genres` contient les identifiants
 TMDB et les libellés français récupérés pendant la collecte.
 La table `movie_genres` relie les films aux genres avec une clé primaire
 composée et des clés étrangères ; un film peut avoir plusieurs genres.
+La table `production_countries` relie les films aux codes pays TMDB, sans
+dupliquer les libellés. La table `countries` associe chaque code ISO 3166-1
+alpha-2 à son libellé TMDB. Les pays de production et leurs libellés sont
+synchronisés lors de la collecte des détails du film.
 Les associations sont synchronisées à chaque collecte, dans la même transaction
 que les films et les libellés.
 Une nouvelle collecte met à jour les films existants, identifiés par leur ID

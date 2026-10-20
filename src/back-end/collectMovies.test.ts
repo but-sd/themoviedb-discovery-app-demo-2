@@ -12,9 +12,12 @@ vi.mock('./discover-movies', async (importOriginal) => ({
     { id: 12, name: 'Aventure' },
     { id: 18, name: 'Drame' },
   ]),
-  fetchMovieCollectionDetails: vi
-    .fn()
-    .mockResolvedValue({ runtime: 120, budget: 1000000, revenue: 2000000 }),
+  fetchMovieCollectionDetails: vi.fn().mockResolvedValue({
+    runtime: 120,
+    budget: 1000000,
+    revenue: 2000000,
+    productionCountries: [{ code: 'FR', name: 'France' }],
+  }),
 }));
 
 import { collectMovies } from './collectMovies';
@@ -110,6 +113,16 @@ describe('collectMovies', () => {
         budget: 1000000,
         revenue: 2000000,
       });
+      expect(
+        database
+          .prepare(`
+            SELECT production_countries.country_code, countries.name
+            FROM production_countries
+            JOIN countries ON countries.code = production_countries.country_code
+            WHERE production_countries.movie_id = 42
+          `)
+          .all(),
+      ).toEqual([{ country_code: 'FR', name: 'France' }]);
       expect(
         database
           .prepare(`

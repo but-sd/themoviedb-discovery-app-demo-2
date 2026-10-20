@@ -73,6 +73,12 @@ export type MovieCollectionDetails = {
   runtime: number | null;
   budget: number | null;
   revenue: number | null;
+  productionCountries: ProductionCountry[];
+};
+
+export type ProductionCountry = {
+  code: string;
+  name: string;
 };
 
 export type MovieHighlight = {

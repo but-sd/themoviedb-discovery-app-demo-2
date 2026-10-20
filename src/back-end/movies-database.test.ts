@@ -43,12 +43,60 @@ it('ranks profitability by ROI, excludes unknown amounts and breaks ties by id',
         2020,
         [],
         new Map([
-          [1, { runtime: null, budget: 200, revenue: 900 }],
-          [2, { runtime: null, budget: 10000, revenue: 20000 }],
-          [3, { runtime: null, budget: 1000, revenue: 250 }],
-          [4, { runtime: null, budget: null, revenue: 1000000 }],
-          [5, { runtime: null, budget: 1000000, revenue: null }],
-          [6, { runtime: null, budget: 400, revenue: 1800 }],
+          [
+            1,
+            {
+              runtime: null,
+              budget: 200,
+              revenue: 900,
+              productionCountries: [],
+            },
+          ],
+          [
+            2,
+            {
+              runtime: null,
+              budget: 10000,
+              revenue: 20000,
+              productionCountries: [],
+            },
+          ],
+          [
+            3,
+            {
+              runtime: null,
+              budget: 1000,
+              revenue: 250,
+              productionCountries: [],
+            },
+          ],
+          [
+            4,
+            {
+              runtime: null,
+              budget: null,
+              revenue: 1000000,
+              productionCountries: [],
+            },
+          ],
+          [
+            5,
+            {
+              runtime: null,
+              budget: 1000000,
+              revenue: null,
+              productionCountries: [],
+            },
+          ],
+          [
+            6,
+            {
+              runtime: null,
+              budget: 400,
+              revenue: 1800,
+              productionCountries: [],
+            },
+          ],
         ]),
       );
     } finally {
@@ -192,9 +240,33 @@ it('averages only known runtimes and updates them without duplicates', () => {
         2020,
         [],
         new Map([
-          [1, { runtime: 90, budget: 1000, revenue: 2000 }],
-          [2, { runtime: 150, budget: null, revenue: null }],
-          [3, { runtime: null, budget: null, revenue: null }],
+          [
+            1,
+            {
+              runtime: 90,
+              budget: 1000,
+              revenue: 2000,
+              productionCountries: [],
+            },
+          ],
+          [
+            2,
+            {
+              runtime: 150,
+              budget: null,
+              revenue: null,
+              productionCountries: [],
+            },
+          ],
+          [
+            3,
+            {
+              runtime: null,
+              budget: null,
+              revenue: null,
+              productionCountries: [],
+            },
+          ],
         ]),
       );
       expect(getCollectionSummary(path)).toMatchObject({
@@ -206,7 +278,17 @@ it('averages only known runtimes and updates them without duplicates', () => {
         [movie],
         2020,
         [],
-        new Map([[1, { runtime: 110, budget: 3000, revenue: 4000 }]]),
+        new Map([
+          [
+            1,
+            {
+              runtime: 110,
+              budget: 3000,
+              revenue: 4000,
+              productionCountries: [],
+            },
+          ],
+        ]),
       );
       expect(
         database
@@ -237,7 +319,17 @@ it('averages only known runtimes and updates them without duplicates', () => {
         [movie],
         2020,
         [],
-        new Map([[1, { runtime: null, budget: null, revenue: null }]]),
+        new Map([
+          [
+            1,
+            {
+              runtime: null,
+              budget: null,
+              revenue: null,
+              productionCountries: [],
+            },
+          ],
+        ]),
       );
       expect(
         database
@@ -369,6 +461,74 @@ it('synchronizes genre names and replaces associations without duplicates', () =
     expect(() =>
       database.prepare('INSERT INTO movie_genres VALUES (999, 18)').run(),
     ).toThrow();
+  } finally {
+    database.close();
+  }
+});
+
+it('normalizes production countries into code relations and labels', () => {
+  const database = createMoviesDatabase(':memory:');
+  try {
+    upsertMovies(
+      database,
+      [movie],
+      2020,
+      [],
+      new Map([
+        [
+          movie.id,
+          {
+            runtime: null,
+            budget: null,
+            revenue: null,
+            productionCountries: [
+              { code: 'FR', name: 'France' },
+              { code: 'US', name: 'United States of America' },
+            ],
+          },
+        ],
+      ]),
+    );
+    expect(
+      database
+        .prepare(
+          'SELECT movie_id, country_code FROM production_countries ORDER BY country_code',
+        )
+        .all(),
+    ).toEqual([
+      { movie_id: 1, country_code: 'FR' },
+      { movie_id: 1, country_code: 'US' },
+    ]);
+    expect(
+      database.prepare('SELECT * FROM countries ORDER BY code').all(),
+    ).toEqual([
+      { code: 'FR', name: 'France' },
+      { code: 'US', name: 'United States of America' },
+    ]);
+
+    upsertMovies(
+      database,
+      [movie],
+      2020,
+      [],
+      new Map([
+        [
+          movie.id,
+          {
+            runtime: null,
+            budget: null,
+            revenue: null,
+            productionCountries: [{ code: 'FR', name: 'France (TMDB)' }],
+          },
+        ],
+      ]),
+    );
+    expect(
+      database.prepare('SELECT country_code FROM production_countries').all(),
+    ).toEqual([{ country_code: 'FR' }]);
+    expect(
+      database.prepare('SELECT name FROM countries WHERE code = ?').get('FR'),
+    ).toEqual({ name: 'France (TMDB)' });
   } finally {
     database.close();
   }

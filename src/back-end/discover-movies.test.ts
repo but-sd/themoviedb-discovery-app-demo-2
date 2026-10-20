@@ -16,13 +16,19 @@ it.each([0, null])(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ runtime: 120, budget: amount, revenue: amount }),
+        json: async () => ({
+          runtime: 120,
+          budget: amount,
+          revenue: amount,
+          production_countries: [],
+        }),
       }),
     );
     expect(await fetchMovieCollectionDetails(42)).toEqual({
       runtime: 120,
       budget: null,
       revenue: null,
+      productionCountries: [],
     });
   },
 );
@@ -52,16 +58,72 @@ it.each([
     'fetch',
     vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ runtime, budget: 1000, revenue: 2000 }),
+      json: async () => ({
+        runtime,
+        budget: 1000,
+        revenue: 2000,
+        production_countries: [],
+      }),
     }),
   );
   expect(await fetchMovieCollectionDetails(42)).toEqual({
     runtime: expected,
     budget: 1000,
     revenue: 2000,
+    productionCountries: [],
   });
   expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('/movie/42');
 });
+
+it('extracts production country codes and labels from movie details', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        runtime: 120,
+        budget: 1000,
+        revenue: 2000,
+        production_countries: [
+          { iso_3166_1: 'FR', name: 'France' },
+          { iso_3166_1: 'US', name: 'United States of America' },
+        ],
+      }),
+    }),
+  );
+
+  await expect(fetchMovieCollectionDetails(42)).resolves.toMatchObject({
+    productionCountries: [
+      { code: 'FR', name: 'France' },
+      { code: 'US', name: 'United States of America' },
+    ],
+  });
+});
+
+it.each([
+  undefined,
+  [{ iso_3166_1: 'FRA', name: 'France' }],
+  [{ iso_3166_1: 'FR', name: '' }],
+])(
+  'rejects invalid production country data %s',
+  async (production_countries) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          runtime: 120,
+          budget: 1000,
+          revenue: 2000,
+          production_countries,
+        }),
+      }),
+    );
+    await expect(fetchMovieCollectionDetails(42)).rejects.toThrow(
+      'production countries',
+    );
+  },
+);
 
 it('rejects invalid runtime responses', async () => {
   vi.stubGlobal(

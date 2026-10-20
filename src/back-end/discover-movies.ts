@@ -3,6 +3,7 @@ import { tmdbAccessToken } from './config';
 import type {
   MoviesApiResponse,
   MovieCollectionDetails,
+  ProductionCountry,
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 import { toSupportedMovie } from './utils';
@@ -115,9 +116,36 @@ export async function fetchMovieCollectionDetails(
       `TMDB returned invalid financial data for movie ${movieId}.`,
     );
   }
+  if (
+    !('production_countries' in data) ||
+    !Array.isArray(data.production_countries)
+  ) {
+    throw new Error(
+      `TMDB returned invalid production countries for movie ${movieId}.`,
+    );
+  }
+  const productionCountries: ProductionCountry[] =
+    data.production_countries.map((country: unknown) => {
+      if (
+        typeof country !== 'object' ||
+        country === null ||
+        !('iso_3166_1' in country) ||
+        typeof country.iso_3166_1 !== 'string' ||
+        !/^[A-Z]{2}$/.test(country.iso_3166_1) ||
+        !('name' in country) ||
+        typeof country.name !== 'string' ||
+        country.name.trim() === ''
+      ) {
+        throw new Error(
+          `TMDB returned invalid production countries for movie ${movieId}.`,
+        );
+      }
+      return { code: country.iso_3166_1, name: country.name };
+    });
   return {
     runtime: data.runtime === 0 ? null : data.runtime,
     budget: budget === 0 ? null : budget,
     revenue: revenue === 0 ? null : revenue,
+    productionCountries,
   };
 }

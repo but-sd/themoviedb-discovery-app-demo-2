@@ -196,6 +196,15 @@ export function createMoviesDatabase(
         PRIMARY KEY (movie_id, genre_id)
       );
       CREATE INDEX IF NOT EXISTS movie_genres_genre_id ON movie_genres(genre_id);
+      CREATE TABLE IF NOT EXISTS countries (
+        code TEXT PRIMARY KEY,
+        name TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS production_countries (
+        movie_id INTEGER NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
+        country_code TEXT NOT NULL REFERENCES countries(code),
+        PRIMARY KEY (movie_id, country_code)
+      );
       CREATE TABLE IF NOT EXISTS collection_years (
         year INTEGER PRIMARY KEY,
         collected_at TEXT NOT NULL
@@ -282,6 +291,16 @@ export function upsertMovies(
     const insertLink = database.prepare(
       'INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?, ?)',
     );
+    const upsertCountry = database.prepare(`
+      INSERT INTO countries (code, name) VALUES (?, ?)
+      ON CONFLICT(code) DO UPDATE SET name = excluded.name
+    `);
+    const deleteProductionCountries = database.prepare(
+      'DELETE FROM production_countries WHERE movie_id = ?',
+    );
+    const insertProductionCountry = database.prepare(
+      'INSERT OR IGNORE INTO production_countries (movie_id, country_code) VALUES (?, ?)',
+    );
     const collectedAt = new Date().toISOString();
     for (const movie of movies) {
       insert.run(
@@ -309,6 +328,14 @@ export function upsertMovies(
       for (const genreId of movie.genre_ids) {
         ensureGenre.run(genreId);
         insertLink.run(movie.id, genreId);
+      }
+      if (details.has(movie.id)) {
+        deleteProductionCountries.run(movie.id);
+        for (const country of details.get(movie.id)?.productionCountries ??
+          []) {
+          upsertCountry.run(country.code, country.name);
+          insertProductionCountry.run(movie.id, country.code);
+        }
       }
     }
     database
