@@ -9,7 +9,7 @@ export function AverageRatingCard({
   averageRating: number | null | undefined;
 }>) {
   return (
-    <details className="genre-highlight">
+    <details className="genre-highlight" aria-label="Note moyenne des films">
       <summary>
         <span className="genre-highlight-label">Note moyenne</span>
         <p className="genre-highlight-value">

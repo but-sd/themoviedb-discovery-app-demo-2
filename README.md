@@ -29,6 +29,21 @@ Ne pas renseigner `title` dans la configuration : Storybook le déduit du chemin
 relatif à `src/front-end/components`, par exemple
 `discovery/AverageRatingCard`.
 
+### Vérification de l’accessibilité
+
+L’addon Accessibility analyse automatiquement chaque story affichée avec
+`axe-core`. Le panneau **Accessibility** présente les violations, les règles
+respectées et les points à vérifier manuellement. Il permet aussi de mettre
+en évidence les éléments concernés ; la barre d’outils propose des simulations
+de déficiences visuelles.
+
+La configuration globale `a11y.test: 'error'` définit les violations comme des
+échecs pour une future intégration du runner de tests Storybook. Actuellement,
+les contrôles s’effectuent dans Storybook : `npm test` exécute les tests unitaires,
+pas les audits d’accessibilité, et `npm run build-storybook` ne les exécute pas.
+Ces contrôles automatisés ne remplacent pas une vérification au clavier et
+avec un lecteur d’écran.
+
 ## Collecte de films
 
 La collecte enregistre aussi `movies.budget` et `movies.revenue` en dollars US,

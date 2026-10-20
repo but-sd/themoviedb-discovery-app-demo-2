@@ -14,3 +14,6 @@ export const Default: Story = {};
 
 // Histoire affichant l'état où la note moyenne n'est pas disponible.
 export const Unavailable: Story = { args: { averageRating: null } };
+
+// Histoire affichant la note moyenne avec une décimale lorsque la valeur le permet.
+export const OneDecimal: Story = { args: { averageRating: 7.2 } };

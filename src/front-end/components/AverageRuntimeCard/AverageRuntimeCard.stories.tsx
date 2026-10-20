@@ -10,4 +10,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
-export const Unavailable: Story = { args: { averageRuntime: null } };
+export const AverageRuntimeUnavailable: Story = {
+  args: { averageRuntime: null },
+};

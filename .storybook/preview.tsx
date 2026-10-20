@@ -9,6 +9,9 @@ const preview: Preview = {
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
+    a11y: {
+      test: 'error',
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,
