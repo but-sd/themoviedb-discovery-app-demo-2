@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BestWeightedGenreRatingCard } from './BestWeightedGenreRatingCard';
 
 const meta = {
-  title: 'Genres/Meilleure note pondérée',
   component: BestWeightedGenreRatingCard,
   args: {
     ratings: [

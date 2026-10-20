@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RepresentedGenresCard } from './RepresentedGenresCard';
 
 const meta = {
-  title: 'Genres/Genres représentés',
   component: RepresentedGenresCard,
   args: {
     distribution: [

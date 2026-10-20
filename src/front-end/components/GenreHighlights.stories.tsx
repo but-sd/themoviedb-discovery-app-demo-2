@@ -3,7 +3,6 @@ import { genres, movieHighlight } from '../stories/fixtures';
 import { GenreHighlightCards } from './GenreHighlights';
 
 const meta = {
-  title: 'Exploration/Tableau de bord',
   component: GenreHighlightCards,
   args: {
     distribution: genres,

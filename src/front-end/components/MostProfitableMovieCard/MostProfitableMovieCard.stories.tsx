@@ -3,7 +3,6 @@ import { movieHighlight } from '../../stories/fixtures';
 import { MostProfitableMovieCard } from './MostProfitableMovieCard';
 
 const meta = {
-  title: 'Films/Film le plus rentable',
   component: MostProfitableMovieCard,
   args: { movie: movieHighlight },
 } satisfies Meta<typeof MostProfitableMovieCard>;

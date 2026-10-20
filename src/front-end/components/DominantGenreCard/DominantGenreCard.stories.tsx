@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { DominantGenreCard } from './DominantGenreCard';
 
 const meta = {
-  title: 'Genres/Genre dominant',
   component: DominantGenreCard,
   args: {
     distribution: [

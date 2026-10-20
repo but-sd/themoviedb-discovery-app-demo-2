@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TopProductionCountryCard } from './TopProductionCountryCard';
 
 const meta = {
-  title: 'Catalogue/Pays le plus représenté',
   component: TopProductionCountryCard,
   args: { country: { code: 'FR', name: 'France', movieCount: 1234 } },
 } satisfies Meta<typeof TopProductionCountryCard>;

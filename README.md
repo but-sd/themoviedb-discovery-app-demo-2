@@ -25,6 +25,9 @@ Les données fictives partagées se trouvent dans
 `src/front-end/stories/fixtures.ts`. Pour ajouter une story, exporter une
 configuration `Meta` et des états `StoryObj` depuis `@storybook/react-vite`,
 en suivant les fichiers existants.
+Ne pas renseigner `title` dans la configuration : Storybook le déduit du chemin
+relatif à `src/front-end/components`, par exemple
+`discovery/AverageRatingCard`.
 
 ## Collecte de films
 

@@ -3,7 +3,6 @@ import { movieHighlight } from '../../stories/fixtures';
 import { LeastProfitableMovieCard } from './LeastProfitableMovieCard';
 
 const meta = {
-  title: 'Films/Film le moins rentable',
   component: LeastProfitableMovieCard,
   args: {
     movie: { ...movieHighlight, revenue: 250000, returnOnInvestment: -75 },

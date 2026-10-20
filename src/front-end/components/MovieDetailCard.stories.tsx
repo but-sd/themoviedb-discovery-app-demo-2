@@ -3,7 +3,6 @@ import { movieDetails } from '../stories/fixtures';
 import MovieDetailCard from './MovieDetailCard';
 
 const meta = {
-  title: 'Films/Fiche du film',
   component: MovieDetailCard,
   args: { movie: movieDetails },
 } satisfies Meta<typeof MovieDetailCard>;

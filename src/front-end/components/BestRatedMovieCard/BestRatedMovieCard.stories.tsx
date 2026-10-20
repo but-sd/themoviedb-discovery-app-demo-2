@@ -3,7 +3,6 @@ import { movieHighlight } from '../../stories/fixtures';
 import { BestRatedMovieCard } from './BestRatedMovieCard';
 
 const meta = {
-  title: 'Films/Film le mieux noté',
   component: BestRatedMovieCard,
   args: { movie: movieHighlight },
 } satisfies Meta<typeof BestRatedMovieCard>;

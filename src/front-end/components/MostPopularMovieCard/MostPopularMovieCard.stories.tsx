@@ -3,7 +3,6 @@ import { movieHighlight } from '../../stories/fixtures';
 import { MostPopularMovieCard } from './MostPopularMovieCard';
 
 const meta = {
-  title: 'Films/Film le plus populaire',
   component: MostPopularMovieCard,
   args: { movie: movieHighlight },
 } satisfies Meta<typeof MostPopularMovieCard>;
