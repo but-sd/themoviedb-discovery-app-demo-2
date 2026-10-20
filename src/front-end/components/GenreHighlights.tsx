@@ -13,9 +13,9 @@ import { DominantGenreCard } from './DominantGenreCard/DominantGenreCard';
 import { LeastProfitableMovieCard } from './LeastProfitableMovieCard/LeastProfitableMovieCard';
 import { MostPopularMovieCard } from './MostPopularMovieCard/MostPopularMovieCard';
 import { MostProfitableMovieCard } from './MostProfitableMovieCard/MostProfitableMovieCard';
-import { MoviesInDatabaseCard } from './MoviesInDatabaseCard/MoviesInDatabaseCard';
+import { MoviesInDatabaseCard } from './discovery/MoviesInDatabaseCard/MoviesInDatabaseCard';
 import { RepresentedGenresCard } from './RepresentedGenresCard/RepresentedGenresCard';
-import { TopProductionCountryCard } from './TopProductionCountryCard/TopProductionCountryCard';
+import { TopProductionCountryCard } from './discovery/TopProductionCountryCard/TopProductionCountryCard';
 
 export function GenreHighlightCards({
   distribution,

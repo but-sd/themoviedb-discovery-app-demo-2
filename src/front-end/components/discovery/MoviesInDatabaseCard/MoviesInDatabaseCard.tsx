@@ -1,8 +1,8 @@
 /**
- * Card displaying the number of movies in the database and the collected year range.
- * @param movieCount The number of movies in the database.
- * @param years The array of collected years.
- * @returns A JSX element representing the movies in database card.
+ * Carte affichant le nombre de films dans la base de données et la plage d'années collectées.
+ * @param movieCount Le nombre de films dans la base de données.
+ * @param years Le tableau des années collectées.
+ * @returns Un élément JSX représentant la carte des films en base.
  */
 export function MoviesInDatabaseCard({
   movieCount,

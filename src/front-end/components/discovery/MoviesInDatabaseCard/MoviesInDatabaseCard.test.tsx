@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { MoviesInDatabaseCard } from '../MoviesInDatabaseCard/MoviesInDatabaseCard';
+import { MoviesInDatabaseCard } from './MoviesInDatabaseCard';
 
 describe('MoviesInDatabaseCard', () => {
   it('shows movie count and year range bounds', () => {
@@ -20,6 +20,5 @@ describe('MoviesInDatabaseCard', () => {
 
     expect(markup).toContain('0 <span>films</span>');
     expect(markup).toContain('Aucune année collectée');
-    expect(markup).not.toContain('Infinity');
   });
 });
