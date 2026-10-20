@@ -1,5 +1,10 @@
-import type { ProductionCountryHighlight } from '../../../back-end/schemas/MoviesTypes';
+import { ProductionCountryHighlight } from '../../../../back-end/schemas/MoviesTypes';
 
+/**
+ * Carte affichant le pays de production le plus représenté dans la base de données.
+ * @param country Le pays de production le plus représenté, ou null si aucun pays n'est disponible.
+ * @returns Un élément JSX représentant la carte du pays de production le plus représenté.
+ */
 export function TopProductionCountryCard({
   country,
 }: Readonly<{
