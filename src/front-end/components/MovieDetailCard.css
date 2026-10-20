@@ -77,7 +77,8 @@
 }
 
 .movie-detail-meta div,
-.movie-detail-genres li {
+.movie-detail-genres li,
+.movie-detail-countries li {
   padding: 8px 12px;
   border-radius: 999px;
   background: var(--surface-muted);
@@ -89,7 +90,8 @@
   color: var(--ink-strong);
 }
 
-.movie-detail-genres {
+.movie-detail-genres,
+.movie-detail-countries {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;

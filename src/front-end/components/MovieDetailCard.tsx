@@ -52,6 +52,16 @@ export default function MovieDetailCard({ movie }: { movie: MovieDetails }) {
             </ul>
           </section>
         )}
+        {movie.production_countries.length > 0 && (
+          <section className="movie-detail-section">
+            <h2>Pays de production</h2>
+            <ul className="movie-detail-countries">
+              {movie.production_countries.map((country) => (
+                <li key={country.iso_3166_1}>{country.name}</li>
+              ))}
+            </ul>
+          </section>
+        )}
         <section className="movie-detail-section">
           <h2>Résumé</h2>
           <p>{movie.overview}</p>
