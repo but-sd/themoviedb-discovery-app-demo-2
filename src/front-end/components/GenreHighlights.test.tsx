@@ -87,7 +87,6 @@ it('shows the best rated and most popular films in the film panel', () => {
   expect(markup.match(/class="featured-movie-poster"/g)).toHaveLength(2);
   expect(markup).toContain('https://image.tmdb.org/t/p/w185/poster.jpg');
   expect(markup).toContain('class="catalog-metrics"');
-  expect(markup).toContain('Films à la une');
 });
 
 it('shows the global average rating and number of rated films', () => {

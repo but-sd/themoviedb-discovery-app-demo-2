@@ -60,8 +60,8 @@ export function GenreHighlightCards({
               ▤
             </span>
             <div>
-              <h2>Votre catalogue en un coup d’œil</h2>
-              <p>Les chiffres essentiels, tous films confondus</p>
+              <h2>Films</h2>
+              <p>Les films qui se distinguent dans votre catalogue</p>
             </div>
           </header>
           <div className="catalog-metrics">
@@ -76,12 +76,6 @@ export function GenreHighlightCards({
             className="featured-movies"
             aria-labelledby="featured-movies-title"
           >
-            <header className="highlight-group-header">
-              <div>
-                <h2 id="featured-movies-title">Films à la une</h2>
-                <p>Les films qui se distinguent dans votre catalogue</p>
-              </div>
-            </header>
             <div className="featured-movies-grid">
               <BestRatedMovieCard movie={summary.bestRatedMovie} />
               <MostPopularMovieCard movie={summary.mostPopularMovie} />
