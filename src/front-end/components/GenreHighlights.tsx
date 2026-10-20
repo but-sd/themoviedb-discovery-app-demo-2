@@ -6,7 +6,11 @@ import type {
 } from '../../back-end/schemas/MoviesTypes';
 import { AverageRatingCard } from './AverageRatingCard/AverageRatingCard';
 import { AverageRuntimeCard } from './AverageRuntimeCard/AverageRuntimeCard';
+import { BestGenreRatingCard } from './BestGenreRatingCard/BestGenreRatingCard';
+import { BestWeightedGenreRatingCard } from './BestWeightedGenreRatingCard/BestWeightedGenreRatingCard';
+import { DominantGenreCard } from './DominantGenreCard/DominantGenreCard';
 import { MoviesInDatabaseCard } from './MoviesInDatabaseCard/MoviesInDatabaseCard';
+import { RepresentedGenresCard } from './RepresentedGenresCard/RepresentedGenresCard';
 
 export function GenreHighlightCards({
   distribution,
@@ -17,21 +21,6 @@ export function GenreHighlightCards({
   ratings: GenreRating[];
   summary?: CollectionSummary | null;
 }) {
-  const maxCount = Math.max(...distribution.map((genre) => genre.movieCount));
-  const maxRating = Math.max(...ratings.map((genre) => genre.averageRating));
-  const maxWeightedRating = Math.max(
-    ...ratings.map((genre) => genre.weightedAverageRating),
-  );
-  const highestWeightedRated = ratings.filter(
-    (genre) => genre.weightedAverageRating === maxWeightedRating,
-  );
-  const mostRepresented = distribution.filter(
-    (genre) => genre.movieCount === maxCount,
-  );
-  const highestRated = ratings.filter(
-    (genre) => genre.averageRating === maxRating,
-  );
-
   return (
     <section
       className="genre-highlights"
@@ -51,96 +40,10 @@ export function GenreHighlightCards({
           </div>
         </header>
         <div className="highlight-group-cards">
-          <details className="genre-highlight">
-            <summary>
-              <span className="genre-highlight-label">
-                Genres représentés <span aria-hidden="true">↗</span>
-              </span>
-              <p className="genre-highlight-name">Diversité du catalogue</p>
-              <p className="genre-highlight-value">
-                {distribution.length.toLocaleString('fr-FR')}{' '}
-                <span>genres</span>
-              </p>
-            </summary>
-          </details>
-          <details className="genre-highlight">
-            <summary>
-              <span className="genre-highlight-label">
-                Genre dominant <span aria-hidden="true">↗</span>
-              </span>
-              {mostRepresented.length ? (
-                <>
-                  <p className="genre-highlight-name">
-                    {mostRepresented[0].name}
-                    {mostRepresented.length > 1 && (
-                      <span className="genre-highlight-badge">
-                        +{mostRepresented.length - 1}
-                      </span>
-                    )}
-                  </p>
-                  <p className="genre-highlight-value">
-                    {maxCount.toLocaleString('fr-FR')} <span>films</span>
-                  </p>
-                </>
-              ) : (
-                <p>Aucun genre disponible.</p>
-              )}
-            </summary>
-          </details>
-          <details className="genre-highlight genre-highlight--rating">
-            <summary>
-              <span className="genre-highlight-label">
-                Meilleure note <span aria-hidden="true">☆</span>
-              </span>
-              {highestRated.length ? (
-                <>
-                  <p className="genre-highlight-name">
-                    {highestRated[0].name}
-                    {highestRated.length > 1 && (
-                      <span className="genre-highlight-badge">
-                        +{highestRated.length - 1}
-                      </span>
-                    )}
-                  </p>
-                  <p className="genre-highlight-value">
-                    {maxRating.toLocaleString('fr-FR', {
-                      maximumFractionDigits: 2,
-                    })}{' '}
-                    <span>/ 10</span>
-                  </p>
-                </>
-              ) : (
-                <p>Aucun film noté disponible.</p>
-              )}
-            </summary>
-          </details>
-          <details className="genre-highlight genre-highlight--rating">
-            <summary>
-              <span className="genre-highlight-label">
-                Meilleure note pondérée <span aria-hidden="true">☆</span>
-              </span>
-              {highestWeightedRated.length ? (
-                <>
-                  <p className="genre-highlight-name">
-                    {highestWeightedRated[0].name}
-                    {highestWeightedRated.length > 1 && (
-                      <span className="genre-highlight-badge">
-                        +{highestWeightedRated.length - 1}
-                      </span>
-                    )}
-                  </p>
-                  <p className="genre-highlight-value">
-                    {maxWeightedRating.toLocaleString('fr-FR', {
-                      maximumFractionDigits: 2,
-                    })}{' '}
-                    <span>/ 10</span>
-                  </p>
-                </>
-              ) : (
-                <p>Aucun film noté disponible.</p>
-              )}
-            </summary>
-          </details>
+          <RepresentedGenresCard distribution={distribution} />
+          <DominantGenreCard distribution={distribution} />
+          <BestGenreRatingCard ratings={ratings} />
+          <BestWeightedGenreRatingCard ratings={ratings} />
         </div>
       </section>
       {summary && (
