@@ -40,4 +40,24 @@ describe('MovieDetailCard', () => {
 
     expect(markup).not.toContain('Pays de production');
   });
+
+  it('uses a subordinate title and French rating with an explicit scale', () => {
+    const markup = renderToStaticMarkup(<MovieDetailCard movie={movie} />);
+    expect(markup).toContain(
+      '<h2 class="movie-detail-title">Film de test</h2>',
+    );
+    expect(markup).not.toContain('<h1');
+    expect(markup).toContain('7,5 / 10');
+    expect(markup).toContain('<h3>Pays de production</h3>');
+  });
+
+  it('does not present missing metadata or an unrated film as known values', () => {
+    const markup = renderToStaticMarkup(
+      <MovieDetailCard
+        movie={{ ...movie, release_date: '', overview: '', vote_count: 0 }}
+      />,
+    );
+    expect(markup.match(/Non disponible/g)).toHaveLength(2);
+    expect(markup).toContain('Aucun résumé disponible.');
+  });
 });

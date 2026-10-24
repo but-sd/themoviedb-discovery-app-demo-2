@@ -36,11 +36,13 @@ export default function MovieRatingDistributionPage() {
   return (
     <main className="app-shell">
       <Link to="/exploration">Retour à l’exploration des données</Link>
-      <h1>Exploration des notes des films</h1>
-      <p>
-        Répartition des films en base par note et évolution de leur note moyenne
-        selon l’année de sortie.
-      </p>
+      <header className="app-header">
+        <h1>Exploration des notes des films</h1>
+        <p>
+          Répartition des films en base par note et évolution de leur note
+          moyenne selon l’année de sortie.
+        </p>
+      </header>
       {error ? <p role="alert">{error}</p> : content}
     </main>
   );

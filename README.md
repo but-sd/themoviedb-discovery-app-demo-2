@@ -112,8 +112,9 @@ séparément, sans être inclus dans les tranches, comme pour le calcul de la mo
 La collecte enregistre aussi `movies.budget` et `movies.revenue` en dollars US,
 depuis la même requête de détails TMDB que la durée. Les montants à zéro ou
 non renseignés sont stockés à `NULL` (inconnus, pas des budgets ou recettes nuls).
-Les valeurs sont actualisées à chaque collecte. Ces colonnes nécessitent une
-nouvelle base ; aucune migration n'est effectuée.
+Les valeurs sont actualisées à chaque collecte. Les colonnes optionnelles
+manquantes (`runtime_minutes`, `budget`, `revenue`) sont ajoutées à l’ouverture
+d’une base existante ; une nouvelle collecte renseigne les valeurs manquantes.
 
 La page d’exploration présente le film le plus rentable et le moins rentable
 selon le retour sur investissement : `(revenue - budget) / budget × 100`.
@@ -123,44 +124,41 @@ Les cartes affichent le ROI en pourcentage et détaillent les montants en dollar
 Cet indicateur ne tient compte ni du marketing, ni des frais de distribution,
 ni du partage des recettes.
 
-La vue d'exploration adopte un dashboard cinéma : trois chiffres clés en tête,
-deux films à la une avec leurs affiches TMDB (ou un visuel de remplacement),
-puis les quatre indicateurs de genres. La disposition s'adapte au mobile,
-sans graphiques ; les explications restent accessibles au survol et au clavier.
+La vue d’exploration affiche quatre indicateurs de catalogue, quatre films à la
+une avec leurs affiches TMDB (ou un visuel de remplacement), puis quatre cartes
+de genres. Les cartes d’indicateurs ouvrent leurs graphiques ; les cartes de
+films ouvrent leur fiche. La disposition s’adapte au mobile et les liens sont
+accessibles au clavier, sans informations réservées au survol.
 
 Le panneau Films affiche aussi le **Film le mieux noté** (au moins 100 votes)
 et le **Film le plus populaire** selon le score TMDB lors de la collecte.
 Les égalités sont départagées par le nombre de votes puis l'identifiant TMDB.
-Le survol précise l'année, la note et le nombre de votes.
+Les fiches sont consultables depuis la totalité des cartes.
 
 Le panneau Genres inclut une vignette **Meilleure note pondérée**, en complément
 de la moyenne simple : `SUM(note × nombre de votes) / SUM(nombre de votes)`.
-Les films sans vote sont exclus ; les détails et les ex æquo sont accessibles
-au survol, au clavier ou au toucher.
+Les films sans vote sont exclus. En cas d’égalité, les cartes affichent un genre
+et un badge indiquant le nombre d’autres genres à égalité ; les graphiques
+permettent de consulter tous les genres.
 
 La carte **Note moyenne** du panneau Films présente la moyenne arithmétique
 des notes des films ayant au moins un vote, sur 10, sans pondération.
 Chaque film est compté une seule fois, indépendamment de ses genres.
-Le nombre de films notés est précisé au survol.
+Le graphique des moyennes annuelles précise le nombre de films notés par année.
 
 Une carte **Durée moyenne** dans le panneau Films affiche la durée moyenne
-en minutes, arrondie, des films ayant une durée connue. Le survol indique
-le nombre de films pris en compte. La collecte récupère désormais les détails
+en minutes, arrondie, des films ayant une durée connue. Le graphique distingue
+les durées inconnues. La collecte récupère les détails
 TMDB de chaque film pour enregistrer sa durée dans `movies.runtime_minutes`.
 Une nouvelle collecte enrichit les films existants ; sans durée renseignée,
 la carte indique « Non disponible ». Les durées nulles ou égales à zéro
 sont exclues du calcul. Cette récupération ajoute une requête par film.
-Ce schéma nécessite une nouvelle base ; aucune migration de l'ancienne table
-de durées n'est effectuée.
+Les colonnes optionnelles manquantes sont ajoutées automatiquement ; les données
+d’une éventuelle ancienne table de durées ne sont pas reprises automatiquement.
 
-La page d'exploration affiche quatre cartes de synthèse : le nombre de films en base
-avec les années de début et de fin de collecte, le nombre de genres représentés,
-le genre le plus représenté
-avec son nombre de films et le genre ayant la meilleure moyenne non pondérée
-(films sans vote exclus). Elles affichent tous les ex æquo et sont actualisées
-après la collecte.
-Les cartes affichent uniquement le genre et sa valeur ; les explications et
-les ex æquo apparaissent au survol, au focus clavier ou en touchant la carte.
+La carte Films en base indique les bornes des années présentes ou collectées,
+sans présumer une couverture continue. Après une collecte, rouvrir l’exploration
+permet de charger les indicateurs actualisés.
 Les indicateurs sont regroupés dans deux panneaux : **Films** pour la couverture
 du catalogue et **Genres** pour la diversité, le genre dominant et la meilleure note.
 

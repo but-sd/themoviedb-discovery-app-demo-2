@@ -60,7 +60,7 @@ export default function AboutPage() {
           <h2 id="about-repository-title">Voir la réalisation du projet</h2>
         </div>
         <a
-          href="https://github.com/alex1dregirard/themoviedb-discovery-app-demo-2026-2027"
+          href="https://github.com/but-sd/themoviedb-discovery-app-demo-2"
           target="_blank"
           rel="noopener noreferrer"
         >

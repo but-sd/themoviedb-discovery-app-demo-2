@@ -70,6 +70,10 @@
   color: var(--text-muted);
 }
 
+.genre-distribution details {
+  overflow-x: auto;
+}
+
 .genre-distribution table {
   width: 100%;
   margin-top: 16px;
@@ -109,10 +113,6 @@
 .highlight-group {
   min-width: 0;
   padding: 0;
-}
-
-.highlight-group--movies {
-  order: -1;
 }
 
 .highlight-group-header {

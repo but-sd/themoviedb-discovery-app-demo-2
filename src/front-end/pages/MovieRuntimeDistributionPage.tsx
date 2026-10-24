@@ -36,12 +36,14 @@ export default function MovieRuntimeDistributionPage() {
   return (
     <main className="app-shell">
       <Link to="/exploration">Retour à l’exploration des données</Link>
-      <h1>Répartition des films par durée</h1>
-      <p>
-        Films présents dans la base, regroupés par durée en heures. Chaque film
-        est compté une seule fois. Les durées inconnues sont affichées
-        séparément.
-      </p>
+      <header className="app-header">
+        <h1>Répartition des films par durée</h1>
+        <p>
+          Films présents dans la base, regroupés par durée en heures. Chaque
+          film est compté une seule fois. Les durées inconnues sont affichées
+          séparément.
+        </p>
+      </header>
       {error ? <p role="alert">{error}</p> : content}
     </main>
   );

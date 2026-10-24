@@ -12,18 +12,43 @@
 
 .app-header h1 {
   margin: 0 0 6px;
-  font-size: 2.6rem;
+  color: var(--heading);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.15;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
-.app-header h2 {
+.app-header h2,
+.app-header > p {
   margin: 0;
   color: var(--text-muted);
   font-size: 1.08rem;
   font-weight: 400;
   line-height: 1.45;
+}
+
+.app-shell > a + .app-header {
+  margin-top: 20px;
+}
+
+.app-shell a:not([class]),
+.back-link {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.app-shell a:focus-visible,
+.genre-chart-selector select:focus-visible,
+.genre-distribution summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.genre-distribution summary {
+  cursor: pointer;
+  padding: 10px 0;
 }
 
 /* Movie grid */
@@ -55,7 +80,7 @@
 }
 
 .movie-card-link:focus-visible {
-  outline: 3px solid #2f6f95;
+  outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
 

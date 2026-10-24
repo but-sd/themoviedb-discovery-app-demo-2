@@ -1,20 +1,21 @@
 import { Link } from 'react-router';
-import { Movie } from '../../back-end/schemas/MoviesTypes';
+import type { Movie } from '../../back-end/schemas/MoviesTypes';
 
 type MovieItemProps = {
   movie: Movie;
 };
 
 export default function MovieItem({ movie }: MovieItemProps) {
-  const releaseYear = movie.release_date.slice(0, 4);
+  const releaseYear = movie.release_date.slice(0, 4) || 'Année inconnue';
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w185${movie.poster_path}`
     : null;
-  const rating = movie.vote_average.toFixed(1);
+  const rating = movie.vote_average.toLocaleString('fr-FR', {
+    maximumFractionDigits: 2,
+  });
 
   return (
     <Link to={`/movies/${movie.id}`} className="movie-card-link">
-      {/* <a href={`/movies/${movie.id}`} className="movie-card-link"> */}
       <div className="movie-card">
         {posterUrl ? (
           <img
@@ -23,16 +24,19 @@ export default function MovieItem({ movie }: MovieItemProps) {
             alt={`Affiche de ${movie.title}`}
           />
         ) : (
-          <div />
+          <div
+            className="movie-poster movie-poster--fallback"
+            aria-hidden="true"
+          />
         )}
         <div className="movie-card__content">
           <h2>{movie.title}</h2>
           <p>
-            {releaseYear} · Note {rating}
+            {releaseYear} ·{' '}
+            {movie.vote_count > 0 ? `Note ${rating} / 10` : 'Non noté'}
           </p>
         </div>
       </div>
-      {/* </a> */}
     </Link>
   );
 }

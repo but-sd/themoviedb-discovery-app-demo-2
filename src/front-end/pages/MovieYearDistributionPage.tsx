@@ -37,11 +37,14 @@ export default function MovieYearDistributionPage() {
   return (
     <main className="app-shell">
       <Link to="/exploration">Retour à l’exploration des données</Link>
-      <h1>Répartition des films par année de sortie</h1>
-      <p>
-        Films présents dans la base, regroupés par année de sortie. Chaque film
-        est compté une seule fois ; les années sans film ne sont pas affichées.
-      </p>
+      <header className="app-header">
+        <h1>Répartition des films par année de sortie</h1>
+        <p>
+          Films présents dans la base, regroupés par année de sortie. Chaque
+          film est compté une seule fois ; les années sans film ne sont pas
+          affichées.
+        </p>
+      </header>
       {error ? <p role="alert">{error}</p> : distributionContent}
     </main>
   );

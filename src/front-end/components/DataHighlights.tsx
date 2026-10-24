@@ -31,26 +31,6 @@ export function DataHighlightCards({
       className="genre-highlights"
       aria-label="Vue d’ensemble du catalogue"
     >
-      <section
-        className="highlight-group highlight-group--genres"
-        aria-label="Indicateurs des genres"
-      >
-        <header className="highlight-group-header">
-          <span className="highlight-group-icon" aria-hidden="true">
-            ◈
-          </span>
-          <div>
-            <h2>Genres</h2>
-            <p>Les tendances de votre catalogue</p>
-          </div>
-        </header>
-        <div className="highlight-group-cards">
-          <RepresentedGenresCard distribution={distribution} />
-          <DominantGenreCard distribution={distribution} />
-          <BestGenreRatingCard ratings={ratings} />
-          <BestWeightedGenreRatingCard ratings={ratings} />
-        </div>
-      </section>
       {summary && (
         <section
           className="highlight-group highlight-group--movies"
@@ -74,10 +54,7 @@ export function DataHighlightCards({
             <AverageRatingCard averageRating={summary.averageRating} />
             <TopProductionCountryCard country={summary.topProductionCountry} />
           </div>
-          <section
-            className="featured-movies"
-            aria-labelledby="featured-movies-title"
-          >
+          <section className="featured-movies" aria-label="Films à la une">
             <div className="featured-movies-grid">
               <BestRatedMovieCard movie={summary.bestRatedMovie} />
               <MostPopularMovieCard movie={summary.mostPopularMovie} />
@@ -87,6 +64,26 @@ export function DataHighlightCards({
           </section>
         </section>
       )}
+      <section
+        className="highlight-group highlight-group--genres"
+        aria-label="Indicateurs des genres"
+      >
+        <header className="highlight-group-header">
+          <span className="highlight-group-icon" aria-hidden="true">
+            ◈
+          </span>
+          <div>
+            <h2>Genres</h2>
+            <p>Les tendances de votre catalogue</p>
+          </div>
+        </header>
+        <div className="highlight-group-cards">
+          <RepresentedGenresCard distribution={distribution} />
+          <DominantGenreCard distribution={distribution} />
+          <BestGenreRatingCard ratings={ratings} />
+          <BestWeightedGenreRatingCard ratings={ratings} />
+        </div>
+      </section>
     </section>
   );
 }

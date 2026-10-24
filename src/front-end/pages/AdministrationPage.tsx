@@ -115,9 +115,9 @@ export default function AdministrationPage() {
     <main className="app-shell">
       <header className="app-header">
         <h1>Administration</h1>
-        <h2>
+        <p>
           Gérez la collecte des films et la mise à jour de la base de données.
-        </h2>
+        </p>
       </header>
       <form
         className="collection-form"

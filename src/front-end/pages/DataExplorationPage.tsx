@@ -35,5 +35,13 @@ export default function DataExplorationPage() {
     content = <output>Chargement des informations de la base…</output>;
   }
 
-  return <main className="app-shell">{content}</main>;
+  return (
+    <main className="app-shell">
+      <header className="app-header">
+        <h1>Exploration des données</h1>
+        <p>Explorez les films et les tendances de votre catalogue collecté.</p>
+      </header>
+      {content}
+    </main>
+  );
 }

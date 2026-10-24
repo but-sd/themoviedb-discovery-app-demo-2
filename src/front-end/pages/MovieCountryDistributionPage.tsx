@@ -35,12 +35,15 @@ export default function MovieCountryDistributionPage() {
   return (
     <main className="app-shell">
       <Link to="/exploration">Retour à l’exploration des données</Link>
-      <h1>Répartition des films par pays de production</h1>
-      <p>
-        Tous les pays sont classés par nombre de films décroissant, puis par
-        code pays en cas d’égalité. Une coproduction compte une fois pour chaque
-        pays : la somme des valeurs peut dépasser le nombre de films en base.
-      </p>
+      <header className="app-header">
+        <h1>Répartition des films par pays de production</h1>
+        <p>
+          Tous les pays sont classés par nombre de films décroissant, puis par
+          code pays en cas d’égalité. Une coproduction compte une fois pour
+          chaque pays : la somme des valeurs peut dépasser le nombre de films en
+          base.
+        </p>
+      </header>
       {error ? <p role="alert">{error}</p> : content}
     </main>
   );

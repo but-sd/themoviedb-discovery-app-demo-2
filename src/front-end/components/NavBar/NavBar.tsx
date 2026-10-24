@@ -9,7 +9,7 @@ interface NavBarProps {
 
 export default function NavBar({ theme, onToggleTheme }: NavBarProps) {
   return (
-    <nav className="app-nav" aria-label="Main navigation">
+    <nav className="app-nav" aria-label="Navigation principale">
       <div className="app-nav-shell">
         <p className="app-nav-brand">TMDB Discovery</p>
 

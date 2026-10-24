@@ -1,24 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { MovieDetails } from '../../back-end/schemas/MoviesTypes';
+import type { MovieDetails } from '../../back-end/schemas/MoviesTypes';
 import MovieDetailCard from '../components/MovieDetailCard';
+import { fetchMovieDetails } from '../services/movies';
 
 export default function MovieDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  // State to hold the fetched movie details data, initialized to null
-  const [movie, setMovie] = useState<MovieDetails | null>(null);
+  const [result, setResult] = useState<{
+    id: string | undefined;
+    movie: MovieDetails | null;
+    error: string;
+  } | null>(null);
+  const movie = result?.id === id ? result?.movie : null;
+  const error = result?.id === id ? result?.error : '';
 
-  // useEffect hook to fetch data from an API when the component mounts
   useEffect(() => {
-    // fetch data from an API /api/movies/{id}
-    fetch(`/api/movies/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Fetched movie details data:', data); // Log the fetched data for debugging
-        setMovie(data); // Update the state with the fetched movie details data
+    const controller = new AbortController();
+    fetchMovieDetails(id ?? '', controller.signal)
+      .then((movie) => {
+        if (!controller.signal.aborted) setResult({ id, movie, error: '' });
+      })
+      .catch((fetchError: unknown) => {
+        if (!controller.signal.aborted) {
+          setResult({
+            id,
+            movie: null,
+            error:
+              fetchError instanceof Error
+                ? fetchError.message
+                : 'Impossible de charger la fiche du film.',
+          });
+        }
       });
-  }, [id]); // Dependency for the useEffect hook
+    return () => controller.abort();
+  }, [id]);
 
   return (
     <main className="app-shell">
@@ -27,12 +43,20 @@ export default function MovieDetailPage() {
         <Link className="back-link" to="/movies">
           ← Retour vers les films populaires
         </Link>
+        {' · '}
+        <Link className="back-link" to="/exploration">
+          Exploration des données
+        </Link>
       </header>
       <section>
-        {movie ? (
+        {error ? (
+          <p role="alert">{error}</p>
+        ) : movie ? (
           <MovieDetailCard movie={movie} />
         ) : (
-          <p className="status-message">Loading...</p>
+          <output className="status-message">
+            Chargement de la fiche du film…
+          </output>
         )}
       </section>
     </main>

@@ -157,11 +157,16 @@ it('groups genre indicators separately from movie coverage', () => {
   );
   expect(markup).toContain('aria-label="Indicateurs des genres"');
   expect(markup).toContain('aria-label="Indicateurs des films"');
-  const genreGroup = markup.split('aria-label="Indicateurs des films"')[0];
+  const genreGroup = markup.split('aria-label="Indicateurs des genres"')[1];
   expect(genreGroup).toContain('Genres représentés');
   expect(genreGroup).toContain('Genre dominant');
   expect(genreGroup).toContain('Meilleure note');
   expect(genreGroup).not.toContain('Films en base');
+  expect(markup.indexOf('Indicateurs des films')).toBeLessThan(
+    markup.indexOf('Indicateurs des genres'),
+  );
+  expect(markup).toContain('aria-label="Films à la une"');
+  expect(markup).not.toContain('aria-labelledby="featured-movies-title"');
 });
 
 it('shows the number of represented genres and their names in the details', () => {
