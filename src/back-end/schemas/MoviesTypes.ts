@@ -87,6 +87,20 @@ export type MovieYearDistribution = {
   movieCount: number;
 };
 
+export const MOVIE_RUNTIME_RANGES = [
+  { label: 'Moins de 1 h', min: 0, max: 60 },
+  { label: '1 h–1 h 29', min: 60, max: 90 },
+  { label: '1 h 30–1 h 59', min: 90, max: 120 },
+  { label: '2 h–2 h 29', min: 120, max: 150 },
+  { label: '2 h 30–2 h 59', min: 150, max: 180 },
+  { label: '3 h et plus', min: 180, max: null },
+] as const;
+
+export type MovieRuntimeDistribution = {
+  buckets: { label: string; movieCount: number }[];
+  unknownMovieCount: number;
+};
+
 export type ProductionCountryHighlight = ProductionCountry & {
   movieCount: number;
 };

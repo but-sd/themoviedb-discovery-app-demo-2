@@ -9,6 +9,7 @@ vi.mock('./movies-database', () => ({
   getGenreDistribution: vi.fn(),
   getGenreRatings: vi.fn(),
   getMovieYearDistribution: vi.fn(),
+  getMovieRuntimeDistribution: vi.fn(),
 }));
 
 import { collectMovies } from './collectMovies';
@@ -18,6 +19,7 @@ import {
   getCollectionSummary,
   getGenreDistribution,
   getMovieYearDistribution,
+  getMovieRuntimeDistribution,
 } from './movies-database';
 
 const app = express();
@@ -30,12 +32,67 @@ const summaryHandler = get.mock.calls.find(
 const yearDistributionHandler = get.mock.calls.find(
   ([path]) => path === '/api/movies/years/distribution',
 )?.[1] as (req: Request, res: Response) => void;
+const runtimeDistributionHandler = get.mock.calls.find(
+  ([path]) => path === '/api/movies/runtimes/distribution',
+)?.[1] as (req: Request, res: Response) => void;
 const handler = post.mock.calls[0][1] as (
   req: Request,
   res: Response,
 ) => Promise<void>;
 
 beforeEach(() => vi.clearAllMocks());
+
+it('serves runtime distribution over HTTP alongside movie routes', async () => {
+  const serverApp = express();
+  registerCollectionApi(serverApp);
+  registerMoviesApi(serverApp);
+  const data = {
+    buckets: [{ label: 'Moins de 1 h', movieCount: 5 }],
+    unknownMovieCount: 2,
+  };
+  vi.mocked(getMovieRuntimeDistribution).mockReturnValue(data);
+  const server = serverApp.listen(0, '127.0.0.1');
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.once('listening', resolve);
+      server.once('error', reject);
+    });
+    const address = server.address();
+    if (address === null || typeof address === 'string')
+      throw new Error('Expected a TCP address');
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/movies/runtimes/distribution`,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(data);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
+it('reports and logs runtime distribution errors', () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vi.mocked(getMovieRuntimeDistribution).mockImplementation(() => {
+      throw new Error('Read failed');
+    });
+    const json = vi.fn();
+    const status = vi.fn().mockReturnValue({ json });
+    runtimeDistributionHandler(
+      {} as Request,
+      { status } as unknown as Response,
+    );
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Impossible de lire la répartition par durée.',
+    });
+    expect(log).toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
 
 it('serves year distribution over HTTP before the movie detail route', async () => {
   const serverApp = express();

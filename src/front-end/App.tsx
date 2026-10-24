@@ -10,6 +10,7 @@ import NavBar from './components/NavBar/NavBar';
 import DataExplorationPage from './pages/DataExplorationPage';
 import AdministrationPage from './pages/AdministrationPage';
 import MovieYearDistributionPage from './pages/MovieYearDistributionPage';
+import MovieRuntimeDistributionPage from './pages/MovieRuntimeDistributionPage';
 
 type Theme = 'light' | 'dark';
 
@@ -40,6 +41,10 @@ export default function App() {
         <Route path="/movies" element={<MoviesListPage />} />
         <Route path="/movies/:id" element={<MovieDetailPage />} />
         <Route path="/exploration" element={<DataExplorationPage />} />
+        <Route
+          path="/exploration/movies/runtimes"
+          element={<MovieRuntimeDistributionPage />}
+        />
         <Route
           path="/exploration/movies/years"
           element={<MovieYearDistributionPage />}

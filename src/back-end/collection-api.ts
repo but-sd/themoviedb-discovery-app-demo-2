@@ -6,9 +6,20 @@ import {
   getGenreDistribution,
   getGenreRatings,
   getMovieYearDistribution,
+  getMovieRuntimeDistribution,
 } from './movies-database';
 
 export function registerCollectionApi(app: Express): void {
+  app.get('/api/movies/runtimes/distribution', (_req, res) => {
+    try {
+      res.json(getMovieRuntimeDistribution());
+    } catch (error) {
+      console.error('Failed to read movie runtime distribution:', error);
+      res.status(500).json({
+        error: 'Impossible de lire la répartition par durée.',
+      });
+    }
+  });
   app.get('/api/movies/years/distribution', (_req, res) => {
     try {
       res.json(getMovieYearDistribution());

@@ -53,6 +53,14 @@ chronologique. Les années sans film sont omises. Les données proviennent de
 `GET /api/movies/years/distribution` (SQLite, sans appel à TMDB), au format
 `[{ "year": 2020, "movieCount": 150 }]`.
 
+La carte **Durée moyenne** ouvre `/exploration/movies/runtimes` : un histogramme
+et un tableau accessible répartissent les films dans les tranches suivantes :
+moins de 1 h, 1 h–1 h 29, 1 h 30–1 h 59, 2 h–2 h 29, 2 h 30–2 h 59 et 3 h et plus.
+Les tranches vides restent affichées. Les films sans durée connue sont comptés
+séparément, sans être inclus dans les tranches, comme pour le calcul de la moyenne.
+`GET /api/movies/runtimes/distribution` lit SQLite sans appel à TMDB et renvoie
+`{ "buckets": [{ "label": "Moins de 1 h", "movieCount": 10 }, ...], "unknownMovieCount": 2 }`.
+
 La collecte enregistre aussi `movies.budget` et `movies.revenue` en dollars US,
 depuis la même requête de détails TMDB que la durée. Les montants à zéro ou
 non renseignés sont stockés à `NULL` (inconnus, pas des budgets ou recettes nuls).

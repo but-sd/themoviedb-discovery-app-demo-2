@@ -9,9 +9,11 @@ import {
   getGenreDistribution,
   getGenreRatings,
   getMovieYearDistribution,
+  getMovieRuntimeDistribution,
   upsertMovies,
 } from './movies-database';
 import type { Movie } from './schemas/MoviesTypes';
+import { MOVIE_RUNTIME_RANGES } from './schemas/MoviesTypes';
 
 const movie: Movie = {
   id: 1,
@@ -27,6 +29,76 @@ const movie: Movie = {
   backdrop_path: null,
   genre_ids: [18],
 };
+
+it('counts every runtime boundary once and keeps unknown durations separate', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'movie-runtimes-'));
+  const path = join(directory, 'movies.sqlite');
+  const emptyBuckets = MOVIE_RUNTIME_RANGES.map(({ label }) => ({
+    label,
+    movieCount: 0,
+  }));
+  try {
+    expect(getMovieRuntimeDistribution(path)).toEqual({
+      buckets: emptyBuckets,
+      unknownMovieCount: 0,
+    });
+    const database = createMoviesDatabase(path);
+    try {
+      const runtimes = [
+        1,
+        59,
+        60,
+        89,
+        90,
+        119,
+        120,
+        149,
+        150,
+        179,
+        180,
+        500,
+        null,
+      ];
+      const movies = runtimes.map((_, index) => ({ ...movie, id: index + 1 }));
+      upsertMovies(
+        database,
+        movies,
+        2020,
+        [],
+        new Map(
+          runtimes.map((runtime, index) => [
+            index + 1,
+            { runtime, budget: null, revenue: null, productionCountries: [] },
+          ]),
+        ),
+      );
+      upsertMovies(database, [movies[0]], 2020);
+      const result = getMovieRuntimeDistribution(path);
+      expect(result).toEqual({
+        buckets: MOVIE_RUNTIME_RANGES.map(({ label }) => ({
+          label,
+          movieCount: 2,
+        })),
+        unknownMovieCount: 1,
+      });
+      expect(
+        result.buckets.reduce(
+          (sum, row) => sum + row.movieCount,
+          result.unknownMovieCount,
+        ),
+      ).toBe(getCollectionSummary(path).movieCount);
+      database.exec('UPDATE movies SET runtime_minutes = NULL');
+      expect(getMovieRuntimeDistribution(path)).toEqual({
+        buckets: emptyBuckets,
+        unknownMovieCount: runtimes.length,
+      });
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 it('counts distinct stored movies per release year in chronological order', () => {
   const directory = mkdtempSync(join(tmpdir(), 'movie-years-'));

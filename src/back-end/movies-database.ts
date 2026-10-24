@@ -10,10 +10,43 @@ import type {
   MovieCollectionDetails,
   MovieHighlight,
   MovieYearDistribution,
+  MovieRuntimeDistribution,
 } from './schemas/MoviesTypes';
+import { MOVIE_RUNTIME_RANGES } from './schemas/MoviesTypes';
 
 export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
 export type Genre = { id: number; name: string };
+
+export function getMovieRuntimeDistribution(
+  databasePath = DEFAULT_DATABASE_PATH,
+): MovieRuntimeDistribution {
+  const database = createMoviesDatabase(databasePath);
+  try {
+    const columns = MOVIE_RUNTIME_RANGES.map(
+      (_, index) => `COUNT(CASE WHEN runtime_minutes > 0
+        AND runtime_minutes >= ? AND (? IS NULL OR runtime_minutes < ?)
+        THEN 1 END) AS bucket_${index}`,
+    );
+    const row = database
+      .prepare(`
+      SELECT ${columns.join(', ')},
+        COUNT(CASE WHEN runtime_minutes IS NULL OR runtime_minutes <= 0
+          THEN 1 END) AS unknown_count
+      FROM movies
+    `)
+      .get(...MOVIE_RUNTIME_RANGES.flatMap(({ min, max }) => [min, max, max]));
+    if (!row) throw new Error('Missing runtime distribution aggregate.');
+    return {
+      buckets: MOVIE_RUNTIME_RANGES.map(({ label }, index) => ({
+        label,
+        movieCount: Number(row[`bucket_${index}`]),
+      })),
+      unknownMovieCount: Number(row.unknown_count),
+    };
+  } finally {
+    database.close();
+  }
+}
 
 export function getMovieYearDistribution(
   databasePath = DEFAULT_DATABASE_PATH,

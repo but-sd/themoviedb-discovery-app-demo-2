@@ -30,6 +30,12 @@ const preview: Preview = {
         <Routes>
           <Route path="/" element={<Story />} />
           <Route
+            path="/exploration/movies/runtimes"
+            element={
+              <p>Répartition par durée : disponible dans l’application.</p>
+            }
+          />
+          <Route
             path="/exploration/movies/years"
             element={
               <p>Répartition par année : disponible dans l’application.</p>
