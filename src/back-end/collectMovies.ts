@@ -11,11 +11,19 @@ import {
 import { upsertMovies } from './database/movie-writer';
 import type { Movie, MovieCollectionDetails } from './schemas/MoviesTypes';
 
+/**
+ * Collecte les films pour une année donnée et les enregistre dans la base de données.
+ * @param year L'année de sortie des films à collecter
+ * @param limit Le nombre maximum de films à collecter pour l'année donnée
+ * @param databasePath Le chemin vers la base de données SQLite
+ * @returns Un objet contenant l'année, le nombre de films collectés et le chemin de la base de données
+ */
 export async function collectMovies(
   year: number,
   limit = 100,
   databasePath = DEFAULT_DATABASE_PATH,
 ): Promise<{ year: number; collected: number; databasePath: string }> {
+  // Validate input parameters before proceeding with movie collection.
   if (!Number.isInteger(year) || !isValidMovieYear(String(year))) {
     throw new Error('Year must be a valid past year.');
   }

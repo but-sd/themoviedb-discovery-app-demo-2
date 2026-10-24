@@ -170,6 +170,9 @@ Avec Node.js 24 ou plus et `TMDB_ACCESS_TOKEN` dans `.env` :
 La commande utilise Commander : `--help` affiche l'usage. `<year>` est une
 année passée à quatre chiffres (1870 à l'année courante) ; `[count]` est un
 entier positif facultatif, fixé à 100 par défaut.
+L’option `--end-year <year>` définit une année de fin inclusive ; sans cette
+option, seule l’année passée en argument est collectée. La limite s’applique
+à chaque année, pas à l’ensemble de la période.
 
 ```sh
 # Afficher l'aide
@@ -180,7 +183,20 @@ npm run collect:movies -- 2020
 
 # Limiter la collecte à 50 films
 npm run collect:movies -- 2020 50
+
+# Collecter jusqu’à 100 films par année entre 2000 et 2020 inclus
+npm run collect:movies -- 2000 --end-year 2020
+
+# Collecter jusqu’à 50 films par année sur la même période
+npm run collect:movies -- 2000 50 --end-year 2020
 ```
+
+La période entière est validée avant toute collecte. Jusqu’à trois années sont
+collectées en parallèle, en démarrant par les plus anciennes. Dès qu’une année
+échoue, aucune nouvelle année n’est lancée ; les collectes déjà en cours sont
+attendues avant la sortie avec un code non nul. Les années en échec sont indiquées
+et les données enregistrées sont conservées. Les résultats peuvent arriver dans
+un ordre différent des années ; relancez les années en échec et celles non lancées.
 
 Le service `collectMovies(year, limit = 100, databasePath)` collecte jusqu'à
 100 films par défaut, triés par popularité, depuis TMDB Discover pour une
@@ -203,6 +219,75 @@ fin de chaque lancement, y compris en cas d'échec partiel.
 Les années du récapitulatif proviennent uniquement de `movies.release_year`,
 sans doublons et par ordre croissant. Une collecte sans film n’y ajoute aucune année ;
 aucun historique distinct des collectes n’est conservé.
+
+## Base de données
+
+Les données collectées sont stockées dans SQLite, par défaut dans
+`data/movies.sqlite`. Le schéma de référence est défini dans
+[`src/back-end/database/schema.ts`](src/back-end/database/schema.ts).
+
+### Modèle conceptuel de données (MCD)
+
+Le diagramme Mermaid ci-dessous présente les trois entités et leurs
+associations. Un film peut appartenir à zéro ou plusieurs genres et avoir zéro
+ou plusieurs pays de production. Réciproquement, un genre ou un pays peut être
+associé à zéro ou plusieurs films.
+
+```mermaid
+erDiagram
+    MOVIES }o--o{ GENRES : "appartient a"
+    MOVIES }o--o{ COUNTRIES : "est produit dans"
+
+    MOVIES {
+        INTEGER id PK "Identifiant TMDB"
+        TEXT title
+        TEXT original_title
+        TEXT original_language
+        TEXT overview
+        TEXT release_date
+        INTEGER release_year
+        REAL popularity
+        REAL vote_average
+        INTEGER vote_count
+        TEXT poster_path "Facultatif"
+        TEXT backdrop_path "Facultatif"
+        INTEGER runtime_minutes "Facultatif, minutes"
+        INTEGER budget "Facultatif, dollars US"
+        INTEGER revenue "Facultatif, dollars US"
+        TEXT collected_at "Date de collecte ISO 8601"
+    }
+
+    GENRES {
+        INTEGER id PK "Identifiant TMDB"
+        TEXT name "Facultatif"
+    }
+
+    COUNTRIES {
+        TEXT code PK "Code ISO 3166-1 alpha-2"
+        TEXT name
+    }
+```
+
+### Tables et contraintes
+
+Les deux associations plusieurs-à-plusieurs du MCD sont matérialisées par les
+tables de liaison suivantes :
+
+| Table                  | Clé primaire composée      | Références                    |
+| ---------------------- | -------------------------- | ----------------------------- |
+| `movie_genres`         | `(movie_id, genre_id)`     | `movies.id`, `genres.id`      |
+| `production_countries` | `(movie_id, country_code)` | `movies.id`, `countries.code` |
+
+Les clés composées empêchent les associations en double. Les clés étrangères
+sont activées à chaque connexion ; supprimer un film supprime ses associations
+par `ON DELETE CASCADE`, mais conserve les genres et les pays de référence.
+Les index `movies_release_year` et `movie_genres_genre_id` facilitent les
+recherches par année et par genre.
+
+Les durées, budgets et recettes inconnus sont stockés à `NULL` ; lorsqu’ils sont
+renseignés, ils doivent être strictement positifs. `release_date` contient la
+date de sortie fournie par TMDB, tandis que `release_year` correspond à l’année
+demandée lors de la collecte.
 
 La table `movies` contient les informations des films, leur année, leurs
 statistiques et la date de collecte. La table `genres` contient les identifiants
@@ -229,6 +314,8 @@ Le nombre demandé doit être un entier strictement positif.
 En cas d'erreur réseau ou si le nombre demandé nécessite de dépasser la limite
 TMDB de 500 pages, la collecte échoue sans enregistrer de résultats partiels.
 Le troisième argument optionnel du service permet de choisir le chemin SQLite.
+
+### Organisation du code et recréation
 
 La persistance est organisée dans `src/back-end/database/` :
 
