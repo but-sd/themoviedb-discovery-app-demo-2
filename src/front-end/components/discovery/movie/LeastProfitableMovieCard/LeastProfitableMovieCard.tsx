@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import type { FinancialMovieHighlight } from '../../../back-end/schemas/MoviesTypes';
+import type { FinancialMovieHighlight } from '../../../../../back-end/schemas/MoviesTypes';
 
 /**
  * Card displaying the least profitable movie by ROI.

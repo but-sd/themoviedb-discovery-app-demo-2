@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { movieHighlight } from '../../../stories/fixtures';
-import { MostProfitableMovieCard } from './MostProfitableMovieCard';
+import { MostPopularMovieCard } from './MostPopularMovieCard';
+import { movieHighlight } from '../../../../stories/fixtures';
 
 const meta = {
-  component: MostProfitableMovieCard,
+  component: MostPopularMovieCard,
   args: { movie: movieHighlight },
-} satisfies Meta<typeof MostProfitableMovieCard>;
+} satisfies Meta<typeof MostPopularMovieCard>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

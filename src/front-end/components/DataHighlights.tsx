@@ -4,18 +4,18 @@ import type {
   GenreDistribution,
   GenreRating,
 } from '../../back-end/schemas/MoviesTypes';
-import { AverageRatingCard } from './discovery/AverageRatingCard/AverageRatingCard';
-import { AverageRuntimeCard } from './discovery/AverageRuntimeCard/AverageRuntimeCard';
-import { BestGenreRatingCard } from './BestGenreRatingCard/BestGenreRatingCard';
-import { BestWeightedGenreRatingCard } from './BestWeightedGenreRatingCard/BestWeightedGenreRatingCard';
-import { BestRatedMovieCard } from './BestRatedMovieCard/BestRatedMovieCard';
-import { DominantGenreCard } from './DominantGenreCard/DominantGenreCard';
-import { LeastProfitableMovieCard } from './LeastProfitableMovieCard/LeastProfitableMovieCard';
-import { MostPopularMovieCard } from './discovery/MostPopularMovieCard/MostPopularMovieCard';
-import { MostProfitableMovieCard } from './discovery/MostProfitableMovieCard/MostProfitableMovieCard';
-import { MoviesInDatabaseCard } from './discovery/MoviesInDatabaseCard/MoviesInDatabaseCard';
+import { AverageRatingCard } from './discovery/movie/AverageRatingCard/AverageRatingCard';
+import { AverageRuntimeCard } from './discovery/movie/AverageRuntimeCard/AverageRuntimeCard';
+import { BestGenreRatingCard } from './discovery/genre/BestGenreRatingCard/BestGenreRatingCard';
+import { BestWeightedGenreRatingCard } from './discovery/genre/BestWeightedGenreRatingCard/BestWeightedGenreRatingCard';
+import { BestRatedMovieCard } from './discovery/movie/BestRatedMovieCard/BestRatedMovieCard';
+import { DominantGenreCard } from './discovery/genre/DominantGenreCard/DominantGenreCard';
+import { LeastProfitableMovieCard } from './discovery/movie/LeastProfitableMovieCard/LeastProfitableMovieCard';
+import { MostPopularMovieCard } from './discovery/movie/MostPopularMovieCard/MostPopularMovieCard';
+import { MostProfitableMovieCard } from './discovery/movie/MostProfitableMovieCard/MostProfitableMovieCard';
+import { MoviesInDatabaseCard } from './discovery/movie/MoviesInDatabaseCard/MoviesInDatabaseCard';
 import { RepresentedGenresCard } from './RepresentedGenresCard/RepresentedGenresCard';
-import { TopProductionCountryCard } from './discovery/TopProductionCountryCard/TopProductionCountryCard';
+import { TopProductionCountryCard } from './discovery/movie/TopProductionCountryCard/TopProductionCountryCard';
 
 export function DataHighlightCards({
   distribution,

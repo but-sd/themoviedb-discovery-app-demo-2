@@ -1,4 +1,4 @@
-import { ProductionCountryHighlight } from '../../../../back-end/schemas/MoviesTypes';
+import { ProductionCountryHighlight } from '../../../../../back-end/schemas/MoviesTypes';
 
 /**
  * Carte affichant le pays de production le plus représenté dans la base de données.

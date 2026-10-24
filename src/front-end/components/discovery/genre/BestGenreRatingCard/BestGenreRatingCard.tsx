@@ -1,4 +1,4 @@
-import type { GenreRating } from '../../../back-end/schemas/MoviesTypes';
+import type { GenreRating } from '../../../../../back-end/schemas/MoviesTypes';
 
 /**
  * Card displaying the best average genre rating.

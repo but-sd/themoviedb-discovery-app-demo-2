@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { movieHighlight } from '../../stories/fixtures';
 import { BestRatedMovieCard } from './BestRatedMovieCard';
+import { movieHighlight } from '../../../../stories/fixtures';
 
 const meta = {
   component: BestRatedMovieCard,

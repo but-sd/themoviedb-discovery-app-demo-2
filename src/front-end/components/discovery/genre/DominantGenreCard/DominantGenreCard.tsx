@@ -1,4 +1,4 @@
-import type { GenreDistribution } from '../../../back-end/schemas/MoviesTypes';
+import type { GenreDistribution } from '../../../../../back-end/schemas/MoviesTypes';
 
 /**
  * Card displaying the dominant genre by number of films.

@@ -1,8 +1,3 @@
-/**
- * Carte affichant la note moyenne des films dans la base de données.
- * @param averageRating La note moyenne, ou null lorsqu'elle est inconnue.
- * @returns Un élément JSX représentant la carte de la note moyenne.
- */
 export function AverageRatingCard({
   averageRating,
 }: Readonly<{
