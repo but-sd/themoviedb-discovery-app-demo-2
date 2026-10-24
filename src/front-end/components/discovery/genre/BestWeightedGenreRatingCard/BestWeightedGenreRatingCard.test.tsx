@@ -1,6 +1,12 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+import type { ReactNode } from 'react';
+import { renderToStaticMarkup as renderMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { BestWeightedGenreRatingCard } from './BestWeightedGenreRatingCard';
+
+function renderToStaticMarkup(element: ReactNode) {
+  return renderMarkup(<MemoryRouter>{element}</MemoryRouter>);
+}
 
 describe('BestWeightedGenreRatingCard', () => {
   it('shows best weighted genre rating', () => {
@@ -30,6 +36,10 @@ describe('BestWeightedGenreRatingCard', () => {
     expect(markup).toContain('Meilleure note pondérée');
     expect(markup).toContain('Drame');
     expect(markup).toContain('8,5 <span>/ 10</span>');
+    expect(markup).toMatch(
+      /^<a[^>]+href="\/exploration\/movies\/genres\/weighted-ratings"/,
+    );
+    expect(markup).not.toContain('<summary');
   });
 
   it('shows empty state when there is no rated movie', () => {
@@ -38,5 +48,8 @@ describe('BestWeightedGenreRatingCard', () => {
     );
 
     expect(markup).toContain('Aucun film noté disponible.');
+    expect(markup).toContain(
+      'href="/exploration/movies/genres/weighted-ratings"',
+    );
   });
 });

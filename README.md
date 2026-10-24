@@ -46,6 +46,54 @@ avec un lecteur d’écran.
 
 ## Collecte de films
 
+Les trois autres cartes de genres sont également cliquables :
+**Genre dominant** ouvre la répartition par genre,
+**Meilleure note** ouvre `/exploration/movies/genres/ratings` et
+**Meilleure note pondérée** ouvre `/exploration/movies/genres/weighted-ratings`.
+Ces deux dernières pages proposent les barres horizontales et verticales,
+une échelle de 0 à 10 et un tableau accessible. Les genres sont classés par
+note décroissante (puis par identifiant en cas d’égalité).
+La moyenne simple donne le même poids à chaque film noté ; la moyenne pondérée
+utilise `somme(note × votes) / somme(votes)`. Les films sans vote sont exclus.
+Les deux pages utilisent `GET /api/movies/genres/ratings`, sans appel à TMDB.
+
+Les pages de graphiques (genres, années, durées, notes et pays) partagent
+les mêmes contrôles et le même rendu Chart.js : barres horizontales par défaut,
+barres verticales, anneau ou camembert, avec une légende pour les parts et une
+adaptation aux thèmes clair/sombre. Les moyennes annuelles de notes proposent
+uniquement les deux modes de barres, sur une échelle fixe de 0 à 10.
+Chaque graphique dispose d’un tableau accessible sous **Afficher les données
+du graphique**. Pour les pays et les genres, les parts représentent des
+associations, et non des films distincts. Les données inconnues restent
+comptées séparément et ne sont pas incluses dans les parts.
+
+La carte **Genres représentés** ouvre `/exploration/movies/genres`.
+Le graphique existant propose des barres horizontales ou verticales, un anneau
+et un camembert, ainsi qu’un tableau accessible des données.
+Un film compte une fois pour chacun de ses genres : les totaux représentent
+les associations film/genre, pas des films distincts.
+Les données proviennent de `GET /api/movies/genres/distribution` (SQLite,
+sans appel à TMDB).
+
+La carte **Pays le plus représenté** ouvre `/exploration/movies/countries`.
+Un histogramme et un tableau accessible montrent tous les pays de production,
+classés par nombre de films décroissant (puis par code pays en cas d’égalité).
+Chaque coproduction compte une fois pour chaque pays ; la somme des valeurs
+peut donc dépasser le nombre de films. Les films sans pays renseigné sont
+comptés séparément. `GET /api/movies/countries/distribution` lit SQLite sans
+appel à TMDB et renvoie
+`{ "countries": [{ "code": "FR", "name": "France", "movieCount": 50 }], "unknownMovieCount": 2 }`.
+
+La carte **Note moyenne** ouvre `/exploration/movies/ratings`, avec deux
+graphiques et leurs tableaux accessibles : la répartition des films par tranches
+d’un point (0 inclus à 1 exclu, puis 1–<2, …, 9–10 inclus) et la note moyenne
+par année de sortie. Seuls les films ayant au moins un vote sont inclus ;
+les films non notés sont comptés séparément. Une note de zéro avec au moins
+un vote reste une note valide. Les moyennes annuelles sont arithmétiques, sans
+pondération par les votes, sur une échelle fixe de 0 à 10.
+`GET /api/movies/ratings/distribution` lit SQLite sans appel à TMDB et renvoie
+`{ "buckets": [{ "label": "0–<1", "movieCount": 2 }, ...], "years": [{ "year": 2020, "averageRating": 7.25, "movieCount": 50 }], "unratedMovieCount": 3 }`.
+
 Dans l’exploration, cliquer sur la carte **Films en base** ouvre
 `/exploration/movies/years` : un histogramme et un tableau accessible présentent
 le nombre de films par année de sortie enregistrée en base, dans l’ordre

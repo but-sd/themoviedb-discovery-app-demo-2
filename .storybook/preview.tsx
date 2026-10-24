@@ -30,6 +30,34 @@ const preview: Preview = {
         <Routes>
           <Route path="/" element={<Story />} />
           <Route
+            path="/exploration/movies/genres/ratings"
+            element={<p>Notes par genre : disponibles dans l’application.</p>}
+          />
+          <Route
+            path="/exploration/movies/genres/weighted-ratings"
+            element={
+              <p>Notes pondérées par genre : disponibles dans l’application.</p>
+            }
+          />
+          <Route
+            path="/exploration/movies/genres"
+            element={
+              <p>Répartition par genre : disponible dans l’application.</p>
+            }
+          />
+          <Route
+            path="/exploration/movies/countries"
+            element={
+              <p>Répartition par pays : disponible dans l’application.</p>
+            }
+          />
+          <Route
+            path="/exploration/movies/ratings"
+            element={
+              <p>Exploration des notes : disponible dans l’application.</p>
+            }
+          />
+          <Route
             path="/exploration/movies/runtimes"
             element={
               <p>Répartition par durée : disponible dans l’application.</p>

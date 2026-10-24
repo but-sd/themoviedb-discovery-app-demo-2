@@ -1,6 +1,12 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+import type { ReactNode } from 'react';
+import { renderToStaticMarkup as renderMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { BestGenreRatingCard } from './BestGenreRatingCard';
+
+function renderToStaticMarkup(element: ReactNode) {
+  return renderMarkup(<MemoryRouter>{element}</MemoryRouter>);
+}
 
 describe('BestGenreRatingCard', () => {
   it('shows best average genre rating', () => {
@@ -30,11 +36,16 @@ describe('BestGenreRatingCard', () => {
     expect(markup).toContain('Meilleure note');
     expect(markup).toContain('Action');
     expect(markup).toContain('8,25 <span>/ 10</span>');
+    expect(markup).toMatch(
+      /^<a[^>]+href="\/exploration\/movies\/genres\/ratings"/,
+    );
+    expect(markup).not.toContain('<summary');
   });
 
   it('shows empty state when there is no rated movie', () => {
     const markup = renderToStaticMarkup(<BestGenreRatingCard ratings={[]} />);
 
     expect(markup).toContain('Aucun film noté disponible.');
+    expect(markup).toContain('href="/exploration/movies/genres/ratings"');
   });
 });

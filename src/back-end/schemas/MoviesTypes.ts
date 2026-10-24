@@ -101,8 +101,25 @@ export type MovieRuntimeDistribution = {
   unknownMovieCount: number;
 };
 
+export const MOVIE_RATING_RANGES = Array.from({ length: 10 }, (_, min) => ({
+  label: min === 9 ? '9–10' : `${min}–<${min + 1}`,
+  min,
+  max: min + 1,
+}));
+
+export type MovieRatingDistribution = {
+  buckets: { label: string; movieCount: number }[];
+  years: { year: number; averageRating: number; movieCount: number }[];
+  unratedMovieCount: number;
+};
+
 export type ProductionCountryHighlight = ProductionCountry & {
   movieCount: number;
+};
+
+export type MovieCountryDistribution = {
+  countries: ProductionCountryHighlight[];
+  unknownMovieCount: number;
 };
 
 export type MovieHighlight = {

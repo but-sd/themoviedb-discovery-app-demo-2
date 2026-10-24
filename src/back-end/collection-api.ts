@@ -7,9 +7,31 @@ import {
   getGenreRatings,
   getMovieYearDistribution,
   getMovieRuntimeDistribution,
+  getMovieRatingDistribution,
+  getMovieCountryDistribution,
 } from './movies-database';
 
 export function registerCollectionApi(app: Express): void {
+  app.get('/api/movies/countries/distribution', (_req, res) => {
+    try {
+      res.json(getMovieCountryDistribution());
+    } catch (error) {
+      console.error('Failed to read movie country distribution:', error);
+      res.status(500).json({
+        error: 'Impossible de lire la répartition par pays de production.',
+      });
+    }
+  });
+  app.get('/api/movies/ratings/distribution', (_req, res) => {
+    try {
+      res.json(getMovieRatingDistribution());
+    } catch (error) {
+      console.error('Failed to read movie rating distribution:', error);
+      res
+        .status(500)
+        .json({ error: 'Impossible de lire la répartition des notes.' });
+    }
+  });
   app.get('/api/movies/runtimes/distribution', (_req, res) => {
     try {
       res.json(getMovieRuntimeDistribution());

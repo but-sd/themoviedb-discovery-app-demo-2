@@ -11,6 +11,10 @@ import DataExplorationPage from './pages/DataExplorationPage';
 import AdministrationPage from './pages/AdministrationPage';
 import MovieYearDistributionPage from './pages/MovieYearDistributionPage';
 import MovieRuntimeDistributionPage from './pages/MovieRuntimeDistributionPage';
+import MovieRatingDistributionPage from './pages/MovieRatingDistributionPage';
+import MovieCountryDistributionPage from './pages/MovieCountryDistributionPage';
+import MovieGenreDistributionPage from './pages/MovieGenreDistributionPage';
+import MovieGenreRatingsPage from './pages/MovieGenreRatingsPage';
 
 type Theme = 'light' | 'dark';
 
@@ -41,6 +45,26 @@ export default function App() {
         <Route path="/movies" element={<MoviesListPage />} />
         <Route path="/movies/:id" element={<MovieDetailPage />} />
         <Route path="/exploration" element={<DataExplorationPage />} />
+        <Route
+          path="/exploration/movies/genres/ratings"
+          element={<MovieGenreRatingsPage />}
+        />
+        <Route
+          path="/exploration/movies/genres/weighted-ratings"
+          element={<MovieGenreRatingsPage weighted />}
+        />
+        <Route
+          path="/exploration/movies/genres"
+          element={<MovieGenreDistributionPage />}
+        />
+        <Route
+          path="/exploration/movies/countries"
+          element={<MovieCountryDistributionPage />}
+        />
+        <Route
+          path="/exploration/movies/ratings"
+          element={<MovieRatingDistributionPage />}
+        />
         <Route
           path="/exploration/movies/runtimes"
           element={<MovieRuntimeDistributionPage />}

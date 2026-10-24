@@ -10,6 +10,8 @@ vi.mock('./movies-database', () => ({
   getGenreRatings: vi.fn(),
   getMovieYearDistribution: vi.fn(),
   getMovieRuntimeDistribution: vi.fn(),
+  getMovieRatingDistribution: vi.fn(),
+  getMovieCountryDistribution: vi.fn(),
 }));
 
 import { collectMovies } from './collectMovies';
@@ -20,6 +22,8 @@ import {
   getGenreDistribution,
   getMovieYearDistribution,
   getMovieRuntimeDistribution,
+  getMovieRatingDistribution,
+  getMovieCountryDistribution,
 } from './movies-database';
 
 const app = express();
@@ -35,12 +39,120 @@ const yearDistributionHandler = get.mock.calls.find(
 const runtimeDistributionHandler = get.mock.calls.find(
   ([path]) => path === '/api/movies/runtimes/distribution',
 )?.[1] as (req: Request, res: Response) => void;
+const ratingDistributionHandler = get.mock.calls.find(
+  ([path]) => path === '/api/movies/ratings/distribution',
+)?.[1] as (req: Request, res: Response) => void;
+const countryDistributionHandler = get.mock.calls.find(
+  ([path]) => path === '/api/movies/countries/distribution',
+)?.[1] as (req: Request, res: Response) => void;
 const handler = post.mock.calls[0][1] as (
   req: Request,
   res: Response,
 ) => Promise<void>;
 
 beforeEach(() => vi.clearAllMocks());
+
+it('serves country distribution over HTTP alongside movie routes', async () => {
+  const serverApp = express();
+  registerCollectionApi(serverApp);
+  registerMoviesApi(serverApp);
+  const data = {
+    countries: [{ code: 'FR', name: 'France', movieCount: 5 }],
+    unknownMovieCount: 2,
+  };
+  vi.mocked(getMovieCountryDistribution).mockReturnValue(data);
+  const server = serverApp.listen(0, '127.0.0.1');
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.once('listening', resolve);
+      server.once('error', reject);
+    });
+    const address = server.address();
+    if (address === null || typeof address === 'string')
+      throw new Error('Expected a TCP address');
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/movies/countries/distribution`,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(data);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
+it('reports and logs country distribution errors', () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vi.mocked(getMovieCountryDistribution).mockImplementation(() => {
+      throw new Error('Read failed');
+    });
+    const json = vi.fn();
+    const status = vi.fn().mockReturnValue({ json });
+    countryDistributionHandler(
+      {} as Request,
+      { status } as unknown as Response,
+    );
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Impossible de lire la répartition par pays de production.',
+    });
+    expect(log).toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it('serves both rating statistics over HTTP alongside movie routes', async () => {
+  const serverApp = express();
+  registerCollectionApi(serverApp);
+  registerMoviesApi(serverApp);
+  const data = {
+    buckets: [{ label: '9–10', movieCount: 5 }],
+    years: [{ year: 2020, averageRating: 9.5, movieCount: 5 }],
+    unratedMovieCount: 2,
+  };
+  vi.mocked(getMovieRatingDistribution).mockReturnValue(data);
+  const server = serverApp.listen(0, '127.0.0.1');
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.once('listening', resolve);
+      server.once('error', reject);
+    });
+    const address = server.address();
+    if (address === null || typeof address === 'string')
+      throw new Error('Expected a TCP address');
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/movies/ratings/distribution`,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(data);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
+it('reports and logs rating distribution errors', () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vi.mocked(getMovieRatingDistribution).mockImplementation(() => {
+      throw new Error('Read failed');
+    });
+    const json = vi.fn();
+    const status = vi.fn().mockReturnValue({ json });
+    ratingDistributionHandler({} as Request, { status } as unknown as Response);
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Impossible de lire la répartition des notes.',
+    });
+    expect(log).toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
 
 it('serves runtime distribution over HTTP alongside movie routes', async () => {
   const serverApp = express();

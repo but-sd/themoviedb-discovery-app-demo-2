@@ -12,6 +12,16 @@ it('offers only bar charts for average ratings and explains the calculation', ()
   expect(markup).not.toContain('Camembert');
 });
 
+it('offers only bar charts for weighted ratings and explains vote weighting', () => {
+  const markup = renderToStaticMarkup(
+    <GenreDistributionChart revision={null} metric="weightedRating" />,
+  );
+  expect(markup).toContain('Notes moyennes pondérées par genre');
+  expect(markup).toContain('somme(note × votes) / somme(votes)');
+  expect(markup).not.toContain('sans pondération');
+  expect(markup.match(/<option /g)).toHaveLength(2);
+});
+
 it('offers four chart views with horizontal bars selected by default', () => {
   const markup = renderToStaticMarkup(
     <GenreDistributionChart revision={null} />,

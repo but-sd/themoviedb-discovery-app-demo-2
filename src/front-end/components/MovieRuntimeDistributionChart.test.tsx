@@ -8,7 +8,7 @@ const buckets = MOVIE_RUNTIME_RANGES.map(({ label }) => ({
   movieCount: 0,
 }));
 
-it('shows six duration ranges, proportional bars and unknown counts separately', () => {
+it('shows six duration ranges, four chart views and unknown counts separately', () => {
   const data = {
     buckets: buckets.map((row, index) => ({
       ...row,
@@ -22,10 +22,10 @@ it('shows six duration ranges, proportional bars and unknown counts separately',
   expect(markup).toContain('Durée inconnue : 3 films');
   expect(markup).toContain('role="img"');
   expect(markup).toContain('aria-labelledby=');
-  expect(markup).toContain('tabindex="0"');
-  expect(markup).toContain('height="120"');
-  expect(markup).toContain('height="240"');
-  expect(markup.match(/<rect /g)).toHaveLength(6);
+  expect(markup.match(/<option /g)).toHaveLength(4);
+  expect(markup).toContain(
+    '<summary>Afficher les données du graphique</summary>',
+  );
   for (const row of data.buckets) {
     expect(markup).toContain(
       `<th scope="row">${row.label}</th><td>${row.movieCount}</td>`,
@@ -48,5 +48,6 @@ it('supports only unknown runtimes without invalid bar heights', () => {
   expect(markup).toContain('Durée inconnue : 10 films');
   expect(markup).not.toContain('Aucun film à afficher');
   expect(markup).not.toMatch(/NaN|Infinity/);
-  expect(markup.match(/<rect /g)).toHaveLength(6);
+  expect(markup).toContain('<canvas');
+  expect(markup.match(/<th scope="row">/g)).toHaveLength(6);
 });

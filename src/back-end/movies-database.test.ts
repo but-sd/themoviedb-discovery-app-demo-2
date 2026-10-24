@@ -10,10 +10,15 @@ import {
   getGenreRatings,
   getMovieYearDistribution,
   getMovieRuntimeDistribution,
+  getMovieRatingDistribution,
+  getMovieCountryDistribution,
   upsertMovies,
 } from './movies-database';
 import type { Movie } from './schemas/MoviesTypes';
-import { MOVIE_RUNTIME_RANGES } from './schemas/MoviesTypes';
+import {
+  MOVIE_RUNTIME_RANGES,
+  MOVIE_RATING_RANGES,
+} from './schemas/MoviesTypes';
 
 const movie: Movie = {
   id: 1,
@@ -29,6 +34,129 @@ const movie: Movie = {
   backdrop_path: null,
   genre_ids: [18],
 };
+
+it('ranks all production countries, counts coproductions once per country and reports missing countries', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'movie-countries-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getMovieCountryDistribution(path)).toEqual({
+      countries: [],
+      unknownMovieCount: 0,
+    });
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [movie, { ...movie, id: 2 }, { ...movie, id: 3 }, { ...movie, id: 4 }],
+        2020,
+      );
+      expect(getMovieCountryDistribution(path)).toEqual({
+        countries: [],
+        unknownMovieCount: 4,
+      });
+      database.exec(`
+        INSERT INTO countries VALUES ('US', 'United States of America'), ('FR', 'France'), ('BE', 'Belgium'), ('DE', 'Germany');
+        INSERT INTO production_countries VALUES (1, 'US'), (1, 'FR'), (2, 'FR'), (2, 'US'), (3, 'BE');
+        INSERT OR IGNORE INTO production_countries VALUES (1, 'FR');
+      `);
+      const result = getMovieCountryDistribution(path);
+      expect(result).toEqual({
+        countries: [
+          { code: 'FR', name: 'France', movieCount: 2 },
+          { code: 'US', name: 'United States of America', movieCount: 2 },
+          { code: 'BE', name: 'Belgium', movieCount: 1 },
+        ],
+        unknownMovieCount: 1,
+      });
+      expect(result.countries[0]).toEqual(
+        getCollectionSummary(path).topProductionCountry,
+      );
+      expect(
+        result.countries.reduce((sum, row) => sum + row.movieCount, 0),
+      ).toBeGreaterThan(getCollectionSummary(path).movieCount);
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('partitions rating boundaries including 0 and 10 and averages rated films per year without vote weighting', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'movie-ratings-'));
+  const path = join(directory, 'movies.sqlite');
+  const emptyBuckets = MOVIE_RATING_RANGES.map(({ label }) => ({
+    label,
+    movieCount: 0,
+  }));
+  try {
+    expect(getMovieRatingDistribution(path)).toEqual({
+      buckets: emptyBuckets,
+      years: [],
+      unratedMovieCount: 0,
+    });
+    const database = createMoviesDatabase(path);
+    try {
+      const ratings = MOVIE_RATING_RANGES.flatMap(({ min }) => [
+        min,
+        min + 0.999,
+      ]);
+      const movies = ratings.map((rating, index) => ({
+        ...movie,
+        id: index + 1,
+        vote_average: rating,
+        vote_count: index === 0 ? 1000 : 1,
+      }));
+      upsertMovies(database, movies, 2020);
+      upsertMovies(database, [movies[0]], 2020);
+      upsertMovies(
+        database,
+        [{ ...movie, id: 21, vote_average: 10, vote_count: 5 }],
+        2024,
+      );
+      upsertMovies(
+        database,
+        [{ ...movie, id: 22, vote_average: 10, vote_count: 0 }],
+        2022,
+      );
+      const result = getMovieRatingDistribution(path);
+      expect(result.buckets).toEqual(
+        emptyBuckets.map((bucket, index) => ({
+          ...bucket,
+          movieCount: index === 9 ? 3 : 2,
+        })),
+      );
+      expect(result.unratedMovieCount).toBe(1);
+      expect(result.years).toHaveLength(2);
+      expect(result.years[0]).toMatchObject({ year: 2020, movieCount: 20 });
+      expect(result.years[0].averageRating).toBeCloseTo(
+        ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length,
+        10,
+      );
+      expect(result.years[1]).toEqual({
+        year: 2024,
+        averageRating: 10,
+        movieCount: 1,
+      });
+      expect(
+        result.buckets.reduce(
+          (sum, row) => sum + row.movieCount,
+          result.unratedMovieCount,
+        ),
+      ).toBe(getCollectionSummary(path).movieCount);
+      database.exec('UPDATE movies SET vote_count = 0');
+      expect(getMovieRatingDistribution(path)).toEqual({
+        buckets: emptyBuckets,
+        years: [],
+        unratedMovieCount: 22,
+      });
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 it('counts every runtime boundary once and keeps unknown durations separate', () => {
   const directory = mkdtempSync(join(tmpdir(), 'movie-runtimes-'));
