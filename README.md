@@ -154,7 +154,7 @@ la carte indique « Non disponible ». Les durées nulles ou égales à zéro
 sont exclues du calcul. Cette récupération ajoute une requête par film.
 Les anciennes bases ne sont pas migrées automatiquement.
 
-La carte Films en base indique les bornes des années présentes ou collectées,
+La carte Films en base indique les bornes des années présentes dans les films stockés,
 sans présumer une couverture continue. Après une collecte, rouvrir l’exploration
 permet de charger les indicateurs actualisés.
 Les indicateurs sont regroupés dans deux panneaux : **Films** pour la couverture
@@ -196,13 +196,13 @@ Avec le serveur démarré (`npm run dev`), il collecte séquentiellement jusqu'�
 La progression est affichée et les années déjà enregistrées sont conservées
 si une année échoue. Gardez la page ouverte pendant la collecte.
 
-La page affiche le nombre de films stockés et les années déjà collectées,
+La page affiche le nombre de films stockés et les années présentes en base,
 via `GET /api/movies/collection`. Le bouton indique **Instancier** si la base
 est vide, ou **Mettre à jour** sinon. Ces informations sont actualisées à la
 fin de chaque lancement, y compris en cas d'échec partiel.
-La table `collection_years` enregistre les années collectées avec succès,
-même lorsqu'aucun film n'est disponible. Les années des films déjà présents
-sont également incluses dans le récapitulatif.
+Les années du récapitulatif proviennent uniquement de `movies.release_year`,
+sans doublons et par ordre croissant. Une collecte sans film n’y ajoute aucune année ;
+aucun historique distinct des collectes n’est conservé.
 
 La table `movies` contient les informations des films, leur année, leurs
 statistiques et la date de collecte. La table `genres` contient les identifiants

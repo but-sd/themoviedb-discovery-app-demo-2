@@ -15,8 +15,7 @@ export function getCollectionSummary(
       .get();
     const years = database
       .prepare(`
-      SELECT year FROM collection_years
-      UNION SELECT release_year AS year FROM movies
+      SELECT DISTINCT release_year AS year FROM movies
       ORDER BY year
     `)
       .all();

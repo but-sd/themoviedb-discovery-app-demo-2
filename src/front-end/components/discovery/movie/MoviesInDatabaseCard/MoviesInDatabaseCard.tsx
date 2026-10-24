@@ -1,9 +1,9 @@
 import { Link } from 'react-router';
 
 /**
- * Carte affichant le nombre de films dans la base de données et la plage d'années collectées.
+ * Carte affichant le nombre de films dans la base de données et la plage d'années présentes.
  * @param movieCount Le nombre de films dans la base de données.
- * @param years Le tableau des années collectées.
+ * @param years Le tableau des années présentes en base.
  * @returns Un élément JSX représentant la carte des films en base.
  */
 export function MoviesInDatabaseCard({
@@ -25,7 +25,7 @@ export function MoviesInDatabaseCard({
       <p className="genre-highlight-period">
         {years.length
           ? `${Math.min(...years)} – ${Math.max(...years)}`
-          : 'Aucune année collectée'}
+          : 'Aucune année présente'}
       </p>
     </Link>
   );

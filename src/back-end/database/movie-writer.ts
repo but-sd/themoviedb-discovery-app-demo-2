@@ -100,12 +100,6 @@ export function upsertMovies(
         }
       }
     }
-    database
-      .prepare(`
-      INSERT INTO collection_years (year, collected_at) VALUES (?, ?)
-      ON CONFLICT(year) DO UPDATE SET collected_at = excluded.collected_at
-    `)
-      .run(year, collectedAt);
     database.exec('COMMIT');
   } catch (error) {
     database.exec('ROLLBACK');

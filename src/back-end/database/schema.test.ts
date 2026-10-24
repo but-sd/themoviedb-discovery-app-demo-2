@@ -13,7 +13,6 @@ it('creates every table, index and optional movie column in the initial schema',
       .all()
       .map((row) => row.name);
     expect(tables).toEqual([
-      'collection_years',
       'countries',
       'genres',
       'movie_genres',

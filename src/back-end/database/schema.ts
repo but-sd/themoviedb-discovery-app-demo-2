@@ -44,9 +44,5 @@ export function initializeSchema(database: DatabaseSync): void {
       country_code TEXT NOT NULL REFERENCES countries(code),
       PRIMARY KEY (movie_id, country_code)
     );
-    CREATE TABLE IF NOT EXISTS collection_years (
-      year INTEGER PRIMARY KEY,
-      collected_at TEXT NOT NULL
-    );
   `);
 }

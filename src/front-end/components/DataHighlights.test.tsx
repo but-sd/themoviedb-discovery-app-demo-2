@@ -205,7 +205,7 @@ it('shows an empty database without invalid year bounds', () => {
       summary={{ movieCount: 0, years: [] }}
     />,
   );
-  expect(markup).toContain('Aucune année collectée');
+  expect(markup).toContain('Aucune année présente');
   expect(markup).not.toContain('Infinity');
 });
 

@@ -154,7 +154,7 @@ it('ranks profitability by ROI, excludes unknown amounts and breaks ties by id',
   }
 });
 
-it('summarizes unique films and successful years including empty collections', () => {
+it('summarizes unique films and only years represented by stored movies', () => {
   const directory = mkdtempSync(join(tmpdir(), 'collection-summary-'));
   const path = join(directory, 'movies.sqlite');
   try {
@@ -174,8 +174,26 @@ it('summarizes unique films and successful years including empty collections', (
     }
     expect(getCollectionSummary(path)).toMatchObject({
       movieCount: 1,
-      years: [2020, 2021],
+      years: [2020],
     });
+    const updatedDatabase = createMoviesDatabase(path);
+    try {
+      upsertMovies(updatedDatabase, [], 2019);
+      upsertMovies(updatedDatabase, [{ ...movie, id: 2 }], 2018);
+      upsertMovies(updatedDatabase, [{ ...movie, id: 3 }], 2022);
+      upsertMovies(updatedDatabase, [{ ...movie, id: 4 }], 2018);
+      expect(getCollectionSummary(path)).toMatchObject({
+        movieCount: 4,
+        years: [2018, 2020, 2022],
+      });
+      updatedDatabase.exec('DELETE FROM movies WHERE release_year = 2018');
+      expect(getCollectionSummary(path)).toMatchObject({
+        movieCount: 2,
+        years: [2020, 2022],
+      });
+    } finally {
+      updatedDatabase.close();
+    }
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

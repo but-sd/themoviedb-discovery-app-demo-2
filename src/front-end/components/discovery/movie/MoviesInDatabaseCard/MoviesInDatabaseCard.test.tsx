@@ -27,6 +27,6 @@ describe('MoviesInDatabaseCard', () => {
     );
 
     expect(markup).toContain('0 <span>films</span>');
-    expect(markup).toContain('Aucune année collectée');
+    expect(markup).toContain('Aucune année présente');
   });
 });

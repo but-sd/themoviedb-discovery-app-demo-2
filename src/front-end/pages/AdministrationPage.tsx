@@ -135,7 +135,7 @@ export default function AdministrationPage() {
               </p>
               {summary.movieCount === 0 && <p>La base est vide.</p>}
               {summary.years.length > 0 && (
-                <p>Années déjà collectées : {summary.years.join(', ')}.</p>
+                <p>Années présentes en base : {summary.years.join(', ')}.</p>
               )}
             </div>
           )
