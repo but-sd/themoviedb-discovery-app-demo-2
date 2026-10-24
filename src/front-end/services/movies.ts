@@ -21,7 +21,7 @@ function isMovieBase(value: unknown) {
     'overview' in value &&
     typeof value.overview === 'string' &&
     'release_date' in value &&
-    typeof value.release_date === 'string' &&
+    isNullableString(value.release_date) &&
     'poster_path' in value &&
     isNullableString(value.poster_path) &&
     'backdrop_path' in value &&

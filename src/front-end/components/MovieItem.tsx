@@ -6,7 +6,7 @@ type MovieItemProps = {
 };
 
 export default function MovieItem({ movie }: MovieItemProps) {
-  const releaseYear = movie.release_date.slice(0, 4) || 'Année inconnue';
+  const releaseYear = movie.release_date?.slice(0, 4) || 'Année inconnue';
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w185${movie.poster_path}`
     : null;

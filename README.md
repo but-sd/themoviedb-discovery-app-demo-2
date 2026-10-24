@@ -244,7 +244,7 @@ erDiagram
         TEXT original_title
         TEXT original_language
         TEXT overview
-        TEXT release_date
+        TEXT release_date "Facultatif"
         INTEGER release_year
         REAL popularity
         REAL vote_average
@@ -286,7 +286,7 @@ recherches par année et par genre.
 
 Les durées, budgets et recettes inconnus sont stockés à `NULL` ; lorsqu’ils sont
 renseignés, ils doivent être strictement positifs. `release_date` contient la
-date de sortie fournie par TMDB, tandis que `release_year` correspond à l’année
+date de sortie fournie par TMDB, ou `NULL` lorsqu’elle est absente, tandis que `release_year` correspond à l’année
 demandée lors de la collecte.
 
 La table `movies` contient les informations des films, leur année, leurs

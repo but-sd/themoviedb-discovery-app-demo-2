@@ -12,7 +12,7 @@ export function initializeSchema(database: DatabaseSync): void {
       original_title TEXT NOT NULL,
       original_language TEXT NOT NULL,
       overview TEXT NOT NULL,
-      release_date TEXT NOT NULL,
+      release_date TEXT,
       release_year INTEGER NOT NULL,
       popularity REAL NOT NULL,
       vote_average REAL NOT NULL,

@@ -18,6 +18,32 @@ const movie: Movie = {
   genre_ids: [18],
 };
 
+it('stores and updates a movie without a release date while retaining its collection year', () => {
+  const database = createMoviesDatabase(':memory:');
+  try {
+    upsertMovies(database, [{ ...movie, release_date: null }], 2020);
+    expect(
+      database
+        .prepare('SELECT release_date, release_year FROM movies WHERE id = ?')
+        .get(movie.id),
+    ).toEqual({ release_date: null, release_year: 2020 });
+    upsertMovies(database, [movie], 2020);
+    expect(
+      database
+        .prepare('SELECT release_date FROM movies WHERE id = ?')
+        .get(movie.id),
+    ).toEqual({ release_date: movie.release_date });
+    upsertMovies(database, [{ ...movie, release_date: null }], 2020);
+    expect(
+      database
+        .prepare('SELECT release_date FROM movies WHERE id = ?')
+        .get(movie.id),
+    ).toEqual({ release_date: null });
+  } finally {
+    database.close();
+  }
+});
+
 it('inserts and updates movies without duplicates', () => {
   const database = createMoviesDatabase(':memory:');
   try {

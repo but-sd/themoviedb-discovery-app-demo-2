@@ -20,6 +20,13 @@ it('creates every table, index and optional movie column in the initial schema',
       'production_countries',
     ]);
     const columns = database.prepare('PRAGMA table_info(movies)').all();
+    expect(columns).toContainEqual(
+      expect.objectContaining({
+        name: 'release_date',
+        type: 'TEXT',
+        notnull: 0,
+      }),
+    );
     for (const name of ['runtime_minutes', 'budget', 'revenue']) {
       expect(columns).toContainEqual(
         expect.objectContaining({ name, type: 'INTEGER', notnull: 0 }),

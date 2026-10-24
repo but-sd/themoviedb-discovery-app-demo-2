@@ -71,7 +71,7 @@ export function upsertMovies(
         movie.original_title,
         movie.original_language,
         movie.overview,
-        movie.release_date,
+        movie.release_date ?? null,
         year,
         movie.popularity,
         movie.vote_average,

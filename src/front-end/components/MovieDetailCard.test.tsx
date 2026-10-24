@@ -54,7 +54,7 @@ describe('MovieDetailCard', () => {
   it('does not present missing metadata or an unrated film as known values', () => {
     const markup = renderToStaticMarkup(
       <MovieDetailCard
-        movie={{ ...movie, release_date: '', overview: '', vote_count: 0 }}
+        movie={{ ...movie, release_date: null, overview: '', vote_count: 0 }}
       />,
     );
     expect(markup.match(/Non disponible/g)).toHaveLength(2);

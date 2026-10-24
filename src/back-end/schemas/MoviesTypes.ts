@@ -17,7 +17,7 @@ export type TmdbMovie = {
   overview: string;
   popularity: number;
   poster_path: string | null;
-  release_date: string;
+  release_date: string | null;
   title: string;
   video: boolean;
   vote_average: number;
@@ -33,7 +33,7 @@ export type TmdbMovieDetails = {
   overview: string;
   popularity: number;
   poster_path: string | null;
-  release_date: string;
+  release_date: string | null;
   title: string;
   video: boolean;
   vote_average: number;

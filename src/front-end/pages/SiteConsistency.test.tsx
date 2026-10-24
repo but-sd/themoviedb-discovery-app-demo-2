@@ -45,7 +45,7 @@ it('keeps missing posters aligned and distinguishes unrated films from zero scor
           ...movieDetails,
           genre_ids: [],
           vote_count: 0,
-          release_date: '',
+          release_date: null,
           poster_path: null,
         }}
       />

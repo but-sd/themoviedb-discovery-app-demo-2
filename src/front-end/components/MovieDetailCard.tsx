@@ -2,7 +2,7 @@ import type { MovieDetails } from '../../back-end/schemas/MoviesTypes';
 import './MovieDetailCard.css';
 
 export default function MovieDetailCard({ movie }: { movie: MovieDetails }) {
-  const releaseYear = movie.release_date.slice(0, 4) || 'Non disponible';
+  const releaseYear = movie.release_date?.slice(0, 4) || 'Non disponible';
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
     : null;
