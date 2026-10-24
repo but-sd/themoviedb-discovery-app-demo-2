@@ -8,12 +8,17 @@ vi.mock('./movies-database', () => ({
   getCollectionSummary: vi.fn(),
   getGenreDistribution: vi.fn(),
   getGenreRatings: vi.fn(),
+  getMovieYearDistribution: vi.fn(),
 }));
 
 import { collectMovies } from './collectMovies';
 import { registerCollectionApi } from './collection-api';
 import { registerMoviesApi } from './movies-api';
-import { getCollectionSummary, getGenreDistribution } from './movies-database';
+import {
+  getCollectionSummary,
+  getGenreDistribution,
+  getMovieYearDistribution,
+} from './movies-database';
 
 const app = express();
 const post = vi.spyOn(app, 'post');
@@ -22,12 +27,61 @@ registerCollectionApi(app);
 const summaryHandler = get.mock.calls.find(
   ([path]) => path === '/api/movies/collection',
 )?.[1] as (req: Request, res: Response) => void;
+const yearDistributionHandler = get.mock.calls.find(
+  ([path]) => path === '/api/movies/years/distribution',
+)?.[1] as (req: Request, res: Response) => void;
 const handler = post.mock.calls[0][1] as (
   req: Request,
   res: Response,
 ) => Promise<void>;
 
 beforeEach(() => vi.clearAllMocks());
+
+it('serves year distribution over HTTP before the movie detail route', async () => {
+  const serverApp = express();
+  registerCollectionApi(serverApp);
+  registerMoviesApi(serverApp);
+  const rows = [{ year: 2020, movieCount: 5 }];
+  vi.mocked(getMovieYearDistribution).mockReturnValue(rows);
+  const server = serverApp.listen(0, '127.0.0.1');
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.once('listening', resolve);
+      server.once('error', reject);
+    });
+    const address = server.address();
+    if (address === null || typeof address === 'string')
+      throw new Error('Expected a TCP address');
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/movies/years/distribution`,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(rows);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
+it('reports and logs year distribution read errors', () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vi.mocked(getMovieYearDistribution).mockImplementation(() => {
+      throw new Error('Read failed');
+    });
+    const json = vi.fn();
+    const status = vi.fn().mockReturnValue({ json });
+    yearDistributionHandler({} as Request, { status } as unknown as Response);
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Impossible de lire la répartition par année de sortie.',
+    });
+    expect(log).toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
 
 it('returns genre counts from SQLite', () => {
   vi.mocked(getGenreDistribution).mockReturnValue([

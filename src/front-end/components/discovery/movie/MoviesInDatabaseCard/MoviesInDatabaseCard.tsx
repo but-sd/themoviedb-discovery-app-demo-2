@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 /**
  * Carte affichant le nombre de films dans la base de données et la plage d'années collectées.
  * @param movieCount Le nombre de films dans la base de données.
@@ -12,18 +14,19 @@ export function MoviesInDatabaseCard({
   years: number[];
 }>) {
   return (
-    <details className="genre-highlight">
-      <summary>
-        <span className="genre-highlight-label">Films en base</span>
-        <p className="genre-highlight-value">
-          {movieCount.toLocaleString('fr-FR')} <span>films</span>
-        </p>
-        <p className="genre-highlight-period">
-          {years.length
-            ? `${Math.min(...years)} – ${Math.max(...years)}`
-            : 'Aucune année collectée'}
-        </p>
-      </summary>
-    </details>
+    <Link
+      to="/exploration/movies/years"
+      className="genre-highlight featured-movie-link"
+    >
+      <span className="genre-highlight-label">Films en base</span>
+      <p className="genre-highlight-value">
+        {movieCount.toLocaleString('fr-FR')} <span>films</span>
+      </p>
+      <p className="genre-highlight-period">
+        {years.length
+          ? `${Math.min(...years)} – ${Math.max(...years)}`
+          : 'Aucune année collectée'}
+      </p>
+    </Link>
   );
 }

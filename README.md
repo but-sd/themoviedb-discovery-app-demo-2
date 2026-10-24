@@ -46,6 +46,13 @@ avec un lecteur d’écran.
 
 ## Collecte de films
 
+Dans l’exploration, cliquer sur la carte **Films en base** ouvre
+`/exploration/movies/years` : un histogramme et un tableau accessible présentent
+le nombre de films par année de sortie enregistrée en base, dans l’ordre
+chronologique. Les années sans film sont omises. Les données proviennent de
+`GET /api/movies/years/distribution` (SQLite, sans appel à TMDB), au format
+`[{ "year": 2020, "movieCount": 150 }]`.
+
 La collecte enregistre aussi `movies.budget` et `movies.revenue` en dollars US,
 depuis la même requête de détails TMDB que la durée. Les montants à zéro ou
 non renseignés sont stockés à `NULL` (inconnus, pas des budgets ou recettes nuls).

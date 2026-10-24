@@ -5,9 +5,20 @@ import {
   getCollectionSummary,
   getGenreDistribution,
   getGenreRatings,
+  getMovieYearDistribution,
 } from './movies-database';
 
 export function registerCollectionApi(app: Express): void {
+  app.get('/api/movies/years/distribution', (_req, res) => {
+    try {
+      res.json(getMovieYearDistribution());
+    } catch (error) {
+      console.error('Failed to read movie year distribution:', error);
+      res.status(500).json({
+        error: 'Impossible de lire la répartition par année de sortie.',
+      });
+    }
+  });
   app.get('/api/movies/genres/ratings', (_req, res) => {
     try {
       res.json(getGenreRatings());

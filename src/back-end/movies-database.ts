@@ -9,10 +9,33 @@ import type {
   Movie,
   MovieCollectionDetails,
   MovieHighlight,
+  MovieYearDistribution,
 } from './schemas/MoviesTypes';
 
 export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
 export type Genre = { id: number; name: string };
+
+export function getMovieYearDistribution(
+  databasePath = DEFAULT_DATABASE_PATH,
+): MovieYearDistribution[] {
+  const database = createMoviesDatabase(databasePath);
+  try {
+    return database
+      .prepare(`
+        SELECT release_year AS year, COUNT(*) AS movie_count
+        FROM movies
+        GROUP BY release_year
+        ORDER BY release_year
+      `)
+      .all()
+      .map((row) => ({
+        year: Number(row.year),
+        movieCount: Number(row.movie_count),
+      }));
+  } finally {
+    database.close();
+  }
+}
 
 export function getGenreRatings(
   databasePath = DEFAULT_DATABASE_PATH,

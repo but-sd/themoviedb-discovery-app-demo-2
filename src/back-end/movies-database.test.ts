@@ -8,6 +8,7 @@ import {
   getCollectionSummary,
   getGenreDistribution,
   getGenreRatings,
+  getMovieYearDistribution,
   upsertMovies,
 } from './movies-database';
 import type { Movie } from './schemas/MoviesTypes';
@@ -26,6 +27,29 @@ const movie: Movie = {
   backdrop_path: null,
   genre_ids: [18],
 };
+
+it('counts distinct stored movies per release year in chronological order', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'movie-years-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    expect(getMovieYearDistribution(path)).toEqual([]);
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(database, [{ ...movie, id: 3 }], 2024);
+      upsertMovies(database, [movie, { ...movie, id: 2 }], 2020);
+      upsertMovies(database, [movie], 2020);
+      upsertMovies(database, [], 2022);
+      expect(getMovieYearDistribution(path)).toEqual([
+        { year: 2020, movieCount: 2 },
+        { year: 2024, movieCount: 1 },
+      ]);
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 it('counts coproductions per country and deterministically ranks the leading country', () => {
   const directory = mkdtempSync(join(tmpdir(), 'top-country-'));

@@ -82,6 +82,11 @@ export type ProductionCountry = {
   name: string;
 };
 
+export type MovieYearDistribution = {
+  year: number;
+  movieCount: number;
+};
+
 export type ProductionCountryHighlight = ProductionCountry & {
   movieCount: number;
 };
