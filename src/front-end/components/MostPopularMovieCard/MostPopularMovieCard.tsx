@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import type { MovieHighlight } from '../../../back-end/schemas/MoviesTypes';
+import type { MovieHighlight } from '../../../../back-end/schemas/MoviesTypes';
 
 /**
  * Card displaying the most popular movie.

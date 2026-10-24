@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { genres, movieHighlight } from '../stories/fixtures';
-import { GenreHighlightCards } from './GenreHighlights';
+import { DataHighlightCards } from './DataHighlights';
 
 const meta = {
-  component: GenreHighlightCards,
+  component: DataHighlightCards,
   args: {
     distribution: genres,
     ratings: genres,
@@ -25,7 +25,7 @@ const meta = {
       },
     },
   },
-} satisfies Meta<typeof GenreHighlightCards>;
+} satisfies Meta<typeof DataHighlightCards>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

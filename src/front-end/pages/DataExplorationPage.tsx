@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import GenreHighlights from '../components/GenreHighlights';
+import DataHighlights from '../components/DataHighlights';
 import type { CollectionSummary } from '../../back-end/schemas/MoviesTypes';
 import { fetchCollectionSummary } from '../services/collection';
 import './DataExplorationPage.css';
@@ -31,7 +31,7 @@ export default function DataExplorationPage() {
       {error ? (
         <p role="alert">{error}</p>
       ) : summary ? (
-        <GenreHighlights revision={summary} summary={summary} />
+        <DataHighlights revision={summary} summary={summary} />
       ) : (
         <p role="status">Chargement des informations de la base…</p>
       )}

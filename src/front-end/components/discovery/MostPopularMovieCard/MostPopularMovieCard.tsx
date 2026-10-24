@@ -1,15 +1,15 @@
 import { Link } from 'react-router';
-import type { FinancialMovieHighlight } from '../../../back-end/schemas/MoviesTypes';
+import type { MovieHighlight } from '../../../../back-end/schemas/MoviesTypes';
 
 /**
- * Card displaying the most profitable movie by ROI.
- * @param movie The highlighted movie or null when unavailable.
- * @returns A JSX element representing the most profitable movie card.
+ * Carte affichant le film le plus populaire.
+ * @param movie Le film mis en avant ou null si indisponible.
+ * @returns Un élément JSX représentant la carte du film le plus populaire.
  */
-export function MostProfitableMovieCard({
+export function MostPopularMovieCard({
   movie,
 }: Readonly<{
-  movie: FinancialMovieHighlight | null | undefined;
+  movie: MovieHighlight | null | undefined;
 }>) {
   const content = (
     <div className="featured-movie-layout">
@@ -37,20 +37,20 @@ export function MostProfitableMovieCard({
         </span>
       )}
       <div className="featured-movie-content">
-        <span className="genre-highlight-label">Film le plus rentable</span>
+        <span className="genre-highlight-label">Film le plus populaire</span>
         {movie ? (
           <>
             <p className="genre-highlight-name">{movie.title}</p>
             <p className="featured-movie-year">{movie.year}</p>
             <p className="genre-highlight-value">
-              {movie.returnOnInvestment.toLocaleString('fr-FR', {
+              {movie.popularity.toLocaleString('fr-FR', {
                 maximumFractionDigits: 2,
               })}{' '}
-              <span>% ROI</span>
+              <span>popularité</span>
             </p>
           </>
         ) : (
-          <p>Aucun film avec budget et recettes connus.</p>
+          <p>Aucun film disponible.</p>
         )}
       </div>
     </div>

@@ -11,7 +11,7 @@ export const movieHighlight: FinancialMovieHighlight = {
   rating: 8.256,
   voteCount: 1500,
   popularity: 123.45,
-  posterPath: null,
+  posterPath: 'https://image.tmdb.org/t/p/w185/6OEtkkzoyusZDm2uMJojlWZSLR9.jpg',
   budget: 1000000,
   revenue: 4500000,
   returnOnInvestment: 350,
@@ -44,7 +44,8 @@ export const movieDetails: MovieDetails = {
   overview:
     'Une équipe part explorer une planète lointaine et découvre un monde inattendu.',
   popularity: movieHighlight.popularity,
-  poster_path: null,
+  poster_path:
+    'https://image.tmdb.org/t/p/w300/6OEtkkzoyusZDm2uMJojlWZSLR9.jpg',
   backdrop_path: null,
   release_date: '2026-07-01',
   vote_average: movieHighlight.rating,

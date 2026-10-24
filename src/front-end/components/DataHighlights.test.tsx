@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup as renderMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { expect, it } from 'vitest';
-import { GenreHighlightCards } from './GenreHighlights';
+import { DataHighlightCards } from './DataHighlights';
 
 function renderToStaticMarkup(element: ReactNode) {
   return renderMarkup(<MemoryRouter>{element}</MemoryRouter>);
@@ -10,7 +10,7 @@ function renderToStaticMarkup(element: ReactNode) {
 
 it('shows the leading production country in the film indicators', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{
@@ -39,7 +39,7 @@ it('shows financial highlights with ROI, amounts and the calculation limits', ()
     returnOnInvestment: 350,
   };
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{
@@ -66,7 +66,7 @@ it('shows financial highlights with ROI, amounts and the calculation limits', ()
 
 it('shows an explicit empty state for both financial cards', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{
@@ -94,7 +94,7 @@ it('shows the best rated and most popular films in the film panel', () => {
     posterPath: '/poster.jpg',
   };
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{
@@ -115,7 +115,7 @@ it('shows the best rated and most popular films in the film panel', () => {
 
 it('shows the global average rating and number of rated films', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{
@@ -132,7 +132,7 @@ it('shows the global average rating and number of rated films', () => {
 
 it('shows average runtime in the film group', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{
@@ -149,7 +149,7 @@ it('shows average runtime in the film group', () => {
 
 it('groups genre indicators separately from movie coverage', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{ movieCount: 0, years: [] }}
@@ -166,7 +166,7 @@ it('groups genre indicators separately from movie coverage', () => {
 
 it('shows the number of represented genres and their names in the details', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[
         { id: 1, name: 'Action', movieCount: 10 },
         { id: 2, name: 'Drame', movieCount: 5 },
@@ -181,7 +181,7 @@ it('shows the number of represented genres and their names in the details', () =
 
 it('shows the database count and collected year bounds without implying continuous coverage', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{ movieCount: 300, years: [2024, 2020, 2022] }}
@@ -194,7 +194,7 @@ it('shows the database count and collected year bounds without implying continuo
 
 it('shows an empty database without invalid year bounds', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[]}
       ratings={[]}
       summary={{ movieCount: 0, years: [] }}
@@ -206,7 +206,7 @@ it('shows an empty database without invalid year bounds', () => {
 
 it('selects the highest count and rating even when data is not sorted', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={[
         { id: 1, name: 'Action', movieCount: 12 },
         { id: 2, name: 'Drame', movieCount: 35 },
@@ -243,7 +243,7 @@ it('selects the highest count and rating even when data is not sorted', () => {
 
 it('shows empty states rather than invalid values', () => {
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards distribution={[]} ratings={[]} />,
+    <DataHighlightCards distribution={[]} ratings={[]} />,
   );
   expect(markup).toContain('Aucun genre disponible');
   expect(markup).toContain('Aucun film noté disponible');
@@ -270,7 +270,7 @@ it('includes all tied genres', () => {
     },
   ];
   const markup = renderToStaticMarkup(
-    <GenreHighlightCards distribution={genres} ratings={genres} />,
+    <DataHighlightCards distribution={genres} ratings={genres} />,
   );
   expect(markup.match(/genre-highlight-badge/g)).toHaveLength(3);
 });

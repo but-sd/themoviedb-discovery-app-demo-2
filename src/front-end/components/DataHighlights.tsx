@@ -11,13 +11,13 @@ import { BestWeightedGenreRatingCard } from './BestWeightedGenreRatingCard/BestW
 import { BestRatedMovieCard } from './BestRatedMovieCard/BestRatedMovieCard';
 import { DominantGenreCard } from './DominantGenreCard/DominantGenreCard';
 import { LeastProfitableMovieCard } from './LeastProfitableMovieCard/LeastProfitableMovieCard';
-import { MostPopularMovieCard } from './MostPopularMovieCard/MostPopularMovieCard';
-import { MostProfitableMovieCard } from './MostProfitableMovieCard/MostProfitableMovieCard';
+import { MostPopularMovieCard } from './discovery/MostPopularMovieCard/MostPopularMovieCard';
+import { MostProfitableMovieCard } from './discovery/MostProfitableMovieCard/MostProfitableMovieCard';
 import { MoviesInDatabaseCard } from './discovery/MoviesInDatabaseCard/MoviesInDatabaseCard';
 import { RepresentedGenresCard } from './RepresentedGenresCard/RepresentedGenresCard';
 import { TopProductionCountryCard } from './discovery/TopProductionCountryCard/TopProductionCountryCard';
 
-export function GenreHighlightCards({
+export function DataHighlightCards({
   distribution,
   ratings,
   summary,
@@ -146,7 +146,7 @@ async function fetchHighlights(signal: AbortSignal) {
   return { distribution, ratings };
 }
 
-export default function GenreHighlights({
+export default function DataHighlights({
   revision,
   summary,
 }: {
@@ -183,10 +183,12 @@ export default function GenreHighlights({
   if (error) return <p role="alert">{error}</p>;
   if (!data) return <p role="status">Chargement de la synthèse des genres…</p>;
   return (
-    <GenreHighlightCards
+    <DataHighlightCards
       distribution={data.distribution}
       ratings={data.ratings}
       summary={summary}
     />
   );
 }
+
+export const GenreHighlightCards = DataHighlightCards;
