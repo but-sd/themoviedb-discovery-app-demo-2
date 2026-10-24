@@ -7,8 +7,8 @@ import {
 import {
   createMoviesDatabase,
   DEFAULT_DATABASE_PATH,
-  upsertMovies,
-} from './movies-database';
+} from './database/connection';
+import { upsertMovies } from './database/movie-writer';
 import type { Movie, MovieCollectionDetails } from './schemas/MoviesTypes';
 
 export async function collectMovies(

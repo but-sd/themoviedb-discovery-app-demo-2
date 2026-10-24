@@ -1,15 +1,15 @@
 import type { Express } from 'express';
 import { collectMovies } from './collectMovies';
 import { isValidMovieYear } from './discover-movies';
+import { getCollectionSummary } from './database/collection-summary';
 import {
-  getCollectionSummary,
   getGenreDistribution,
   getGenreRatings,
   getMovieYearDistribution,
   getMovieRuntimeDistribution,
   getMovieRatingDistribution,
   getMovieCountryDistribution,
-} from './movies-database';
+} from './database/movie-statistics';
 
 export function registerCollectionApi(app: Express): void {
   app.get('/api/movies/countries/distribution', (_req, res) => {

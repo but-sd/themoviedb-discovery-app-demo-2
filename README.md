@@ -112,9 +112,8 @@ séparément, sans être inclus dans les tranches, comme pour le calcul de la mo
 La collecte enregistre aussi `movies.budget` et `movies.revenue` en dollars US,
 depuis la même requête de détails TMDB que la durée. Les montants à zéro ou
 non renseignés sont stockés à `NULL` (inconnus, pas des budgets ou recettes nuls).
-Les valeurs sont actualisées à chaque collecte. Les colonnes optionnelles
-manquantes (`runtime_minutes`, `budget`, `revenue`) sont ajoutées à l’ouverture
-d’une base existante ; une nouvelle collecte renseigne les valeurs manquantes.
+Les valeurs sont actualisées à chaque collecte. Les colonnes `runtime_minutes`,
+`budget` et `revenue` font partie du schéma initial.
 
 La page d’exploration présente le film le plus rentable et le moins rentable
 selon le retour sur investissement : `(revenue - budget) / budget × 100`.
@@ -153,8 +152,7 @@ TMDB de chaque film pour enregistrer sa durée dans `movies.runtime_minutes`.
 Une nouvelle collecte enrichit les films existants ; sans durée renseignée,
 la carte indique « Non disponible ». Les durées nulles ou égales à zéro
 sont exclues du calcul. Cette récupération ajoute une requête par film.
-Les colonnes optionnelles manquantes sont ajoutées automatiquement ; les données
-d’une éventuelle ancienne table de durées ne sont pas reprises automatiquement.
+Les anciennes bases ne sont pas migrées automatiquement.
 
 La carte Films en base indique les bornes des années présentes ou collectées,
 sans présumer une couverture continue. Après une collecte, rouvrir l’exploration
@@ -169,10 +167,18 @@ Les notes moyennes sont arithmétiques, sans pondération, sur une échelle
 de 0 à 10 ; les films sans vote sont exclus.
 
 Avec Node.js 24 ou plus et `TMDB_ACCESS_TOKEN` dans `.env` :
+La commande utilise Commander : `--help` affiche l'usage. `<year>` est une
+année passée à quatre chiffres (1870 à l'année courante) ; `[count]` est un
+entier positif facultatif, fixé à 100 par défaut.
 
 ```sh
+# Afficher l'aide
+npm run collect:movies -- --help
+
+# Collecter jusqu'à 100 films pour 2020
 npm run collect:movies -- 2020
-# Pour choisir le nombre maximum de films :
+
+# Limiter la collecte à 50 films
 npm run collect:movies -- 2020 50
 ```
 
@@ -224,14 +230,20 @@ En cas d'erreur réseau ou si le nombre demandé nécessite de dépasser la limi
 TMDB de 500 pages, la collecte échoue sans enregistrer de résultats partiels.
 Le troisième argument optionnel du service permet de choisir le chemin SQLite.
 
-La création du fichier SQLite, de la table et de son index est centralisée
-dans `src/back-end/movies-database.ts` via `createMoviesDatabase()`.
-Les insertions et mises à jour transactionnelles sont exposées par
-`upsertMovies(database, movies, year, genres)` dans le même module.
-Le service de collecte appelle ces fonctions et ferme la connexion.
+La persistance est organisée dans `src/back-end/database/` :
 
-Ce schéma nécessite une nouvelle base SQLite ; aucune migration des anciennes
-bases utilisant `movies.genre_ids` n'est effectuée.
+- `connection.ts` ouvre la base, active les clés étrangères et initialise le schéma
+  via `createMoviesDatabase()`. L’appelant ferme la connexion après utilisation.
+- `schema.ts` définit l’ensemble des tables, colonnes, contraintes et index initiaux.
+- `movie-writer.ts` expose `upsertMovies(database, movies, year, genres, details)`
+  pour enregistrer une collecte dans une transaction.
+- `movie-statistics.ts` fournit les distributions et les notes moyennes par genre.
+- `collection-summary.ts` regroupe les indicateurs et les films remarquables du catalogue.
+
+Aucune migration n’est exécutée. Après un changement de schéma, sauvegardez puis
+retirez l’ancien fichier `data/movies.sqlite` (ou le fichier configuré) avant de
+relancer une collecte : une base vide au schéma actuel sera créée. Relancer la
+collecte sans retirer une ancienne base incompatible ne met pas son schéma à jour.
 
 Exemple d'exploitation :
 

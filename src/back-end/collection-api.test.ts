@@ -4,8 +4,10 @@ import { beforeEach, expect, it, vi } from 'vitest';
 
 vi.mock('./collectMovies', () => ({ collectMovies: vi.fn() }));
 vi.mock('./config', () => ({ tmdbAccessToken: 'test-access-token' }));
-vi.mock('./movies-database', () => ({
+vi.mock('./database/collection-summary', () => ({
   getCollectionSummary: vi.fn(),
+}));
+vi.mock('./database/movie-statistics', () => ({
   getGenreDistribution: vi.fn(),
   getGenreRatings: vi.fn(),
   getMovieYearDistribution: vi.fn(),
@@ -17,14 +19,14 @@ vi.mock('./movies-database', () => ({
 import { collectMovies } from './collectMovies';
 import { registerCollectionApi } from './collection-api';
 import { registerMoviesApi } from './movies-api';
+import { getCollectionSummary } from './database/collection-summary';
 import {
-  getCollectionSummary,
   getGenreDistribution,
   getMovieYearDistribution,
   getMovieRuntimeDistribution,
   getMovieRatingDistribution,
   getMovieCountryDistribution,
-} from './movies-database';
+} from './database/movie-statistics';
 
 const app = express();
 const post = vi.spyOn(app, 'post');

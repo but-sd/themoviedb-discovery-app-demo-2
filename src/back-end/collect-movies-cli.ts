@@ -1,22 +1,49 @@
+import { Command, InvalidArgumentError } from 'commander';
 import { collectMovies } from './collectMovies';
 
-try {
-  const args = process.argv.slice(2);
-  if (
-    args.length < 1 ||
-    args.length > 2 ||
-    !/^\d{4}$/.test(args[0]) ||
-    (args[1] !== undefined && !/^\d+$/.test(args[1]))
-  ) {
-    throw new Error('Usage: npm run collect:movies -- <year> [count]');
+/**
+ * Parse a string as a four-digit year.
+ * @param value The string value to parse as a year
+ * @returns The parsed year as a number
+ */
+function parseYear(value: string): number {
+  if (!/^\d{4}$/.test(value)) {
+    throw new InvalidArgumentError('year must be a four-digit year');
   }
-  console.log(
-    await collectMovies(
-      Number(args[0]),
-      args[1] === undefined ? undefined : Number(args[1]),
-    ),
-  );
+  return Number(value);
+}
+
+/**
+ * Parse a string as a positive integer count.
+ * @param value The string value to parse as a count
+ * @returns The parsed count as a number
+ */
+function parseCount(value: string): number {
+  const count = Number(value);
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(count) || count <= 0) {
+    throw new InvalidArgumentError('count must be a positive integer');
+  }
+  return count;
+}
+
+// CLI program for collecting movies
+const program = new Command();
+program
+  .name('collect:movies')
+  .description('Collect movies for a release year.')
+  .argument('<year>', 'four-digit release year', parseYear)
+  .argument('[count]', 'maximum number of movies to collect', parseCount)
+  .showHelpAfterError('(add --help for additional information)')
+  .action(async (year: number, count?: number) => {
+    console.log(await collectMovies(year, count));
+  });
+
+try {
+  await program.parseAsync(process.argv);
 } catch (error) {
-  console.error('Movie collection failed:', error);
+  console.error(
+    'Movie collection failed:',
+    error instanceof Error ? error.message : error,
+  );
   process.exitCode = 1;
 }

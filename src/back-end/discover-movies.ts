@@ -7,7 +7,7 @@ import type {
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 import { toSupportedMovie } from './utils';
-import type { Genre } from './movies-database';
+import type { Genre } from './schemas/MoviesTypes';
 
 export async function fetchMovieGenres(): Promise<Genre[]> {
   const query = new URLSearchParams({ language: DEFAULT_LANGUAGE });
