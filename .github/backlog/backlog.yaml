@@ -163,6 +163,7 @@ epics:
           à spécifier avant de l'ajouter ; il n'est pas un besoin implicite d'EXPL-02.
         size: S
         priority: P1
+        milestone: 1.1.0
         dependsOn: []
         acceptance:
           - L'équipe distingue année demandée pour la collecte, date de sortie, année dérivée de cette date et horodatage de collecte.
@@ -188,6 +189,7 @@ epics:
           et la procédure d'installation.
         size: M
         priority: P1
+        milestone: 1.1.0
         dependsOn: [EXPL-01]
         acceptance:
           - Un MCD déduit du dictionnaire et des règles fonctionnelles d'EXPL-01 justifie les entités et cardinalités retenues avant leur traduction en schéma relationnel.
@@ -208,6 +210,7 @@ epics:
         story: En tant qu'étudiant, je veux initialiser la base avec une commande documentée pour pouvoir travailler depuis un clone du projet.
         size: M
         priority: P1
+        milestone: 1.1.0
         dependsOn: [EXPL-02]
         acceptance:
           - Des migrations versionnées créent les tables, contraintes et index du modèle.

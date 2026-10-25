@@ -207,8 +207,9 @@ existants sans milestone ; un milestone déjà affecté manuellement est conserv
 même avec `--update-existing`. Omettre ou retirer cette propriété ne détache
 jamais un ticket de sa version. Les erreurs de permission arrêtent l'import.
 
-La configuration fournie crée **1.1.0**, sans y rattacher automatiquement les
-tickets : l'équipe choisit le périmètre de la version pendant la planification.
+La configuration fournie crée **1.1.0** et y rattache les trois premiers tickets,
+**EXPL-01**, **EXPL-02** et **EXPL-03**. L'équipe peut ajuster le périmètre des
+versions suivantes pendant la planification.
 Une milestone regroupe un objectif de livraison, tandis que le statut du projet
 décrit l'avancement des tickets.
 
