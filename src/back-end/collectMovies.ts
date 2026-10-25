@@ -9,6 +9,7 @@ import {
   DEFAULT_DATABASE_PATH,
 } from './database/connection';
 import { upsertMovies } from './database/movie-writer';
+import { createGenreWriter } from './database/genre-writer';
 import type { Movie, MovieCollectionDetails } from './schemas/MoviesTypes';
 
 /**
@@ -61,9 +62,25 @@ export async function collectMovies(
   for (const movie of movies.values()) {
     details.set(movie.id, await fetchMovieCollectionDetails(movie.id));
   }
+
+  // Create and initialize the movies database if it doesn't exist.
   const database = createMoviesDatabase(databasePath);
   try {
-    upsertMovies(database, movies.values(), genres, details);
+    database.exec('BEGIN');
+    try {
+      const genreWriter = createGenreWriter(database);
+      genreWriter.upsertGenres(genres);
+      for (const movie of movies.values()) {
+        for (const genreId of movie.genre_ids) {
+          genreWriter.ensureGenre(genreId);
+        }
+      }
+      upsertMovies(database, movies.values(), details);
+      database.exec('COMMIT');
+    } catch (error) {
+      database.exec('ROLLBACK');
+      throw error;
+    }
   } finally {
     database.close();
   }

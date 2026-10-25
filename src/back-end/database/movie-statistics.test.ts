@@ -16,7 +16,7 @@ import {
   MOVIE_RUNTIME_RANGES,
   MOVIE_RATING_RANGES,
 } from '../schemas/MoviesTypes';
-import { upsertMovies } from './movie-writer';
+import { upsertMovies } from './writer-test-helper';
 import type { Movie } from '../schemas/MoviesTypes';
 
 const movie: Movie = {

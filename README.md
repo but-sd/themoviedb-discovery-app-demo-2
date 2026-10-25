@@ -338,8 +338,11 @@ La persistance est organisée dans `src/back-end/database/` :
 - `connection.ts` ouvre la base, active les clés étrangères et initialise le schéma
   via `createMoviesDatabase()`. L’appelant ferme la connexion après utilisation.
 - `schema.ts` définit l’ensemble des tables, colonnes, contraintes et index initiaux.
-- `movie-writer.ts` expose `upsertMovies(database, movies, genres, details)`
-  pour enregistrer une collecte dans une transaction.
+- `movie-writer.ts` expose `upsertMovies(database, movies, details)`
+  pour enregistrer les films et leurs associations dans un point de sauvegarde.
+- `genre-writer.ts` gère uniquement les genres et leurs libellés ; les associations
+  films-genres restent dans `movie-writer.ts`. `collectMovies.ts` appelle les deux
+  writers et pilote une transaction commune aux genres, films et associations.
 - `movie-statistics.ts` fournit les distributions et les notes moyennes par genre.
 - `collection-summary.ts` regroupe les indicateurs et les films remarquables du catalogue.
 

@@ -1,16 +1,18 @@
 import type { DatabaseSync } from 'node:sqlite';
-import type {
-  Genre,
-  Movie,
-  MovieCollectionDetails,
-} from '../schemas/MoviesTypes';
+import type { Movie, MovieCollectionDetails } from '../schemas/MoviesTypes';
 
+/**
+ * Upserts movies, their genres, and collection details into the database.
+ * @param database The SQLite database to upsert movies into.
+ * @param movies An iterable of movies to upsert.
+ * @param details A map of movie IDs to their collection details.
+ */
 export function upsertMovies(
   database: DatabaseSync,
   movies: Iterable<Movie>,
-  genres: Iterable<Genre> = [],
   details: ReadonlyMap<number, MovieCollectionDetails> = new Map(),
 ): void {
+  // Prepare the SQL statement for inserting or updating movies in the database.
   const insert = database.prepare(`
       INSERT INTO movies (
         id, title, original_title, original_language, overview, release_date,
@@ -33,22 +35,12 @@ export function upsertMovies(
         revenue = CASE WHEN ? THEN excluded.revenue ELSE movies.revenue END,
         collected_at = excluded.collected_at
     `);
-  database.exec('BEGIN');
+  database.exec('SAVEPOINT movie_write');
   try {
-    const upsertGenre = database.prepare(`
-      INSERT INTO genres (id, name) VALUES (?, ?)
-      ON CONFLICT(id) DO UPDATE SET name = excluded.name
-    `);
-    for (const genre of genres) {
-      upsertGenre.run(genre.id, genre.name);
-    }
-    const ensureGenre = database.prepare(
-      'INSERT OR IGNORE INTO genres (id) VALUES (?)',
-    );
-    const deleteLinks = database.prepare(
+    const deleteGenreLinks = database.prepare(
       'DELETE FROM movie_genres WHERE movie_id = ?',
     );
-    const insertLink = database.prepare(
+    const insertGenreLink = database.prepare(
       'INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?, ?)',
     );
     const upsertCountry = database.prepare(`
@@ -83,10 +75,9 @@ export function upsertMovies(
         Number(details.has(movie.id)),
         Number(details.has(movie.id)),
       );
-      deleteLinks.run(movie.id);
+      deleteGenreLinks.run(movie.id);
       for (const genreId of movie.genre_ids) {
-        ensureGenre.run(genreId);
-        insertLink.run(movie.id, genreId);
+        insertGenreLink.run(movie.id, genreId);
       }
       if (details.has(movie.id)) {
         deleteProductionCountries.run(movie.id);
@@ -97,9 +88,10 @@ export function upsertMovies(
         }
       }
     }
-    database.exec('COMMIT');
+    database.exec('RELEASE SAVEPOINT movie_write');
   } catch (error) {
-    database.exec('ROLLBACK');
+    database.exec('ROLLBACK TO SAVEPOINT movie_write');
+    database.exec('RELEASE SAVEPOINT movie_write');
     throw error;
   }
 }

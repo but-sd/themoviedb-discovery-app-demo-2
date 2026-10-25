@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { expect, it } from 'vitest';
 import { createMoviesDatabase } from './connection';
 import { getCollectionSummary } from './collection-summary';
-import { upsertMovies } from './movie-writer';
+import { upsertMovies } from './writer-test-helper';
 import type { Movie } from '../schemas/MoviesTypes';
 
 const movie: Movie = {
