@@ -161,7 +161,8 @@ permet de charger les indicateurs actualisés.
 La carte **Films en base** est autonome : `<MoviesInDatabaseCard />` charge
 `GET /api/movies/catalog-summary`, qui renvoie uniquement `{ movieCount, years }`.
 Elle s’affiche sans attendre les autres indicateurs ou les genres, gère son
-chargement, affiche les erreurs et annule la requête au démontage, sans nouvelle tentative.
+chargement et affiche les erreurs, sans nouvelle tentative. Au démontage, les
+résultats et erreurs tardifs sont ignorés ; la requête réseau n’est pas annulée.
 Le total inclut les films sans année connue ; seules les années connues figurent
 dans la période. Sa vue `MoviesInDatabaseCardView` permet de présenter les états
 renseigné, vide, chargement et erreur dans Storybook sans backend.

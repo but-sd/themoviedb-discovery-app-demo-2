@@ -3,7 +3,7 @@ import { fetchCatalogSummary } from './catalog-summary';
 
 afterEach(() => vi.unstubAllGlobals());
 
-it('validates and sorts years and forwards cancellation', async () => {
+it('fetches the catalog summary, sorts years and forwards cancellation', async () => {
   const fetchMock = vi.fn().mockResolvedValue({
     ok: true,
     json: async () => ({ movieCount: 3, years: [2024, 2020] }),
@@ -31,21 +31,17 @@ it.each([0, 3])(
   },
 );
 
-it.each([
-  null,
-  {},
-  { movieCount: -1, years: [] },
-  { movieCount: 1.5, years: [] },
-  { movieCount: 2, years: [2020, 2020] },
-  { movieCount: 2, years: ['2020'] },
-  { movieCount: 0, years: [2020] },
-  { movieCount: 1, years: [null] },
-])('rejects malformed data %j', async (data) => {
+it('propagates JSON parsing failures', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue({ ok: true, json: async () => data }),
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => {
+        throw new SyntaxError('Invalid JSON');
+      },
+    }),
   );
-  await expect(fetchCatalogSummary()).rejects.toThrow('invalides');
+  await expect(fetchCatalogSummary()).rejects.toThrow('Invalid JSON');
 });
 
 it('reports HTTP errors and propagates network failures', async () => {

@@ -13,13 +13,13 @@ export function MoviesInDatabaseCard() {
   });
 
   useEffect(() => {
-    const controller = new AbortController();
-    fetchCatalogSummary(controller.signal)
+    let active = true;
+    fetchCatalogSummary()
       .then((data) => {
-        if (!controller.signal.aborted) setState({ status: 'success', data });
+        if (active) setState({ status: 'success', data });
       })
       .catch((error: unknown) => {
-        if (!controller.signal.aborted) {
+        if (active) {
           console.error(
             'Impossible de charger les informations du catalogue :',
             error,
@@ -30,7 +30,9 @@ export function MoviesInDatabaseCard() {
           });
         }
       });
-    return () => controller.abort();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return <MoviesInDatabaseCardView state={state} />;

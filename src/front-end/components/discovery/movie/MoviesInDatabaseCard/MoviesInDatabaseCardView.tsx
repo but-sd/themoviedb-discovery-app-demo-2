@@ -1,11 +1,19 @@
 import { Link } from 'react-router';
 import type { CatalogSummary } from '../../../../../back-end/schemas/MoviesTypes';
 
+/**
+ * Component that displays the state of movies in the database, including loading, error, and success states.
+ */
 export type MoviesInDatabaseCardState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'success'; data: CatalogSummary };
 
+/**
+ * Component that renders the view for the movies in the database card.
+ * @param param0 The props object containing the state of the movies in the database.
+ * @returns The JSX element representing the movies in the database card view.
+ */
 export function MoviesInDatabaseCardView({
   state,
 }: {
@@ -13,6 +21,7 @@ export function MoviesInDatabaseCardView({
 }) {
   if (state.status !== 'success') {
     return (
+      // Display loading or error state before showing the success view
       <div className="genre-highlight">
         <span className="genre-highlight-label">Films en base</span>
         {state.status === 'loading' ? (
@@ -25,6 +34,7 @@ export function MoviesInDatabaseCardView({
   }
   const { movieCount, years } = state.data;
   return (
+    // Display the success view for the movies in the database when the data is available
     <Link
       to="/exploration/movies/years"
       className="genre-highlight featured-movie-link"
