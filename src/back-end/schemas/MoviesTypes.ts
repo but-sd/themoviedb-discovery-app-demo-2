@@ -136,9 +136,12 @@ export type MovieHighlight = {
   popularity: number | null;
 };
 
-export type CollectionSummary = {
+export type CatalogSummary = {
   movieCount: number;
   years: number[];
+};
+
+export type CollectionSummary = CatalogSummary & {
   topProductionCountry?: ProductionCountryHighlight | null;
   averageRuntime?: number | null;
   runtimeMovieCount?: number;

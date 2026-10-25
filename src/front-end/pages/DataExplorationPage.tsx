@@ -26,22 +26,18 @@ export default function DataExplorationPage() {
     return () => controller.abort();
   }, []);
 
-  let content;
-  if (error) {
-    content = <p role="alert">{error}</p>;
-  } else if (summary) {
-    content = <DataHighlights revision={summary} summary={summary} />;
-  } else {
-    content = <output>Chargement des informations de la base…</output>;
-  }
-
   return (
     <main className="app-shell">
       <header className="app-header">
         <h1>Exploration des données</h1>
         <p>Explorez les films et les tendances de votre catalogue collecté.</p>
       </header>
-      {content}
+      {error ? (
+        <p role="alert">{error}</p>
+      ) : (
+        !summary && <output>Chargement des informations de la base…</output>
+      )}
+      <DataHighlights revision={null} summary={summary} />
     </main>
   );
 }

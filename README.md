@@ -157,6 +157,14 @@ Les anciennes bases ne sont pas migrées automatiquement.
 La carte Films en base indique les bornes des années présentes dans les films stockés,
 sans présumer une couverture continue. Après une collecte, rouvrir l’exploration
 permet de charger les indicateurs actualisés.
+
+La carte **Films en base** est autonome : `<MoviesInDatabaseCard />` charge
+`GET /api/movies/catalog-summary`, qui renvoie uniquement `{ movieCount, years }`.
+Elle s’affiche sans attendre les autres indicateurs ou les genres, gère son
+chargement, affiche les erreurs et annule la requête au démontage, sans nouvelle tentative.
+Le total inclut les films sans année connue ; seules les années connues figurent
+dans la période. Sa vue `MoviesInDatabaseCardView` permet de présenter les états
+renseigné, vide, chargement et erreur dans Storybook sans backend.
 Les indicateurs sont regroupés dans deux panneaux : **Films** pour la couverture
 du catalogue et **Genres** pour la diversité, le genre dominant et la meilleure note.
 
@@ -348,6 +356,8 @@ La persistance est organisée dans `src/back-end/database/` :
   `collectMovies.ts` appelle les trois writers et pilote une transaction commune
   aux genres, pays, films et associations.
 - `movie-statistics.ts` fournit les distributions et les notes moyennes par genre.
+- `catalog-summary.ts` fournit uniquement le nombre de films et les années connues
+  pour la carte autonome, sans calculer les autres indicateurs.
 - `collection-summary.ts` regroupe les indicateurs et les films remarquables du catalogue.
 
 Aucune migration n’est exécutée. Après un changement de schéma, sauvegardez puis

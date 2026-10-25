@@ -1,4 +1,5 @@
 import type { Express } from 'express';
+import { getCatalogSummary } from './database/catalog-summary';
 import { collectMovies } from './collectMovies';
 import { isValidMovieYear } from './discover-movies';
 import { getCollectionSummary } from './database/collection-summary';
@@ -12,6 +13,16 @@ import {
 } from './database/movie-statistics';
 
 export function registerCollectionApi(app: Express): void {
+  app.get('/api/movies/catalog-summary', (_req, res) => {
+    try {
+      res.json(getCatalogSummary());
+    } catch (error) {
+      console.error('Failed to read catalog summary:', error);
+      res
+        .status(500)
+        .json({ error: 'Impossible de lire les informations du catalogue.' });
+    }
+  });
   app.get('/api/movies/countries/distribution', (_req, res) => {
     try {
       res.json(getMovieCountryDistribution());

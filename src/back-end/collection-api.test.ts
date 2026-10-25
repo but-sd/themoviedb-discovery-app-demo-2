@@ -4,6 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 
 vi.mock('./collectMovies', () => ({ collectMovies: vi.fn() }));
 vi.mock('./config', () => ({ tmdbAccessToken: 'test-access-token' }));
+vi.mock('./database/catalog-summary', () => ({ getCatalogSummary: vi.fn() }));
 vi.mock('./database/collection-summary', () => ({
   getCollectionSummary: vi.fn(),
 }));
@@ -17,6 +18,7 @@ vi.mock('./database/movie-statistics', () => ({
 }));
 
 import { collectMovies } from './collectMovies';
+import { getCatalogSummary } from './database/catalog-summary';
 import { registerCollectionApi } from './collection-api';
 import { registerMoviesApi } from './movies-api';
 import { getCollectionSummary } from './database/collection-summary';
@@ -32,6 +34,9 @@ const app = express();
 const post = vi.spyOn(app, 'post');
 const get = vi.spyOn(app, 'get');
 registerCollectionApi(app);
+const catalogSummaryHandler = get.mock.calls.find(
+  ([path]) => path === '/api/movies/catalog-summary',
+)?.[1] as (req: Request, res: Response) => void;
 const summaryHandler = get.mock.calls.find(
   ([path]) => path === '/api/movies/collection',
 )?.[1] as (req: Request, res: Response) => void;
@@ -53,6 +58,33 @@ const handler = post.mock.calls[0][1] as (
 ) => Promise<void>;
 
 beforeEach(() => vi.clearAllMocks());
+
+it('serves the targeted catalog summary', () => {
+  const data = { movieCount: 3, years: [2020, 2024] };
+  vi.mocked(getCatalogSummary).mockReturnValue(data);
+  const json = vi.fn();
+  catalogSummaryHandler({} as Request, { json } as unknown as Response);
+  expect(json).toHaveBeenCalledWith(data);
+});
+
+it('reports catalog summary failures explicitly', () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    vi.mocked(getCatalogSummary).mockImplementation(() => {
+      throw new Error('SQLite failure');
+    });
+    const json = vi.fn();
+    const status = vi.fn().mockReturnValue({ json });
+    catalogSummaryHandler({} as Request, { status } as unknown as Response);
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Impossible de lire les informations du catalogue.',
+    });
+    expect(log).toHaveBeenCalled();
+  } finally {
+    log.mockRestore();
+  }
+});
 
 it('serves country distribution over HTTP alongside movie routes', async () => {
   const serverApp = express();

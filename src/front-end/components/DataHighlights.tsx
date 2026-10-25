@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import type {
   CollectionSummary,
   GenreDistribution,
@@ -14,6 +15,7 @@ import { LeastProfitableMovieCard } from './discovery/movie/LeastProfitableMovie
 import { MostPopularMovieCard } from './discovery/movie/MostPopularMovieCard/MostPopularMovieCard';
 import { MostProfitableMovieCard } from './discovery/movie/MostProfitableMovieCard/MostProfitableMovieCard';
 import { MoviesInDatabaseCard } from './discovery/movie/MoviesInDatabaseCard/MoviesInDatabaseCard';
+import { MoviesInDatabaseCardView } from './discovery/movie/MoviesInDatabaseCard/MoviesInDatabaseCardView';
 import { RepresentedGenresCard } from './RepresentedGenresCard/RepresentedGenresCard';
 import { TopProductionCountryCard } from './discovery/movie/TopProductionCountryCard/TopProductionCountryCard';
 
@@ -21,17 +23,21 @@ export function DataHighlightCards({
   distribution,
   ratings,
   summary,
+  catalogCard,
+  genresStatus,
 }: {
   distribution: GenreDistribution[];
   ratings: GenreRating[];
   summary?: CollectionSummary | null;
+  catalogCard?: ReactNode;
+  genresStatus?: ReactNode;
 }) {
   return (
     <section
       className="genre-highlights"
       aria-label="Vue d’ensemble du catalogue"
     >
-      {summary && (
+      {(summary || catalogCard) && (
         <section
           className="highlight-group highlight-group--movies"
           aria-label="Indicateurs des films"
@@ -46,22 +52,34 @@ export function DataHighlightCards({
             </div>
           </header>
           <div className="catalog-metrics">
-            <MoviesInDatabaseCard
-              movieCount={summary.movieCount}
-              years={summary.years}
-            />
-            <AverageRuntimeCard averageRuntime={summary.averageRuntime} />
-            <AverageRatingCard averageRating={summary.averageRating} />
-            <TopProductionCountryCard country={summary.topProductionCountry} />
+            {catalogCard ??
+              (summary && (
+                <MoviesInDatabaseCardView
+                  state={{ status: 'success', data: summary }}
+                />
+              ))}
+            {summary && (
+              <>
+                <AverageRuntimeCard averageRuntime={summary.averageRuntime} />
+                <AverageRatingCard averageRating={summary.averageRating} />
+                <TopProductionCountryCard
+                  country={summary.topProductionCountry}
+                />
+              </>
+            )}
           </div>
-          <section className="featured-movies" aria-label="Films à la une">
-            <div className="featured-movies-grid">
-              <BestRatedMovieCard movie={summary.bestRatedMovie} />
-              <MostPopularMovieCard movie={summary.mostPopularMovie} />
-              <MostProfitableMovieCard movie={summary.mostProfitableMovie} />
-              <LeastProfitableMovieCard movie={summary.leastProfitableMovie} />
-            </div>
-          </section>
+          {summary && (
+            <section className="featured-movies" aria-label="Films à la une">
+              <div className="featured-movies-grid">
+                <BestRatedMovieCard movie={summary.bestRatedMovie} />
+                <MostPopularMovieCard movie={summary.mostPopularMovie} />
+                <MostProfitableMovieCard movie={summary.mostProfitableMovie} />
+                <LeastProfitableMovieCard
+                  movie={summary.leastProfitableMovie}
+                />
+              </div>
+            </section>
+          )}
         </section>
       )}
       <section
@@ -77,12 +95,14 @@ export function DataHighlightCards({
             <p>Les tendances de votre catalogue</p>
           </div>
         </header>
-        <div className="highlight-group-cards">
-          <RepresentedGenresCard distribution={distribution} />
-          <DominantGenreCard distribution={distribution} />
-          <BestGenreRatingCard ratings={ratings} />
-          <BestWeightedGenreRatingCard ratings={ratings} />
-        </div>
+        {genresStatus ?? (
+          <div className="highlight-group-cards">
+            <RepresentedGenresCard distribution={distribution} />
+            <DominantGenreCard distribution={distribution} />
+            <BestGenreRatingCard ratings={ratings} />
+            <BestWeightedGenreRatingCard ratings={ratings} />
+          </div>
+        )}
       </section>
     </section>
   );
@@ -177,13 +197,19 @@ export default function DataHighlights({
     return () => controller.abort();
   }, [revision]);
 
-  if (error) return <p role="alert">{error}</p>;
-  if (!data) return <p role="status">Chargement de la synthèse des genres…</p>;
   return (
     <DataHighlightCards
-      distribution={data.distribution}
-      ratings={data.ratings}
+      distribution={data?.distribution ?? []}
+      ratings={data?.ratings ?? []}
       summary={summary}
+      catalogCard={<MoviesInDatabaseCard />}
+      genresStatus={
+        error ? (
+          <p role="alert">{error}</p>
+        ) : !data ? (
+          <p role="status">Chargement de la synthèse des genres…</p>
+        ) : undefined
+      }
     />
   );
 }
