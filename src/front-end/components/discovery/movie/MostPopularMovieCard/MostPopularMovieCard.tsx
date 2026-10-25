@@ -43,9 +43,11 @@ export function MostPopularMovieCard({
             <p className="genre-highlight-name">{movie.title}</p>
             <p className="featured-movie-year">{movie.year}</p>
             <p className="genre-highlight-value">
-              {movie.popularity.toLocaleString('fr-FR', {
-                maximumFractionDigits: 2,
-              })}{' '}
+              {movie.popularity === null
+                ? 'Non disponible'
+                : movie.popularity.toLocaleString('fr-FR', {
+                    maximumFractionDigits: 2,
+                  })}{' '}
               <span>popularité</span>
             </p>
           </>

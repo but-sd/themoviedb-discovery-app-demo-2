@@ -21,18 +21,21 @@ function isMovieHighlight(value: unknown): value is MovieHighlight | null {
       typeof value.year === 'number' &&
       Number.isInteger(value.year) &&
       'rating' in value &&
-      typeof value.rating === 'number' &&
-      Number.isFinite(value.rating) &&
-      value.rating >= 0 &&
-      value.rating <= 10 &&
+      (value.rating === null ||
+        (typeof value.rating === 'number' &&
+          Number.isFinite(value.rating) &&
+          value.rating >= 0 &&
+          value.rating <= 10)) &&
       'voteCount' in value &&
-      typeof value.voteCount === 'number' &&
-      Number.isSafeInteger(value.voteCount) &&
-      value.voteCount >= 0 &&
+      (value.voteCount === null ||
+        (typeof value.voteCount === 'number' &&
+          Number.isSafeInteger(value.voteCount) &&
+          value.voteCount >= 0)) &&
       'popularity' in value &&
-      typeof value.popularity === 'number' &&
-      Number.isFinite(value.popularity) &&
-      value.popularity >= 0)
+      (value.popularity === null ||
+        (typeof value.popularity === 'number' &&
+          Number.isFinite(value.popularity) &&
+          value.popularity >= 0)))
   );
 }
 

@@ -10,18 +10,18 @@ export type TmdbMoviesRawResponse = {
 export type TmdbMovie = {
   adult: boolean;
   backdrop_path: string | null;
-  genre_ids: number[];
+  genre_ids?: number[] | null;
   id: number;
   original_language: string;
   original_title: string;
   overview: string;
-  popularity: number;
+  popularity: number | null;
   poster_path: string | null;
   release_date: string | null;
   title: string;
   video: boolean;
-  vote_average: number;
-  vote_count: number;
+  vote_average: number | null;
+  vote_count: number | null;
 };
 
 export type TmdbMovieDetails = {
@@ -31,13 +31,13 @@ export type TmdbMovieDetails = {
   original_language: string;
   original_title: string;
   overview: string;
-  popularity: number;
+  popularity: number | null;
   poster_path: string | null;
   release_date: string | null;
   title: string;
   video: boolean;
-  vote_average: number;
-  vote_count: number;
+  vote_average: number | null;
+  vote_count: number | null;
   genres: Array<{ id: number; name: string }>;
   production_countries: Array<{ iso_3166_1: string; name: string }>;
   tagline: string | null;
@@ -58,7 +58,9 @@ export type MoviesApiResponse = {
 };
 
 // TypeScript type for the supported movie format used in our application, omitting 'adult' and 'video' properties from the TmdbMovie type.
-export type Movie = Omit<TmdbMovie, 'adult' | 'video'>;
+export type Movie = Omit<TmdbMovie, 'adult' | 'video' | 'genre_ids'> & {
+  genre_ids: number[];
+};
 
 // TypeScript type for the supported movie details format used in our application, omitting 'adult','video' and production_companies properties from the TmdbMovieDetails type.
 export type MovieDetails = Omit<
@@ -129,9 +131,9 @@ export type MovieHighlight = {
   id: number;
   title: string;
   year: number;
-  rating: number;
-  voteCount: number;
-  popularity: number;
+  rating: number | null;
+  voteCount: number | null;
+  popularity: number | null;
 };
 
 export type CollectionSummary = {

@@ -27,17 +27,20 @@ function isMovieBase(value: unknown) {
     'backdrop_path' in value &&
     isNullableString(value.backdrop_path) &&
     'popularity' in value &&
-    typeof value.popularity === 'number' &&
-    Number.isFinite(value.popularity) &&
+    (value.popularity === null ||
+      (typeof value.popularity === 'number' &&
+        Number.isFinite(value.popularity))) &&
     'vote_average' in value &&
-    typeof value.vote_average === 'number' &&
-    Number.isFinite(value.vote_average) &&
-    value.vote_average >= 0 &&
-    value.vote_average <= 10 &&
+    (value.vote_average === null ||
+      (typeof value.vote_average === 'number' &&
+        Number.isFinite(value.vote_average) &&
+        value.vote_average >= 0 &&
+        value.vote_average <= 10)) &&
     'vote_count' in value &&
-    typeof value.vote_count === 'number' &&
-    Number.isSafeInteger(value.vote_count) &&
-    value.vote_count >= 0
+    (value.vote_count === null ||
+      (typeof value.vote_count === 'number' &&
+        Number.isSafeInteger(value.vote_count) &&
+        value.vote_count >= 0))
   );
 }
 

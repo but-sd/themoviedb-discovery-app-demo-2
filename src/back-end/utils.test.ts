@@ -21,6 +21,14 @@ const mockTmdbMovie: TmdbMovie = {
 };
 
 describe('utils', () => {
+  it.each([undefined, null, []])(
+    'normalizes missing genres (%j) to an empty association list',
+    (genre_ids) => {
+      expect(
+        toSupportedMovie({ ...mockTmdbMovie, genre_ids }).genre_ids,
+      ).toEqual([]);
+    },
+  );
   it('should convert TMDB movies raw response to supported movie format', () => {
     // Arrange: Prepare the mock TMDB movies raw response.
 

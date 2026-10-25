@@ -199,6 +199,39 @@ it('summarizes unique films and only years represented by stored movies', () => 
   }
 });
 
+it('keeps missing popularity distinct from zero and excludes it from popularity rankings', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'missing-popularity-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [{ ...movie, popularity: null, vote_count: 100 }],
+        2020,
+      );
+      expect(database.prepare('SELECT popularity FROM movies').get()).toEqual({
+        popularity: null,
+      });
+      expect(getCollectionSummary(path)).toMatchObject({
+        movieCount: 1,
+        mostPopularMovie: null,
+        bestRatedMovie: { id: movie.id, popularity: null },
+      });
+      upsertMovies(database, [{ ...movie, id: 2, popularity: 0 }], 2020);
+      expect(getCollectionSummary(path)).toMatchObject({
+        mostPopularMovie: { id: 2, popularity: 0 },
+      });
+      upsertMovies(database, [{ ...movie, id: 2, popularity: null }], 2020);
+      expect(getCollectionSummary(path).mostPopularMovie).toBeNull();
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 it('averages only known runtimes and updates them without duplicates', () => {
   const directory = mkdtempSync(join(tmpdir(), 'movie-runtimes-'));
   const path = join(directory, 'movies.sqlite');

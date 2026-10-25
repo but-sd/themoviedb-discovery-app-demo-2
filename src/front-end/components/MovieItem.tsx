@@ -10,7 +10,7 @@ export default function MovieItem({ movie }: MovieItemProps) {
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w185${movie.poster_path}`
     : null;
-  const rating = movie.vote_average.toLocaleString('fr-FR', {
+  const rating = movie.vote_average?.toLocaleString('fr-FR', {
     maximumFractionDigits: 2,
   });
 
@@ -33,7 +33,11 @@ export default function MovieItem({ movie }: MovieItemProps) {
           <h2>{movie.title}</h2>
           <p>
             {releaseYear} ·{' '}
-            {movie.vote_count > 0 ? `Note ${rating} / 10` : 'Non noté'}
+            {movie.vote_count !== null &&
+            movie.vote_count > 0 &&
+            rating !== undefined
+              ? `Note ${rating} / 10`
+              : 'Non noté'}
           </p>
         </div>
       </div>

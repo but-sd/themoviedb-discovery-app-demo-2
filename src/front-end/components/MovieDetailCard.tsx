@@ -6,7 +6,7 @@ export default function MovieDetailCard({ movie }: { movie: MovieDetails }) {
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
     : null;
-  const rating = movie.vote_average.toLocaleString('fr-FR', {
+  const rating = movie.vote_average?.toLocaleString('fr-FR', {
     maximumFractionDigits: 2,
   });
 
@@ -42,7 +42,11 @@ export default function MovieDetailCard({ movie }: { movie: MovieDetails }) {
           <div>
             <dt>Note</dt>
             <dd>
-              {movie.vote_count > 0 ? `${rating} / 10` : 'Non disponible'}
+              {movie.vote_count !== null &&
+              movie.vote_count > 0 &&
+              rating !== undefined
+                ? `${rating} / 10`
+                : 'Non disponible'}
             </dd>
           </div>
         </dl>

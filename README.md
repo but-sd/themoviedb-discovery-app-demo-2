@@ -246,9 +246,9 @@ erDiagram
         TEXT overview
         TEXT release_date "Facultatif"
         INTEGER release_year
-        REAL popularity
-        REAL vote_average
-        INTEGER vote_count
+        REAL popularity "Facultatif"
+        REAL vote_average "Facultatif"
+        INTEGER vote_count "Facultatif"
         TEXT poster_path "Facultatif"
         TEXT backdrop_path "Facultatif"
         INTEGER runtime_minutes "Facultatif, minutes"
@@ -289,11 +289,24 @@ renseignés, ils doivent être strictement positifs. `release_date` contient la
 date de sortie fournie par TMDB, ou `NULL` lorsqu’elle est absente, tandis que `release_year` correspond à l’année
 demandée lors de la collecte.
 
+La popularité absente est stockée à `NULL`, et non à zéro. Les films sans
+popularité connue sont exclus de la sélection du film le plus populaire.
+
+Une note absente est stockée à `NULL`, sans être confondue avec une note de zéro.
+Les films sans note sont exclus des moyennes et du classement des meilleurs films,
+et comptés parmi les films non notés dans la distribution des notes.
+
+Un nombre de votes absent est également stocké à `NULL`. Sans nombre de votes
+connu et strictement positif, le film est considéré comme non noté pour les
+statistiques, même si une note est fournie.
+
 La table `movies` contient les informations des films, leur année, leurs
 statistiques et la date de collecte. La table `genres` contient les identifiants
 TMDB et les libellés français récupérés pendant la collecte.
 La table `movie_genres` relie les films aux genres avec une clé primaire
 composée et des clés étrangères ; un film peut avoir plusieurs genres.
+Lorsque TMDB ne fournit pas de genres, le film est enregistré sans association
+de genre.
 La table `production_countries` relie les films aux codes pays TMDB, sans
 dupliquer les libellés. La table `countries` associe chaque code ISO 3166-1
 alpha-2 à son libellé TMDB. Les pays de production et leurs libellés sont

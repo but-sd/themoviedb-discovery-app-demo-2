@@ -61,7 +61,7 @@ export function getMovieRatingDistribution(
     const row = database
       .prepare(`
       SELECT ${columns.join(', ')},
-        COUNT(CASE WHEN vote_count <= 0 THEN 1 END) AS unrated_count
+        COUNT(CASE WHEN vote_count IS NULL OR vote_count <= 0 OR vote_average IS NULL THEN 1 END) AS unrated_count
       FROM movies
     `)
       .get(...MOVIE_RATING_RANGES.flatMap(({ min, max }) => [min, max]));
@@ -70,7 +70,7 @@ export function getMovieRatingDistribution(
       .prepare(`
       SELECT release_year AS year, AVG(vote_average) AS average_rating,
         COUNT(*) AS movie_count
-      FROM movies WHERE vote_count > 0
+      FROM movies WHERE vote_count > 0 AND vote_average IS NOT NULL
       GROUP BY release_year ORDER BY release_year
     `)
       .all();
@@ -158,7 +158,7 @@ export function getGenreRatings(
       FROM movie_genres
       JOIN genres ON genres.id = movie_genres.genre_id
       JOIN movies ON movies.id = movie_genres.movie_id
-      WHERE movies.vote_count > 0
+      WHERE movies.vote_count > 0 AND movies.vote_average IS NOT NULL
       GROUP BY genres.id, genres.name
       ORDER BY average_rating DESC, genres.id
     `)

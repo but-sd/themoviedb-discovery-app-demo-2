@@ -43,9 +43,11 @@ export function BestRatedMovieCard({
             <p className="genre-highlight-name">{movie.title}</p>
             <p className="featured-movie-year">{movie.year}</p>
             <p className="genre-highlight-value">
-              {movie.rating.toLocaleString('fr-FR', {
-                maximumFractionDigits: 2,
-              })}{' '}
+              {movie.rating === null
+                ? 'Non disponible'
+                : movie.rating.toLocaleString('fr-FR', {
+                    maximumFractionDigits: 2,
+                  })}{' '}
               <span>/ 10</span>
             </p>
           </>

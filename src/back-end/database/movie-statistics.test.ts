@@ -34,6 +34,106 @@ const movie: Movie = {
   genre_ids: [18],
 };
 
+it('excludes missing ratings from all averages without confusing them with rated zeroes', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'missing-rating-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(
+        database,
+        [{ ...movie, vote_average: null, vote_count: 1000 }],
+        2020,
+      );
+      expect(database.prepare('SELECT vote_average FROM movies').get()).toEqual(
+        { vote_average: null },
+      );
+      expect(getCollectionSummary(path)).toMatchObject({
+        averageRating: null,
+        ratedMovieCount: 0,
+        bestRatedMovie: null,
+        mostPopularMovie: { rating: null },
+      });
+      expect(getGenreRatings(path)).toEqual([]);
+      expect(getMovieRatingDistribution(path)).toMatchObject({
+        years: [],
+        unratedMovieCount: 1,
+      });
+      upsertMovies(
+        database,
+        [
+          { ...movie, id: 2, vote_average: 0, vote_count: 100 },
+          { ...movie, id: 3, vote_average: 8, vote_count: 100 },
+        ],
+        2021,
+      );
+      expect(getCollectionSummary(path)).toMatchObject({
+        averageRating: 4,
+        ratedMovieCount: 2,
+        bestRatedMovie: { id: 3 },
+      });
+      expect(getGenreRatings(path)).toEqual([
+        expect.objectContaining({
+          movieCount: 2,
+          averageRating: 4,
+          weightedAverageRating: 4,
+          voteCount: 200,
+        }),
+      ]);
+      const distribution = getMovieRatingDistribution(path);
+      expect(distribution.years).toEqual([
+        { year: 2021, averageRating: 4, movieCount: 2 },
+      ]);
+      expect(distribution.unratedMovieCount).toBe(1);
+      expect(
+        distribution.buckets.reduce(
+          (sum, bucket) => sum + bucket.movieCount,
+          0,
+        ),
+      ).toBe(2);
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('stores missing vote counts and treats those films as unrated in every aggregate', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'missing-vote-count-'));
+  const path = join(directory, 'movies.sqlite');
+  try {
+    const database = createMoviesDatabase(path);
+    try {
+      upsertMovies(database, [{ ...movie, vote_count: null }], 2020);
+      expect(database.prepare('SELECT vote_count FROM movies').get()).toEqual({
+        vote_count: null,
+      });
+      expect(getCollectionSummary(path)).toMatchObject({
+        movieCount: 1,
+        ratedMovieCount: 0,
+        averageRating: null,
+        bestRatedMovie: null,
+        mostPopularMovie: { voteCount: null },
+      });
+      expect(getGenreRatings(path)).toEqual([]);
+      const distribution = getMovieRatingDistribution(path);
+      expect(distribution.years).toEqual([]);
+      expect(distribution.unratedMovieCount).toBe(1);
+      expect(
+        distribution.buckets.every((bucket) => bucket.movieCount === 0),
+      ).toBe(true);
+      upsertMovies(database, [movie], 2020);
+      expect(getCollectionSummary(path).ratedMovieCount).toBe(1);
+      expect(getMovieRatingDistribution(path).unratedMovieCount).toBe(0);
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 it('ranks all production countries, counts coproductions once per country and reports missing countries', () => {
   const directory = mkdtempSync(join(tmpdir(), 'movie-countries-'));
   const path = join(directory, 'movies.sqlite');

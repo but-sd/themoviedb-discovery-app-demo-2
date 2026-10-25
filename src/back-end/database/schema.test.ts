@@ -22,6 +22,23 @@ it('creates every table, index and optional movie column in the initial schema',
     const columns = database.prepare('PRAGMA table_info(movies)').all();
     expect(columns).toContainEqual(
       expect.objectContaining({
+        name: 'vote_count',
+        type: 'INTEGER',
+        notnull: 0,
+      }),
+    );
+    expect(columns).toContainEqual(
+      expect.objectContaining({
+        name: 'vote_average',
+        type: 'REAL',
+        notnull: 0,
+      }),
+    );
+    expect(columns).toContainEqual(
+      expect.objectContaining({ name: 'popularity', type: 'REAL', notnull: 0 }),
+    );
+    expect(columns).toContainEqual(
+      expect.objectContaining({
         name: 'release_date',
         type: 'TEXT',
         notnull: 0,

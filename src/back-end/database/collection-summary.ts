@@ -28,18 +28,19 @@ export function getCollectionSummary(
     const rating = database
       .prepare(`
       SELECT AVG(vote_average) AS average, COUNT(*) AS count
-      FROM movies WHERE vote_count > 0
+      FROM movies WHERE vote_count > 0 AND vote_average IS NOT NULL
     `)
       .get();
     const bestRated = database
       .prepare(`
-      SELECT * FROM movies WHERE vote_count >= 100
+      SELECT * FROM movies WHERE vote_count >= 100 AND vote_average IS NOT NULL
       ORDER BY vote_average DESC, vote_count DESC, id LIMIT 1
     `)
       .get();
     const mostPopular = database
       .prepare(`
-      SELECT * FROM movies ORDER BY popularity DESC, vote_count DESC, id LIMIT 1
+      SELECT * FROM movies WHERE popularity IS NOT NULL
+      ORDER BY popularity DESC, vote_count DESC, id LIMIT 1
     `)
       .get();
     const topCountry = database
@@ -58,9 +59,9 @@ export function getCollectionSummary(
             id: Number(row.id),
             title: String(row.title),
             year: Number(row.release_year),
-            rating: Number(row.vote_average),
-            voteCount: Number(row.vote_count),
-            popularity: Number(row.popularity),
+            rating: row.vote_average === null ? null : Number(row.vote_average),
+            voteCount: row.vote_count === null ? null : Number(row.vote_count),
+            popularity: row.popularity === null ? null : Number(row.popularity),
             posterPath:
               row.poster_path === null ? null : String(row.poster_path),
           }
