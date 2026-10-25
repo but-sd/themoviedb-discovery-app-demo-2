@@ -9,7 +9,7 @@ import {
   DEFAULT_DATABASE_PATH,
 } from './database/connection';
 import { upsertMovies } from './database/movie-writer';
-import { createGenreWriter } from './database/genre-writer';
+import { upsertGenres } from './database/genre-writer';
 import type { Movie, MovieCollectionDetails } from './schemas/MoviesTypes';
 
 /**
@@ -31,6 +31,9 @@ export async function collectMovies(
   if (!Number.isSafeInteger(limit) || limit <= 0) {
     throw new Error('Movie limit must be a positive integer.');
   }
+
+  // Fetch all genres from the API, so they can be upserted into the database later.
+  const genres = await fetchMovieGenres();
 
   const movies = new Map<number, Movie>();
   let totalPages = 1;
@@ -57,7 +60,6 @@ export async function collectMovies(
     }
   }
 
-  const genres = await fetchMovieGenres();
   const details = new Map<number, MovieCollectionDetails>();
   for (const movie of movies.values()) {
     details.set(movie.id, await fetchMovieCollectionDetails(movie.id));
@@ -68,8 +70,10 @@ export async function collectMovies(
   try {
     database.exec('BEGIN');
     try {
-      const genreWriter = createGenreWriter(database);
-      genreWriter.upsertGenres(genres);
+      // Upsert genres into the database
+      upsertGenres(database, genres);
+
+      // Upsert movies into the database
       upsertMovies(database, movies.values(), details);
       database.exec('COMMIT');
     } catch (error) {

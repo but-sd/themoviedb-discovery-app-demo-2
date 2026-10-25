@@ -1,19 +1,15 @@
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Genre } from '../schemas/MoviesTypes';
-import { createGenreWriter } from './genre-writer';
+import { upsertGenres } from './genre-writer';
+import { initializeGenresSchema } from './schema';
 
-describe('createGenreWriter.upsertGenres', () => {
+describe('upsertGenres', () => {
   let database: DatabaseSync;
 
   beforeEach(() => {
     database = new DatabaseSync(':memory:');
-    database.exec(`
-      CREATE TABLE genres (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-      )
-    `);
+    initializeGenresSchema(database);
   });
 
   afterEach(() => {
@@ -27,13 +23,12 @@ describe('createGenreWriter.upsertGenres', () => {
   }
 
   it('inserts every genre provided in an array', () => {
-    const writer = createGenreWriter(database);
     const genres: Genre[] = [
       { id: 28, name: 'Action' },
       { id: 35, name: 'Comedy' },
     ];
 
-    writer.upsertGenres(genres);
+    upsertGenres(database, genres);
 
     expect(getGenres()).toEqual([
       { id: 28, name: 'Action' },
@@ -45,21 +40,19 @@ describe('createGenreWriter.upsertGenres', () => {
     database
       .prepare('INSERT INTO genres (id, name) VALUES (?, ?)')
       .run(18, 'Old name');
-    const writer = createGenreWriter(database);
 
-    writer.upsertGenres([{ id: 18, name: 'Updated name' }]);
+    upsertGenres(database, [{ id: 18, name: 'Updated name' }]);
 
     expect(getGenres()).toEqual([{ id: 18, name: 'Updated name' }]);
   });
 
   it('accepts any iterable of genres', () => {
-    const writer = createGenreWriter(database);
     function* genreIterable(): Iterable<Genre> {
       yield { id: 12, name: 'Adventure' };
       yield { id: 16, name: 'Animation' };
     }
 
-    writer.upsertGenres(genreIterable());
+    upsertGenres(database, genreIterable());
 
     expect(getGenres()).toEqual([
       { id: 12, name: 'Adventure' },
@@ -71,17 +64,14 @@ describe('createGenreWriter.upsertGenres', () => {
     database
       .prepare('INSERT INTO genres (id, name) VALUES (?, ?)')
       .run(99, 'Existing');
-    const writer = createGenreWriter(database);
 
-    writer.upsertGenres([]);
+    upsertGenres(database, []);
 
     expect(getGenres()).toEqual([{ id: 99, name: 'Existing' }]);
   });
 
   it('keeps the last value when an ID appears more than once', () => {
-    const writer = createGenreWriter(database);
-
-    writer.upsertGenres([
+    upsertGenres(database, [
       { id: 14, name: 'Action' },
       { id: 14, name: 'Animation' },
     ]);

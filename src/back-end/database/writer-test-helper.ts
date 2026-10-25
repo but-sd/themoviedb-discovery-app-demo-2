@@ -4,7 +4,7 @@ import type {
   Movie,
   MovieCollectionDetails,
 } from '../schemas/MoviesTypes';
-import { createGenreWriter } from './genre-writer';
+import { upsertGenres } from './genre-writer';
 import { upsertMovies as writeMovies } from './movie-writer';
 
 export function upsertMovies(
@@ -16,7 +16,6 @@ export function upsertMovies(
   const collectedMovies = [...movies];
   database.exec('BEGIN');
   try {
-    const writer = createGenreWriter(database);
     const namedGenres = new Map<number, Genre>();
     for (const movie of collectedMovies) {
       for (const id of movie.genre_ids) {
@@ -24,7 +23,7 @@ export function upsertMovies(
       }
     }
     for (const genre of genres) namedGenres.set(genre.id, genre);
-    writer.upsertGenres(namedGenres.values());
+    upsertGenres(database, namedGenres.values());
     writeMovies(database, collectedMovies, details);
     database.exec('COMMIT');
   } catch (error) {

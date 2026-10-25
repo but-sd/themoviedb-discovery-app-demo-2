@@ -42,7 +42,7 @@ function initializeMoviesSchema(database: DatabaseSync): void {
  * Initializes the genres table schema.
  * @param database The SQLite database to initialize.
  */
-function initializeGenresSchema(database: DatabaseSync): void {
+export function initializeGenresSchema(database: DatabaseSync): void {
   database.exec(`
     CREATE TABLE IF NOT EXISTS genres (
       id INTEGER PRIMARY KEY,
