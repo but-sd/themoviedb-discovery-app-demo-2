@@ -10,16 +10,43 @@ import {
   validateBacklog,
 } from '../instantiate-backlog.mjs';
 
-const config = parse(
+const configuredBacklog = parse(
   readFileSync(
     new URL('../../.github/backlog/backlog.yaml', import.meta.url),
     'utf8',
   ),
 );
 
+const config = {
+  ...structuredClone(configuredBacklog),
+  epics: ['EXP', 'REL', 'WATCH', 'BUG'].map((id) => ({
+    id,
+    title: `Evolution ${id}`,
+    objective: 'Verifier un import reproductible.',
+    tickets: [1, 2, 3].map((number) => ({
+      id: `${id}-0${number}`,
+      type: id === 'BUG' ? 'bug' : 'feature',
+      title: `Ticket ${id} ${number}`,
+      story: 'En tant qu etudiant, je veux un ticket verifiable.',
+      size: number === 1 ? 'S' : 'M',
+      priority: 'P1',
+      dependsOn:
+        id === 'EXP' && number === 1
+          ? ['REL-01']
+          : id === 'WATCH' && number > 1
+            ? [`WATCH-0${number - 1}`]
+            : [],
+      acceptance: ['Un resultat observable est verifie.'],
+      ...(id === 'BUG'
+        ? { reproduction: ['Declencher le defaut et observer le resultat.'] }
+        : {}),
+    })),
+  })),
+};
+
 test('backlog accepts a growing set of ideas with unique tickets', () => {
-  validateBacklog(config);
-  const tickets = config.epics.flatMap((epic) => epic.tickets);
+  validateBacklog(configuredBacklog);
+  const tickets = configuredBacklog.epics.flatMap((epic) => epic.tickets);
   assert.equal(
     new Set(tickets.map((ticket) => ticket.id)).size,
     tickets.length,

@@ -1,7 +1,9 @@
 # Un backlog agile pour les étudiants
 
-Le fichier [`backlog.yaml`](backlog.yaml) est la source versionnée des **7
-évolutions et 21 tickets Feature**, plus **3 tickets Bug**. Chaque étudiant peut l'adapter, puis instancier les
+Le fichier [`backlog.yaml`](backlog.yaml) contient une **epic active et 11 tickets
+Feature** pour construire un tableau de bord d'exploration des films sur plusieurs
+années. Les anciennes idées restent commentées et ne sont pas importées.
+Chaque étudiant peut l'adapter, puis instancier les
 issues et un GitHub Project dans **son propre dépôt personnel ou d'organisation**. Rien n'est créé dans le
 dépôt de l'enseignant automatiquement.
 
@@ -19,22 +21,34 @@ s'il manque. Ce choix est annoncé pendant l'import. Une erreur d'accès à l'AP
 ou un type requis désactivé dans une organisation reste une erreur explicite,
 pas un basculement silencieux vers un label.
 
-| Évolution                       | Identifiants        | Estimations initiales |
-| ------------------------------- | ------------------- | --------------------- |
-| Explorer le catalogue           | EXP-01 à EXP-03     | S, M, L               |
-| Tableau de bord cinéma          | DASH-01 à DASH-03   | M, M, L               |
-| Comparer les films              | COMP-01 à COMP-03   | XS, M, L              |
-| Historique des tendances        | HIST-01 à HIST-03   | L, L, M               |
-| Recommandation explicable       | REC-01 à REC-03     | M, L, XL              |
-| Watchlist et notes personnelles | WATCH-01 à WATCH-03 | S, M, M               |
-| Fiabiliser l'application        | REL-01 à REL-03     | S, M, M               |
-| Corrections de bugs             | BUG-01 à BUG-03     | S, M, S               |
+### Epic active : exploration par année de sortie
 
-Les tickets Bug incluent des étapes de reproduction issues de la lecture du code :
-chargement persistant après erreur réseau, fiche qui reçoit un JSON d'erreur comme
-un film, et réponse TMDB 404 transformée en HTTP 500. Ce sont des corrections à
-réaliser, pas des bugs introduits volontairement. BUG-01 et BUG-02 recoupent REL-01 :
-coordonner ces tickets plutôt que compter deux fois le même travail.
+L'objectif est de comparer les films selon leur **année de sortie** sur une
+période configurable, par exemple 2015 à 2024. Il ne s'agit pas de reconstituer
+l'évolution historique des notes ou de la popularité : ces valeurs sont celles
+observées à la collecte. Une collecte plafonnée reste un échantillon, pas un
+recensement exhaustif.
+
+| Ticket  | Livraison attendue                                 | Taille | Prérequis        |
+| ------- | -------------------------------------------------- | ------ | ---------------- |
+| EXPL-01 | Périmètre et dictionnaire des données              | S      | Aucun            |
+| EXPL-02 | Modèle relationnel et choix justifié du moteur     | M      | EXPL-01          |
+| EXPL-03 | Base locale et migrations                          | M      | EXPL-02          |
+| EXPL-04 | Extraction TMDB par année et pagination            | L      | EXPL-01          |
+| EXPL-05 | Nettoyage et contrôles de qualité                  | M      | EXPL-01, EXPL-04 |
+| EXPL-06 | Chargement idempotent et suivi des exécutions      | L      | EXPL-03, EXPL-05 |
+| EXPL-07 | CLI de pilotage et simulation                      | M      | EXPL-06          |
+| EXPL-08 | API de lecture et agrégations                      | L      | EXPL-06          |
+| EXPL-09 | Page, filtres et tableau paginé                    | M      | EXPL-08          |
+| EXPL-10 | Visualisations et interprétation                   | L      | EXPL-09          |
+| EXPL-11 | Démonstration reproductible et tests d'intégration | M      | EXPL-07, EXPL-10 |
+
+EXPL-03 et EXPL-04 peuvent avancer en parallèle après leurs prérequis. Le choix
+du moteur de base reste une décision à argumenter dans EXPL-02, pas une contrainte
+imposée par ce backlog. Chaque ticket possède ses critères d'acceptation ; le
+champ Epic du projet associe les tickets à cette évolution, sans créer d'issue
+parent supplémentaire. Ce backlog décrit le travail futur, il n'implémente pas
+encore la base, le CLI ni le tableau de bord.
 
 La configuration `project.typeViews` définit deux vues supplémentaires :
 **Features** et **Bugs**. Elles sont filtrées respectivement avec `type:Feature`
@@ -229,9 +243,11 @@ pas GitHub et ne détermine donc pas quelles issues ont changé.
 6. **Rétrospective** : comparer ce qui a été prévu et livré, discuter les
    incertitudes et ajuster le découpage et les estimations du sprint suivant.
 
-Pour une première itération, **REL-01, EXP-01 et WATCH-01** forment une sélection
-possible, pas une obligation. Un projet orienté science des données peut ensuite
-viser REL-02, DASH-01 et DASH-02 avant la visualisation.
+Pour une première itération, commencer par **EXPL-01**, puis discuter le modèle
+**EXPL-02** et le contrat d'extraction **EXPL-04**. Construire ensuite un petit
+incrément de bout en bout sur une période limitée avant d'élargir la collecte.
+Les tailles restent à réestimer ; découper les tickets L si nécessaire pour
+tenir l'objectif du sprint.
 
 ## Vérifier le dispositif
 

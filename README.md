@@ -5,8 +5,11 @@ projet pour des étudiants de BUT Science des données.
 
 ## Backlog pédagogique et GitHub Projects
 
-Les [7 idées d'évolution, leurs 21 tickets Feature et 3 tickets Bug](.github/backlog/README.md) sont
-configurés dans [`.github/backlog/backlog.yaml`](.github/backlog/backlog.yaml).
+L'[epic d'exploration des films sur plusieurs années](.github/backlog/README.md)
+est configurée dans [`.github/backlog/backlog.yaml`](.github/backlog/backlog.yaml)
+avec 11 tickets Feature, du cadrage des données au tableau de bord, en passant
+par la base, le pipeline d'alimentation et son CLI. Les anciennes idées restent
+commentées et ne sont pas générées.
 Chaque ticket contient une user story, des critères d'acceptation, des
 dépendances, une priorité et une estimation initiale en taille de T-shirt.
 
@@ -17,8 +20,8 @@ personnels. Cette classification est appliquée aussi aux issues existantes lors
 d'une relance, sans retirer leurs autres labels.
 
 Les vues **Features** et **Bugs** séparent les deux catégories, tandis que
-**Backlog** conserve tous les tickets. Les bugs incluent des étapes de reproduction
-et des critères de correction, sans modifier le comportement de l'application.
+**Backlog** conserve tous les tickets. La vue Bugs peut rester vide tant qu'aucun
+ticket Bug n'est activé dans la configuration.
 
 ```sh
 npm run backlog:instantiate -- --repo MON_LOGIN/MON_DEPOT --owner MON_LOGIN --dry-run
