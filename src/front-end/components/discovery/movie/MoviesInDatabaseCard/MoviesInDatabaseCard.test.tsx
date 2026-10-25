@@ -36,4 +36,20 @@ describe('MoviesInDatabaseCard', () => {
     expect(markup).toContain('0 <span>films</span>');
     expect(markup).toContain('Aucune année présente');
   });
+
+  it('shows loading state', () => {
+    const markup = renderToStaticMarkup(
+      <MoviesInDatabaseCardView state={{ status: 'loading' }} />,
+    );
+    expect(markup).toContain('Chargement…');
+  });
+
+  it('shows error state', () => {
+    const markup = renderToStaticMarkup(
+      <MoviesInDatabaseCardView
+        state={{ status: 'error', message: 'Erreur' }}
+      />,
+    );
+    expect(markup).toContain('Erreur');
+  });
 });

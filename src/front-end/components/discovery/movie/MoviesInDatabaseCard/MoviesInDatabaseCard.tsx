@@ -3,6 +3,10 @@ import { fetchCatalogSummary } from '../../../../services/catalog-summary';
 import { MoviesInDatabaseCardView } from './MoviesInDatabaseCardView';
 import type { MoviesInDatabaseCardState } from './MoviesInDatabaseCardView';
 
+/**
+ * Fetches the catalog summary and manages the loading, success, and error states for the MoviesInDatabaseCardView component.
+ * @returns The MoviesInDatabaseCardView component with the current state
+ */
 export function MoviesInDatabaseCard() {
   const [state, setState] = useState<MoviesInDatabaseCardState>({
     status: 'loading',

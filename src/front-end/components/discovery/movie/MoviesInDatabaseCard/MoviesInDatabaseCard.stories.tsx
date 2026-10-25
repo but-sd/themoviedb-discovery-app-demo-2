@@ -14,12 +14,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// Stories for MoviesInDatabaseCardView component
+
+// Default story shows the component with typical data
 export const Default: Story = {};
+
+// Empty story shows the component with no movies and no years
 export const Empty: Story = {
   args: { state: { status: 'success', data: { movieCount: 0, years: [] } } },
 };
+
+// Loading story shows the component while data is being fetched
 export const Loading: Story = { args: { state: { status: 'loading' } } };
-export const Error: Story = {
+
+// ErrorState story shows the component when there is an error
+export const ErrorState: Story = {
   args: {
     state: {
       status: 'error',

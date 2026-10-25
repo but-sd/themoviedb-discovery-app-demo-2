@@ -44,7 +44,7 @@ it('loads independently and displays the result without data props', async () =>
     json: async () => ({ movieCount: 12, years: [2020, 2024] }),
   });
   vi.stubGlobal('fetch', fetchMock);
-  expect(render()).toContain('role="status"');
+  expect(render()).toContain('<output>Chargement…</output>');
   expect(render()).not.toContain('0 <span>films</span>');
   const cleanup = hooks.effect!();
   await vi.waitFor(() => expect(render()).toContain('12 <span>films</span>'));
