@@ -38,70 +38,105 @@ epics:
         type: feature
         title: "Spécification : données et relations du catalogue d'exploration"
         story: |
-          En tant qu'étudiant, je dispose de la spécification fonctionnelle des données
-          pour réaliser le schéma de la base dans EXPL-02, sans devoir redéfinir le modèle.
+          En tant qu'analyste, je veux comprendre les informations disponibles dans
+          TMDB et celles nécessaires au tableau de bord, afin de préparer leur
+          collecte et de disposer d'une base de travail pour la modélisation.
 
-          ### Périmètre et sources des données
+          ### Besoin d'exploration
 
-          Cette spécification décrit les données nécessaires à l'exploration,
-          leurs relations et leurs règles de gestion. Elle est indépendante du
-          moteur de stockage, des types techniques et de l'organisation physique
-          des données. Leur traduction en schéma relève d'EXPL-02.
+          Le tableau de bord doit permettre de comparer les films selon leur année
+          de sortie sur une période inclusive configurable, par exemple 2015 à 2024.
+          On souhaite explorer les titres, les genres, les pays de production, les
+          notes, la popularité, les durées, les budgets et les recettes.
+          La limite de films retenus par année et le tri par popularité doivent être
+          annoncés : une sélection plafonnée n'est pas un recensement exhaustif.
+          Les notes et la popularité sont celles observées lors de la collecte,
+          pas une reconstitution de leur évolution au fil des années.
 
-          Les films sont collectés depuis TMDB Discover sur une période inclusive
-          configurable, par exemple 2015 à 2024, avec une limite par année et un tri
-          par popularité documentés. Les détails TMDB enrichissent les films avec
-          leur durée, leur budget, leurs recettes et leurs pays de production.
-          Les genres sont identifiés par TMDB et leurs libellés sont récupérés en français.
-          Les notes et la popularité sont celles observées lors de la collecte :
-          elles ne reconstituent pas une évolution historique.
+          ### Parcours des sources : Discover, puis détail d'un film
 
-          ### Dictionnaire des films
+          Le point de départ est l'API TMDB Discover (`GET /discover/movie`).
+          Elle permet de rechercher des films selon leur date de sortie et fournit
+          une liste paginée : il faut examiner les différentes pages du résultat.
+          Chaque résultat donne notamment l'identifiant du film, ses titres, sa
+          date de sortie, son résumé, ses indicateurs de votes et de popularité,
+          ses chemins d'images et les identifiants de ses genres (`genre_ids`).
 
-          Les noms d'attributs servent de repères dans le dictionnaire ; les
-          natures ci-dessous décrivent les valeurs attendues, pas des types de stockage.
+          Discover ne fournit pas toutes les informations nécessaires au tableau
+          de bord. Pour chaque film retenu, son identifiant permet ensuite de
+          consulter sa fiche détaillée (`GET /movie/{movie_id}`). Celle-ci apporte
+          notamment la durée (`runtime`), le budget (`budget`), les recettes
+          (`revenue`) et les pays de production (`production_countries`).
+          Elle fournit aussi les genres avec leurs identifiants et leurs libellés.
+          Le catalogue des genres (`GET /genre/movie/list`) permet également de
+          retrouver les libellés correspondant aux identifiants de Discover.
+          Les titres, résumés et libellés de genres sont demandés en français,
+          sous réserve de leur disponibilité dans TMDB.
 
-          | Attribut | Nature | Obligatoire | Signification |
+          Un résultat Discover et sa fiche détaillée décrivent le même film lorsque
+          leur identifiant TMDB est identique : le détail complète les informations,
+          il ne représente pas un film supplémentaire. Une information absente de
+          Discover ne doit pas être déclarée inconnue avant d'avoir examiné le
+          détail ; même ce dernier peut toutefois comporter des valeurs manquantes.
+
+          ### Dictionnaire des données brutes à examiner
+
+          Ce dictionnaire décrit les informations reçues de TMDB, sans les organiser
+          en modèle de données. Les chemins indiquent où les retrouver dans les
+          réponses de l'API ; ce ne sont pas des noms de stockage à reprendre.
+
+          | Donnée | Champ ou chemin TMDB | Nature et unité | Source et signification |
           | --- | --- | --- | --- |
-          | id | Nombre entier | Oui, unique | Identifiant TMDB stable du film |
-          | title | Texte | Oui | Titre traduit |
-          | original_title | Texte | Oui | Titre original |
-          | original_language | Code de langue | Oui | Code de langue originale fourni par TMDB |
-          | overview | Texte | Oui | Résumé ; une chaîne vide est possible |
-          | release_date | Date | Non | Date de sortie TMDB au format YYYY-MM-DD |
-          | release_year | Année | Non, dérivée | Année extraite de release_date ; pas une donnée indépendante |
-          | popularity | Nombre décimal | Non | Score TMDB au moment de la collecte |
-          | vote_average | Nombre décimal | Non | Note moyenne sur 10 ; zéro reste une note possible |
-          | vote_count | Nombre entier | Non | Nombre de votes |
-          | poster_path | Texte | Non | Chemin relatif de l'affiche TMDB |
-          | backdrop_path | Texte | Non | Chemin relatif de l'image de fond TMDB |
-          | runtime_minutes | Nombre entier | Non | Durée strictement positive, en minutes |
-          | budget | Nombre entier | Non | Budget strictement positif, en dollars US |
-          | revenue | Nombre entier | Non | Recettes strictement positives, en dollars US |
-          | collected_at | Date et heure | Oui | Horodatage de la dernière collecte au format ISO 8601 |
+          | Identifiant du film | id | Nombre entier | Discover et détail ; identifiant stable permettant de reconnaître le même film |
+          | Titre traduit | title | Texte | Discover et détail ; titre destiné à l'affichage |
+          | Titre original | original_title | Texte | Discover et détail ; titre dans sa version originale |
+          | Langue originale | original_language | Code de langue | Discover et détail ; ne désigne pas un pays de production |
+          | Résumé | overview | Texte | Discover et détail ; peut être vide |
+          | Date de sortie | release_date | Date au format YYYY-MM-DD | Discover et détail ; peut être absente ou inexploitable |
+          | Popularité | popularity | Nombre décimal | Discover et détail ; score TMDB observé lors de la collecte |
+          | Note moyenne | vote_average | Nombre décimal sur 10 | Discover et détail ; à interpréter avec le nombre de votes |
+          | Nombre de votes | vote_count | Nombre entier | Discover et détail ; nombre de votes ayant servi à la note |
+          | Affiche | poster_path | Chemin relatif | Discover et détail ; peut être absent |
+          | Image de fond | backdrop_path | Chemin relatif | Discover et détail ; peut être absente |
+          | Identifiants des genres | genre_ids | Liste de nombres entiers | Discover ; codes des genres du film, sans leurs libellés |
+          | Identifiant d'un genre | genres[].id | Nombre entier | Détail et catalogue des genres ; correspond à un code reçu dans genre_ids |
+          | Libellé d'un genre | genres[].name | Texte | Détail et catalogue des genres ; libellé français lorsqu'il est disponible |
+          | Durée | runtime | Nombre entier de minutes | Détail ; durée du film, parfois inconnue |
+          | Budget | budget | Nombre entier de dollars US | Détail ; budget annoncé, parfois inconnu |
+          | Recettes | revenue | Nombre entier de dollars US | Détail ; recettes annoncées, parfois inconnues |
+          | Code d'un pays de production | production_countries[].iso_3166_1 | Code ISO 3166-1 alpha-2 | Détail ; code du pays participant à la production |
+          | Nom d'un pays de production | production_countries[].name | Texte | Détail ; libellé du pays fourni par TMDB |
 
-          L'année de sortie doit toujours correspondre à la date de sortie connue,
-          y compris après correction de cette date. Elle n'est pas saisie ou
-          collectée indépendamment. L'année demandée sert uniquement à filtrer la collecte,
-          pas à remplacer une année inconnue. Une date absente ou inexploitable
-          donne une année inconnue : le film reste dans le catalogue et les indicateurs
-          globaux, mais est exclu des graphiques et regroupements par année.
+          Deux informations complémentaires ne sont pas des champs bruts de TMDB :
+          l'année de sortie est déduite de la date de sortie, et la date et l'heure
+          de collecte sont relevées par l'application pour situer l'observation.
+          L'année de sortie doit rester cohérente si la date est corrigée.
+          L'année demandée pour la recherche ne remplace jamais une année inconnue.
+          Un film dont la date est absente ou inexploitable reste au catalogue,
+          mais ne contribue pas aux graphiques et regroupements par année.
 
-          ### Référentiels et associations
+          ### Comprendre les genres et les pays de production
 
-          | Entité | Attributs | Rôle |
-          | --- | --- | --- |
-          | Genre | id : identifiant TMDB entier unique ; name : texte facultatif | Genre TMDB et libellé français lorsqu'il est connu |
-          | Pays | code : code unique ISO 3166-1 alpha-2 ; name : texte obligatoire | Pays de production et libellé TMDB |
+          Un genre décrit le contenu ou le style d'un film : comédie, aventure,
+          animation, etc. Un même film peut être à la fois une comédie et un film
+          d'aventure. Le libellé « Comédie » peut aussi être partagé par de nombreux
+          autres films ; il faut se fier au code TMDB pour reconnaître ce genre,
+          même si son libellé change de langue. TMDB peut ne renseigner aucun genre.
 
-          Un film possède zéro à plusieurs genres ; un genre concerne zéro à plusieurs
-          films. Un film possède zéro à plusieurs pays de production ; un pays concerne
-          zéro à plusieurs films. Chaque association relie un film et un genre
-          existants, ou un film et un pays existants, identifiés par leur identifiant
-          ou code unique. Une même paire ne peut être associée qu'une seule fois.
-          Un film sans genre ou pays connu reste au catalogue sans association :
-          ne pas inventer de référence « Inconnu ».
-          Supprimer un film supprime ses associations, mais conserve les référentiels.
+          Le pays de production indique une participation à la production du film.
+          Il ne faut le confondre ni avec la langue originale, ni avec un lieu de
+          tournage, ni avec un pays où le film est distribué. Une coproduction
+          peut faire intervenir plusieurs pays, et un pays peut participer à de
+          nombreux films. TMDB peut ne renseigner aucun pays de production.
+
+          Par exemple, un film fictif classé « Comédie » et « Aventure », coproduit
+          par la France et la Belgique, doit être retrouvé lorsque l'on explore
+          chacun de ces genres ou chacun de ces pays. Il reste pourtant un seul
+          film dans le total du catalogue. Répéter le même genre ou le même pays
+          dans une réponse ne doit pas le compter deux fois pour ce film.
+          L'absence d'information ne justifie pas d'inventer un genre ou un pays
+          nommé « Inconnu ». Retirer un film du catalogue ne signifie pas que ses
+          genres ou ses pays cessent d'exister pour les autres films.
 
           ### Valeurs absentes, actualisation et calculs
 
@@ -112,15 +147,15 @@ epics:
           et son nombre de votes strictement positif. Une note de zéro avec des votes
           est valide. Une durée inconnue est exclue de la moyenne des durées.
 
-          Chaque film est unique par identifiant TMDB. Une nouvelle collecte actualise
-          ses attributs, son horodatage et ses associations de manière cohérente :
-          une actualisation partielle ne doit pas laisser un état contradictoire,
-          sans supprimer les films des autres années. Le nombre de films se calcule
-          sur les films distincts : les totaux par genre ou pays comptent des
-          associations et peuvent dépasser ce nombre pour les coproductions.
+          Retrouver un film déjà collecté doit permettre d'actualiser sa description,
+          ses genres, ses pays et la date de l'observation, sans créer un doublon
+          ni retirer les films des autres années. Ces informations doivent rester
+          cohérentes entre elles. Additionner les effectifs de tous les genres ou
+          pays peut dépasser le nombre total de films, puisqu'un même film peut
+          apparaître dans plusieurs catégories.
 
           Ce périmètre ne comprend ni historique des exécutions ni historique de
-          notes : `collected_at` décrit le dernier état connu. Le suivi détaillé des
+          notes : la date de collecte décrit le dernier état connu. Le suivi détaillé des
           collectes prévu dans les tickets suivants est une extension distincte,
           à spécifier avant de l'ajouter ; il n'est pas un besoin implicite d'EXPL-02.
         size: S
@@ -129,8 +164,10 @@ epics:
         acceptance:
           - L'équipe distingue année demandée pour la collecte, date de sortie, année dérivée de cette date et horodatage de collecte.
           - Les exemples couvrent une date valide, une date absente et une date inexploitable ; aucune année de remplacement n'est inventée.
-          - Le MCD attendu est reformulé avec les cardinalités film-genre et film-pays, sans nouvelle décision de modèle.
-          - Un exemple de film avec plusieurs genres et deux pays illustre les entités, leurs identifiants et leurs associations sans imposer de tables ni de mécanisme de stockage.
+          - L'équipe explique quelles informations proviennent de Discover et pourquoi une consultation du détail par identifiant de film est nécessaire.
+          - Le dictionnaire permet de retrouver les données brutes dans Discover, le détail et le catalogue des genres, sans fournir de modèle préconstruit.
+          - Un exemple de film avec plusieurs genres et deux pays explique les filtres et les comptages attendus, sans diagramme ni vocabulaire de modélisation.
+          - Les étudiants déduisent eux-mêmes le MCD à partir du dictionnaire et des règles fonctionnelles ; ce ticket n'en fournit pas la solution.
           - Un exemple sans durée, budget, recette ni votes explicite les valeurs inconnues et les exclusions des calculs.
           - Une correction de date de sortie entraîne une année cohérente ; une date absente ou inexploitable laisse cette année inconnue.
           - Les critères d'EXPL-02 sont traçables à cette spécification ; la limite par année et la couverture non exhaustive sont explicites.
@@ -150,7 +187,8 @@ epics:
         priority: P1
         dependsOn: [EXPL-01]
         acceptance:
-          - Les cinq tables movies, genres, countries, movie_genres et production_countries traduisent les entités et associations d'EXPL-01 ; les types SQLite et nullabilités sont documentés selon les natures et règles du dictionnaire.
+          - Un MCD déduit du dictionnaire et des règles fonctionnelles d'EXPL-01 justifie les entités et cardinalités retenues avant leur traduction en schéma relationnel.
+          - Les cinq tables movies, genres, countries, movie_genres et production_countries traduisent le MCD construit par les étudiants ; les types SQLite et nullabilités sont documentés selon les données et règles du dictionnaire.
           - "movies.release_year est une colonne INTEGER GENERATED ALWAYS AS (CAST(strftime('%Y', release_date) AS INTEGER)) STORED, nullable et non renseignée par les écritures."
           - Un test insère un film daté de 2020, vérifie release_year = 2020, modifie release_date vers 2021 et vérifie le recalcul automatique.
           - Des tests vérifient release_year IS NULL pour une date NULL ou inexploitable, et le refus d'une insertion ou modification explicite de release_year.

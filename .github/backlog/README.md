@@ -43,12 +43,12 @@ recensement exhaustif.
 | EXPL-10 | Visualisations et interprétation                   | L      | EXPL-09          |
 | EXPL-11 | Démonstration reproductible et tests d'intégration | M      | EXPL-07, EXPL-10 |
 
-EXPL-01 fournit une spécification autonome des films, genres, pays et de leurs
-relations, sans présupposer de moteur ni d'organisation physique du stockage.
-Elle décrit les natures des données, les cardinalités et les règles métier.
-EXPL-02 traduit ce cahier des charges en schéma SQLite, avec ses cinq tables,
-types, clés et contraintes. Le suivi détaillé des exécutions des étapes suivantes
-reste une extension distincte.
+EXPL-01 décrit le besoin d'exploration, le parcours Discover puis détail d'un film
+et un dictionnaire des données brutes avec leur provenance dans l'API TMDB.
+Les liens entre films, genres et pays sont expliqués par des règles métier et
+des exemples, sans fournir les entités ni le MCD. Les étudiants en déduisent
+eux-mêmes le MCD dans EXPL-02, puis le traduisent en schéma SQLite.
+Le suivi détaillé des exécutions des étapes suivantes reste une extension distincte.
 
 Dans EXPL-01, l'année de sortie est une information dérivée de la date de sortie,
 et non l'année demandée au collecteur. Une date absente ou inexploitable laisse
