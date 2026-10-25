@@ -259,7 +259,7 @@ erDiagram
 
     GENRES {
         INTEGER id PK "Identifiant TMDB"
-        TEXT name "Facultatif"
+        TEXT name
     }
 
     COUNTRIES {
@@ -306,6 +306,7 @@ statistiques, même si une note est fournie.
 La table `movies` contient les informations des films, leur année, leurs
 statistiques et la date de collecte. La table `genres` contient les identifiants
 TMDB et les libellés français récupérés pendant la collecte.
+Le libellé d’un genre est obligatoire : aucun genre provisoire sans nom n’est créé.
 La table `movie_genres` relie les films aux genres avec une clé primaire
 composée et des clés étrangères ; un film peut avoir plusieurs genres.
 Lorsque TMDB ne fournit pas de genres, le film est enregistré sans association

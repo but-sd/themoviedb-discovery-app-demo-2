@@ -46,7 +46,7 @@ function initializeGenresSchema(database: DatabaseSync): void {
   database.exec(`
     CREATE TABLE IF NOT EXISTS genres (
       id INTEGER PRIMARY KEY,
-      name TEXT
+      name TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS movie_genres (
       movie_id INTEGER NOT NULL REFERENCES movies(id) ON DELETE CASCADE,

@@ -166,7 +166,7 @@ export function getGenreRatings(
       .all()
       .map((row) => ({
         id: Number(row.id),
-        name: row.name === null ? `Genre ${row.id}` : String(row.name),
+        name: String(row.name),
         movieCount: Number(row.movie_count),
         averageRating: Number(row.average_rating),
         weightedAverageRating: Number(row.weighted_average_rating),
@@ -193,7 +193,7 @@ export function getGenreDistribution(
       .all()
       .map((row) => ({
         id: Number(row.id),
-        name: row.name === null ? `Genre ${row.id}` : String(row.name),
+        name: String(row.name),
         movieCount: Number(row.movie_count),
       }));
   } finally {

@@ -11,7 +11,7 @@ describe('createGenreWriter.upsertGenres', () => {
     database.exec(`
       CREATE TABLE genres (
         id INTEGER PRIMARY KEY,
-        name TEXT
+        name TEXT NOT NULL
       )
     `);
   });
@@ -20,10 +20,10 @@ describe('createGenreWriter.upsertGenres', () => {
     database.close();
   });
 
-  function getGenres(): { id: number; name: string | null }[] {
+  function getGenres(): { id: number; name: string }[] {
     return database
       .prepare('SELECT id, name FROM genres ORDER BY id')
-      .all() as { id: number; name: string | null }[];
+      .all() as { id: number; name: string }[];
   }
 
   it('inserts every genre provided in an array', () => {
@@ -89,12 +89,9 @@ describe('createGenreWriter.upsertGenres', () => {
     expect(getGenres()).toEqual([{ id: 14, name: 'Animation' }]);
   });
 
-  it('inserts a missing genre placeholder and ignores an existing ID', () => {
-    const writer = createGenreWriter(database);
-
-    writer.ensureGenre(21);
-    writer.ensureGenre(21);
-
-    expect(getGenres()).toEqual([{ id: 21, name: null }]);
+  it('rejects a genre without a name', () => {
+    expect(() =>
+      database.prepare('INSERT INTO genres (id) VALUES (?)').run(21),
+    ).toThrow(/NOT NULL constraint failed: genres.name/);
   });
 });

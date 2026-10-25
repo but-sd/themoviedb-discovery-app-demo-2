@@ -17,10 +17,14 @@ export function upsertMovies(
   database.exec('BEGIN');
   try {
     const writer = createGenreWriter(database);
-    writer.upsertGenres(genres);
+    const namedGenres = new Map<number, Genre>();
     for (const movie of collectedMovies) {
-      for (const id of movie.genre_ids) writer.ensureGenre(id);
+      for (const id of movie.genre_ids) {
+        namedGenres.set(id, { id, name: `Test genre ${id}` });
+      }
     }
+    for (const genre of genres) namedGenres.set(genre.id, genre);
+    writer.upsertGenres(namedGenres.values());
     writeMovies(database, collectedMovies, details);
     database.exec('COMMIT');
   } catch (error) {

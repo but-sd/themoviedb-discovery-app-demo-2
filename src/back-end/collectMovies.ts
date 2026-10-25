@@ -70,11 +70,6 @@ export async function collectMovies(
     try {
       const genreWriter = createGenreWriter(database);
       genreWriter.upsertGenres(genres);
-      for (const movie of movies.values()) {
-        for (const genreId of movie.genre_ids) {
-          genreWriter.ensureGenre(genreId);
-        }
-      }
       upsertMovies(database, movies.values(), details);
       database.exec('COMMIT');
     } catch (error) {
