@@ -43,17 +43,19 @@ recensement exhaustif.
 | EXPL-10 | Visualisations et interprétation                   | L      | EXPL-09          |
 | EXPL-11 | Démonstration reproductible et tests d'intégration | M      | EXPL-07, EXPL-10 |
 
-EXPL-01 reprend la documentation et le schéma déjà réalisés dans le worktree
-`alexandre-girard-maif-ubiquitous-meme` : SQLite, films, genres, pays et deux
-tables de liaison. Son texte est autonome et sert de cahier des charges à
-EXPL-02. Le suivi détaillé des exécutions des étapes suivantes reste une
-extension distincte, absente de ce schéma de référence.
+EXPL-01 fournit une spécification autonome des films, genres, pays et de leurs
+relations, sans présupposer de moteur ni d'organisation physique du stockage.
+Elle décrit les natures des données, les cardinalités et les règles métier.
+EXPL-02 traduit ce cahier des charges en schéma SQLite, avec ses cinq tables,
+types, clés et contraintes. Le suivi détaillé des exécutions des étapes suivantes
+reste une extension distincte.
 
-L'année `movies.release_year` est une colonne SQLite générée et stockée à partir
-de `release_date`, et non l'année demandée au collecteur. Une date absente ou
-inexploitable donne une année NULL ; le film reste au catalogue mais ne participe
-pas aux regroupements par année. EXPL-02 prévoit les tests du calcul, de sa
-mise à jour automatique et de l'interdiction d'écrire directement cette colonne.
+Dans EXPL-01, l'année de sortie est une information dérivée de la date de sortie,
+et non l'année demandée au collecteur. Une date absente ou inexploitable laisse
+l'année inconnue ; le film reste au catalogue mais ne participe pas aux
+regroupements par année. EXPL-02 choisit de traduire cette règle par une colonne
+SQLite générée et stockée, avec les tests du calcul, de sa mise à jour automatique
+et de l'interdiction d'écrire directement cette colonne.
 
 EXPL-03 et EXPL-04 peuvent avancer en parallèle après leurs prérequis.
 Chaque ticket possède ses critères d'acceptation ; le

@@ -41,13 +41,12 @@ epics:
           En tant qu'étudiant, je dispose de la spécification fonctionnelle des données
           pour réaliser le schéma de la base dans EXPL-02, sans devoir redéfinir le modèle.
 
-          ### Référence et périmètre
+          ### Périmètre et sources des données
 
-          Cette spécification reprend le modèle déjà réalisé dans le worktree
-          `alexandre-girard-maif-ubiquitous-meme`, décrit dans la section
-          « Base de données » du README et dans `src/back-end/database/schema.ts`.
-          Elle est autonome : l'étudiant n'a pas besoin d'accéder à ce worktree.
-          La cible est SQLite, avec cinq tables décrites ci-dessous.
+          Cette spécification décrit les données nécessaires à l'exploration,
+          leurs relations et leurs règles de gestion. Elle est indépendante du
+          moteur de stockage, des types techniques et de l'organisation physique
+          des données. Leur traduction en schéma relève d'EXPL-02.
 
           Les films sont collectés depuis TMDB Discover sur une période inclusive
           configurable, par exemple 2015 à 2024, avec une limite par année et un tri
@@ -57,87 +56,83 @@ epics:
           Les notes et la popularité sont celles observées lors de la collecte :
           elles ne reconstituent pas une évolution historique.
 
-          ### Dictionnaire des films : movies
+          ### Dictionnaire des films
 
-          | Attribut | Type SQLite | Obligatoire | Signification |
+          Les noms d'attributs servent de repères dans le dictionnaire ; les
+          natures ci-dessous décrivent les valeurs attendues, pas des types de stockage.
+
+          | Attribut | Nature | Obligatoire | Signification |
           | --- | --- | --- | --- |
-          | id | INTEGER | Oui, clé primaire | Identifiant TMDB stable du film |
-          | title | TEXT | Oui | Titre traduit |
-          | original_title | TEXT | Oui | Titre original |
-          | original_language | TEXT | Oui | Code de langue originale fourni par TMDB |
-          | overview | TEXT | Oui | Résumé ; une chaîne vide est possible |
-          | release_date | TEXT | Non | Date de sortie TMDB au format YYYY-MM-DD |
-          | release_year | INTEGER généré, STORED | Non, calculé | Année extraite de release_date par SQLite ; jamais fournie par la collecte |
-          | popularity | REAL | Non | Score TMDB au moment de la collecte |
-          | vote_average | REAL | Non | Note moyenne sur 10 ; zéro reste une note possible |
-          | vote_count | INTEGER | Non | Nombre de votes |
-          | poster_path | TEXT | Non | Chemin relatif de l'affiche TMDB |
-          | backdrop_path | TEXT | Non | Chemin relatif de l'image de fond TMDB |
-          | runtime_minutes | INTEGER | Non | Durée strictement positive, en minutes |
-          | budget | INTEGER | Non | Budget strictement positif, en dollars US |
-          | revenue | INTEGER | Non | Recettes strictement positives, en dollars US |
-          | collected_at | TEXT | Oui | Horodatage de la dernière collecte au format ISO 8601 |
+          | id | Nombre entier | Oui, unique | Identifiant TMDB stable du film |
+          | title | Texte | Oui | Titre traduit |
+          | original_title | Texte | Oui | Titre original |
+          | original_language | Code de langue | Oui | Code de langue originale fourni par TMDB |
+          | overview | Texte | Oui | Résumé ; une chaîne vide est possible |
+          | release_date | Date | Non | Date de sortie TMDB au format YYYY-MM-DD |
+          | release_year | Année | Non, dérivée | Année extraite de release_date ; pas une donnée indépendante |
+          | popularity | Nombre décimal | Non | Score TMDB au moment de la collecte |
+          | vote_average | Nombre décimal | Non | Note moyenne sur 10 ; zéro reste une note possible |
+          | vote_count | Nombre entier | Non | Nombre de votes |
+          | poster_path | Texte | Non | Chemin relatif de l'affiche TMDB |
+          | backdrop_path | Texte | Non | Chemin relatif de l'image de fond TMDB |
+          | runtime_minutes | Nombre entier | Non | Durée strictement positive, en minutes |
+          | budget | Nombre entier | Non | Budget strictement positif, en dollars US |
+          | revenue | Nombre entier | Non | Recettes strictement positives, en dollars US |
+          | collected_at | Date et heure | Oui | Horodatage de la dernière collecte au format ISO 8601 |
 
-          `release_year` est une colonne générée stockée, définie par :
-
-          ```sql
-          release_year INTEGER GENERATED ALWAYS AS (
-            CAST(strftime('%Y', release_date) AS INTEGER)
-          ) STORED
-          ```
-
-          SQLite la recalcule automatiquement lorsque `release_date` change.
-          Les INSERT et UPDATE de la collecte ne doivent jamais renseigner
-          `release_year`. L'année demandée sert uniquement à filtrer la collecte,
+          L'année de sortie doit toujours correspondre à la date de sortie connue,
+          y compris après correction de cette date. Elle n'est pas saisie ou
+          collectée indépendamment. L'année demandée sert uniquement à filtrer la collecte,
           pas à remplacer une année inconnue. Une date absente ou inexploitable
-          donne une année NULL : le film reste dans le catalogue et les indicateurs
+          donne une année inconnue : le film reste dans le catalogue et les indicateurs
           globaux, mais est exclu des graphiques et regroupements par année.
 
           ### Référentiels et associations
 
-          | Table | Attributs | Rôle |
+          | Entité | Attributs | Rôle |
           | --- | --- | --- |
-          | genres | id INTEGER clé primaire ; name TEXT nullable | Genre TMDB et libellé français lorsqu'il est connu |
-          | countries | code TEXT clé primaire ; name TEXT obligatoire | Pays de production, code ISO 3166-1 alpha-2 et libellé TMDB |
-          | movie_genres | movie_id INTEGER ; genre_id INTEGER | Association film-genre, clé primaire composée des deux attributs |
-          | production_countries | movie_id INTEGER ; country_code TEXT | Association film-pays, clé primaire composée des deux attributs |
+          | Genre | id : identifiant TMDB entier unique ; name : texte facultatif | Genre TMDB et libellé français lorsqu'il est connu |
+          | Pays | code : code unique ISO 3166-1 alpha-2 ; name : texte obligatoire | Pays de production et libellé TMDB |
 
           Un film possède zéro à plusieurs genres ; un genre concerne zéro à plusieurs
           films. Un film possède zéro à plusieurs pays de production ; un pays concerne
-          zéro à plusieurs films. Les tables de liaison portent les clés étrangères
-          vers `movies.id`, `genres.id` et `countries.code`. Les clés composées
-          interdisent les associations en double. Un film sans genre ou pays connu
-          reste stocké sans association : ne pas inventer de référence « Inconnu ».
+          zéro à plusieurs films. Chaque association relie un film et un genre
+          existants, ou un film et un pays existants, identifiés par leur identifiant
+          ou code unique. Une même paire ne peut être associée qu'une seule fois.
+          Un film sans genre ou pays connu reste au catalogue sans association :
+          ne pas inventer de référence « Inconnu ».
           Supprimer un film supprime ses associations, mais conserve les référentiels.
 
           ### Valeurs absentes, actualisation et calculs
 
-          Les durées, budgets et recettes absents ou égaux à zéro deviennent NULL ;
+          Les durées, budgets et recettes absents ou égaux à zéro sont considérés comme inconnus ;
           une valeur renseignée doit être strictement positive. Popularité, note et
-          nombre de votes absents restent NULL, sans remplacement par zéro.
+          nombre de votes absents restent inconnus, sans remplacement par zéro.
           Un film contribue aux moyennes des notes uniquement si sa note est connue
           et son nombre de votes strictement positif. Une note de zéro avec des votes
           est valide. Une durée inconnue est exclue de la moyenne des durées.
 
           Chaque film est unique par identifiant TMDB. Une nouvelle collecte actualise
-          ses attributs, son horodatage et ses associations dans une même transaction,
+          ses attributs, son horodatage et ses associations de manière cohérente :
+          une actualisation partielle ne doit pas laisser un état contradictoire,
           sans supprimer les films des autres années. Le nombre de films se calcule
           sur les films distincts : les totaux par genre ou pays comptent des
           associations et peuvent dépasser ce nombre pour les coproductions.
 
-          Le modèle de référence ne conserve ni table d'exécutions ni historique de
+          Ce périmètre ne comprend ni historique des exécutions ni historique de
           notes : `collected_at` décrit le dernier état connu. Le suivi détaillé des
           collectes prévu dans les tickets suivants est une extension distincte,
-          à spécifier avant de l'ajouter, pas une sixième table implicite dans EXPL-02.
+          à spécifier avant de l'ajouter ; il n'est pas un besoin implicite d'EXPL-02.
         size: S
         priority: P1
         dependsOn: []
         acceptance:
-          - L'équipe distingue année demandée pour la collecte, date de sortie, année générée depuis cette date et horodatage de collecte.
+          - L'équipe distingue année demandée pour la collecte, date de sortie, année dérivée de cette date et horodatage de collecte.
           - Les exemples couvrent une date valide, une date absente et une date inexploitable ; aucune année de remplacement n'est inventée.
           - Le MCD attendu est reformulé avec les cardinalités film-genre et film-pays, sans nouvelle décision de modèle.
-          - Un exemple de film avec plusieurs genres et deux pays illustre les cinq tables et les clés de liaison.
-          - Un exemple sans durée, budget, recette ni votes explicite les NULL et les exclusions des calculs.
+          - Un exemple de film avec plusieurs genres et deux pays illustre les entités, leurs identifiants et leurs associations sans imposer de tables ni de mécanisme de stockage.
+          - Un exemple sans durée, budget, recette ni votes explicite les valeurs inconnues et les exclusions des calculs.
+          - Une correction de date de sortie entraîne une année cohérente ; une date absente ou inexploitable laisse cette année inconnue.
           - Les critères d'EXPL-02 sont traçables à cette spécification ; la limite par année et la couverture non exhaustive sont explicites.
       - id: EXPL-02
         type: feature
@@ -155,11 +150,11 @@ epics:
         priority: P1
         dependsOn: [EXPL-01]
         acceptance:
-          - Les cinq tables movies, genres, countries, movie_genres et production_countries reprennent tous les attributs, types et nullabilités d'EXPL-01.
+          - Les cinq tables movies, genres, countries, movie_genres et production_countries traduisent les entités et associations d'EXPL-01 ; les types SQLite et nullabilités sont documentés selon les natures et règles du dictionnaire.
           - "movies.release_year est une colonne INTEGER GENERATED ALWAYS AS (CAST(strftime('%Y', release_date) AS INTEGER)) STORED, nullable et non renseignée par les écritures."
           - Un test insère un film daté de 2020, vérifie release_year = 2020, modifie release_date vers 2021 et vérifie le recalcul automatique.
           - Des tests vérifient release_year IS NULL pour une date NULL ou inexploitable, et le refus d'une insertion ou modification explicite de release_year.
-          - movies.id, genres.id et countries.code sont les clés primaires ; les deux tables de liaison utilisent les clés primaires composées spécifiées.
+          - movies.id, genres.id et countries.code sont les clés primaires ; les tables de liaison utilisent les clés primaires composées (movie_id, genre_id) et (movie_id, country_code).
           - Les clés étrangères sont activées sur chaque connexion de test ; un lien vers une référence absente et une association en double sont refusés.
           - Les références au film utilisent ON DELETE CASCADE ; supprimer un film retire ses liaisons mais conserve les genres et pays de référence.
           - Les contraintes CHECK imposent runtime_minutes > 0, budget > 0 et revenue > 0 lorsqu'ils sont renseignés, tout en autorisant NULL.
