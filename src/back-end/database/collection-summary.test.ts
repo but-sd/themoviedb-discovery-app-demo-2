@@ -29,11 +29,7 @@ it('counts coproductions per country and deterministically ranks the leading cou
     expect(getCollectionSummary(path).topProductionCountry).toBeNull();
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(
-        database,
-        [movie, { ...movie, id: 2 }, { ...movie, id: 3 }],
-        2020,
-      );
+      upsertMovies(database, [movie, { ...movie, id: 2 }, { ...movie, id: 3 }]);
       expect(getCollectionSummary(path).topProductionCountry).toBeNull();
       database.exec(`
         INSERT INTO countries VALUES ('US', 'United States of America'), ('FR', 'France');
@@ -71,7 +67,6 @@ it('ranks profitability by ROI, excludes unknown amounts and breaks ties by id',
       upsertMovies(
         database,
         [movie, ...[2, 3, 4, 5, 6].map((id) => ({ ...movie, id }))],
-        2020,
         [],
         new Map([
           [
@@ -166,9 +161,9 @@ it('summarizes unique films and only years represented by stored movies', () => 
     });
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(database, [movie], 2020);
-      upsertMovies(database, [movie], 2020);
-      upsertMovies(database, [], 2021);
+      upsertMovies(database, [movie]);
+      upsertMovies(database, [movie]);
+      upsertMovies(database, []);
     } finally {
       database.close();
     }
@@ -178,10 +173,16 @@ it('summarizes unique films and only years represented by stored movies', () => 
     });
     const updatedDatabase = createMoviesDatabase(path);
     try {
-      upsertMovies(updatedDatabase, [], 2019);
-      upsertMovies(updatedDatabase, [{ ...movie, id: 2 }], 2018);
-      upsertMovies(updatedDatabase, [{ ...movie, id: 3 }], 2022);
-      upsertMovies(updatedDatabase, [{ ...movie, id: 4 }], 2018);
+      upsertMovies(updatedDatabase, []);
+      upsertMovies(updatedDatabase, [
+        { ...movie, id: 2, release_date: '2018-01-01' },
+      ]);
+      upsertMovies(updatedDatabase, [
+        { ...movie, id: 3, release_date: '2022-01-01' },
+      ]);
+      upsertMovies(updatedDatabase, [
+        { ...movie, id: 4, release_date: '2018-01-01' },
+      ]);
       expect(getCollectionSummary(path)).toMatchObject({
         movieCount: 4,
         years: [2018, 2020, 2022],
@@ -205,11 +206,7 @@ it('keeps missing popularity distinct from zero and excludes it from popularity 
   try {
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(
-        database,
-        [{ ...movie, popularity: null, vote_count: 100 }],
-        2020,
-      );
+      upsertMovies(database, [{ ...movie, popularity: null, vote_count: 100 }]);
       expect(database.prepare('SELECT popularity FROM movies').get()).toEqual({
         popularity: null,
       });
@@ -218,11 +215,11 @@ it('keeps missing popularity distinct from zero and excludes it from popularity 
         mostPopularMovie: null,
         bestRatedMovie: { id: movie.id, popularity: null },
       });
-      upsertMovies(database, [{ ...movie, id: 2, popularity: 0 }], 2020);
+      upsertMovies(database, [{ ...movie, id: 2, popularity: 0 }]);
       expect(getCollectionSummary(path)).toMatchObject({
         mostPopularMovie: { id: 2, popularity: 0 },
       });
-      upsertMovies(database, [{ ...movie, id: 2, popularity: null }], 2020);
+      upsertMovies(database, [{ ...movie, id: 2, popularity: null }]);
       expect(getCollectionSummary(path).mostPopularMovie).toBeNull();
     } finally {
       database.close();
@@ -241,7 +238,6 @@ it('averages only known runtimes and updates them without duplicates', () => {
       upsertMovies(
         database,
         [movie, { ...movie, id: 2 }, { ...movie, id: 3 }],
-        2020,
         [],
         new Map([
           [
@@ -280,7 +276,6 @@ it('averages only known runtimes and updates them without duplicates', () => {
       upsertMovies(
         database,
         [movie],
-        2020,
         [],
         new Map([
           [
@@ -308,7 +303,7 @@ it('averages only known runtimes and updates them without duplicates', () => {
           )
           .all(),
       ).toEqual([]);
-      upsertMovies(database, [movie], 2020);
+      upsertMovies(database, [movie]);
       expect(getCollectionSummary(path)).toMatchObject({
         averageRuntime: 130,
         runtimeMovieCount: 2,
@@ -321,7 +316,6 @@ it('averages only known runtimes and updates them without duplicates', () => {
       upsertMovies(
         database,
         [movie],
-        2020,
         [],
         new Map([
           [
@@ -362,15 +356,11 @@ it('summarizes film ratings without weighting, genre duplication, or unrated fil
     });
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(
-        database,
-        [
-          { ...movie, vote_average: 8, vote_count: 10, genre_ids: [18, 12] },
-          { ...movie, id: 2, vote_average: 4, vote_count: 100 },
-          { ...movie, id: 3, vote_average: 0, vote_count: 0 },
-        ],
-        2020,
-      );
+      upsertMovies(database, [
+        { ...movie, vote_average: 8, vote_count: 10, genre_ids: [18, 12] },
+        { ...movie, id: 2, vote_average: 4, vote_count: 100 },
+        { ...movie, id: 3, vote_average: 0, vote_count: 0 },
+      ]);
     } finally {
       database.close();
     }
@@ -393,21 +383,17 @@ it('selects top movies with a minimum vote count and deterministic ties', () => 
     });
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(
-        database,
-        [
-          {
-            ...movie,
-            id: 1,
-            vote_average: 10,
-            vote_count: 99,
-            popularity: 500,
-          },
-          { ...movie, id: 2, vote_average: 8, vote_count: 100, popularity: 20 },
-          { ...movie, id: 3, vote_average: 8, vote_count: 200, popularity: 30 },
-        ],
-        2020,
-      );
+      upsertMovies(database, [
+        {
+          ...movie,
+          id: 1,
+          vote_average: 10,
+          vote_count: 99,
+          popularity: 500,
+        },
+        { ...movie, id: 2, vote_average: 8, vote_count: 100, popularity: 20 },
+        { ...movie, id: 3, vote_average: 8, vote_count: 200, popularity: 30 },
+      ]);
     } finally {
       database.close();
     }

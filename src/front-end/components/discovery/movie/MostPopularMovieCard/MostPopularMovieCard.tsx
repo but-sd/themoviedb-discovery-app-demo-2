@@ -41,7 +41,9 @@ export function MostPopularMovieCard({
         {movie ? (
           <>
             <p className="genre-highlight-name">{movie.title}</p>
-            <p className="featured-movie-year">{movie.year}</p>
+            <p className="featured-movie-year">
+              {movie.year ?? 'Année inconnue'}
+            </p>
             <p className="genre-highlight-value">
               {movie.popularity === null
                 ? 'Non disponible'

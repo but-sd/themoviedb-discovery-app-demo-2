@@ -70,7 +70,7 @@ export function getMovieRatingDistribution(
       .prepare(`
       SELECT release_year AS year, AVG(vote_average) AS average_rating,
         COUNT(*) AS movie_count
-      FROM movies WHERE vote_count > 0 AND vote_average IS NOT NULL
+      FROM movies WHERE vote_count > 0 AND vote_average IS NOT NULL AND release_year IS NOT NULL
       GROUP BY release_year ORDER BY release_year
     `)
       .all();
@@ -131,6 +131,7 @@ export function getMovieYearDistribution(
       .prepare(`
         SELECT release_year AS year, COUNT(*) AS movie_count
         FROM movies
+        WHERE release_year IS NOT NULL
         GROUP BY release_year
         ORDER BY release_year
       `)

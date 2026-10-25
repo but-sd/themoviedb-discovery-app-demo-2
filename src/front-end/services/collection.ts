@@ -18,8 +18,8 @@ function isMovieHighlight(value: unknown): value is MovieHighlight | null {
       'posterPath' in value &&
       (value.posterPath === null || typeof value.posterPath === 'string') &&
       'year' in value &&
-      typeof value.year === 'number' &&
-      Number.isInteger(value.year) &&
+      (value.year === null ||
+        (typeof value.year === 'number' && Number.isInteger(value.year))) &&
       'rating' in value &&
       (value.rating === null ||
         (typeof value.rating === 'number' &&

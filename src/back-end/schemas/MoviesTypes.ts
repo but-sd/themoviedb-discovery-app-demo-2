@@ -130,7 +130,7 @@ export type MovieHighlight = {
   posterPath?: string | null;
   id: number;
   title: string;
-  year: number;
+  year: number | null;
   rating: number | null;
   voteCount: number | null;
   popularity: number | null;

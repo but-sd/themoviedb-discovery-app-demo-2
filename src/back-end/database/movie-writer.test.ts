@@ -18,22 +18,26 @@ const movie: Movie = {
   genre_ids: [18],
 };
 
-it('stores and updates a movie without a release date while retaining its collection year', () => {
+it('calculates the release year from the release date and recalculates it on updates', () => {
   const database = createMoviesDatabase(':memory:');
   try {
-    upsertMovies(database, [{ ...movie, release_date: null }], 2020);
+    upsertMovies(database, [{ ...movie, release_date: null }]);
     expect(
       database
         .prepare('SELECT release_date, release_year FROM movies WHERE id = ?')
         .get(movie.id),
-    ).toEqual({ release_date: null, release_year: 2020 });
-    upsertMovies(database, [movie], 2020);
+    ).toEqual({ release_date: null, release_year: null });
+    upsertMovies(database, [movie]);
     expect(
       database
         .prepare('SELECT release_date FROM movies WHERE id = ?')
         .get(movie.id),
     ).toEqual({ release_date: movie.release_date });
-    upsertMovies(database, [{ ...movie, release_date: null }], 2020);
+    upsertMovies(database, [{ ...movie, release_date: '2024-06-01' }]);
+    expect(database.prepare('SELECT release_year FROM movies').get()).toEqual({
+      release_year: 2024,
+    });
+    upsertMovies(database, [{ ...movie, release_date: null }]);
     expect(
       database
         .prepare('SELECT release_date FROM movies WHERE id = ?')
@@ -47,8 +51,8 @@ it('stores and updates a movie without a release date while retaining its collec
 it('inserts and updates movies without duplicates', () => {
   const database = createMoviesDatabase(':memory:');
   try {
-    upsertMovies(database, [movie], 2020);
-    upsertMovies(database, [{ ...movie, title: 'Updated title' }], 2020);
+    upsertMovies(database, [movie]);
+    upsertMovies(database, [{ ...movie, title: 'Updated title' }]);
     expect(
       database.prepare('SELECT COUNT(*) AS count FROM movies').get(),
     ).toMatchObject({ count: 1 });
@@ -66,13 +70,19 @@ it('inserts and updates movies without duplicates', () => {
 it('synchronizes genre names and replaces associations without duplicates', () => {
   const database = createMoviesDatabase(':memory:');
   try {
-    upsertMovies(database, [movie, { ...movie, id: 2 }], 2020, [
-      { id: 18, name: 'Drama' },
-    ]);
-    upsertMovies(database, [{ ...movie, genre_ids: [12, 12] }], 2020, [
-      { id: 18, name: 'Drame' },
-      { id: 12, name: 'Aventure' },
-    ]);
+    upsertMovies(
+      database,
+      [movie, { ...movie, id: 2 }],
+      [{ id: 18, name: 'Drama' }],
+    );
+    upsertMovies(
+      database,
+      [{ ...movie, genre_ids: [12, 12] }],
+      [
+        { id: 18, name: 'Drame' },
+        { id: 12, name: 'Aventure' },
+      ],
+    );
     expect(
       database.prepare('SELECT * FROM movie_genres ORDER BY movie_id').all(),
     ).toEqual([
@@ -82,7 +92,7 @@ it('synchronizes genre names and replaces associations without duplicates', () =
     expect(
       database.prepare('SELECT name FROM genres WHERE id = 18').get(),
     ).toMatchObject({ name: 'Drame' });
-    upsertMovies(database, [{ ...movie, genre_ids: [] }], 2020);
+    upsertMovies(database, [{ ...movie, genre_ids: [] }]);
     expect(
       database.prepare('SELECT * FROM movie_genres WHERE movie_id = 1').all(),
     ).toEqual([]);
@@ -100,7 +110,6 @@ it('normalizes production countries into code relations and labels', () => {
     upsertMovies(
       database,
       [movie],
-      2020,
       [],
       new Map([
         [
@@ -137,7 +146,6 @@ it('normalizes production countries into code relations and labels', () => {
     upsertMovies(
       database,
       [movie],
-      2020,
       [],
       new Map([
         [
@@ -165,21 +173,17 @@ it('normalizes production countries into code relations and labels', () => {
 it('rolls back all changes when a write fails and keeps the connection usable', () => {
   const database = createMoviesDatabase(':memory:');
   try {
-    upsertMovies(database, [movie], 2020);
+    upsertMovies(database, [movie]);
     database.exec(`
       CREATE TRIGGER reject_movie BEFORE INSERT ON movies
       WHEN NEW.id = 2
       BEGIN SELECT RAISE(ABORT, 'Rejected movie'); END;
     `);
     expect(() =>
-      upsertMovies(
-        database,
-        [
-          { ...movie, title: 'Not saved', genre_ids: [12] },
-          { ...movie, id: 2 },
-        ],
-        2020,
-      ),
+      upsertMovies(database, [
+        { ...movie, title: 'Not saved', genre_ids: [12] },
+        { ...movie, id: 2 },
+      ]),
     ).toThrow('Rejected movie');
     expect(
       database.prepare('SELECT title FROM movies WHERE id = 1').get(),
@@ -190,7 +194,7 @@ it('rolls back all changes when a write fails and keeps the connection usable', 
     expect(
       database.prepare('SELECT * FROM genres WHERE id = 12').all(),
     ).toEqual([]);
-    upsertMovies(database, [{ ...movie, title: 'Saved after rollback' }], 2020);
+    upsertMovies(database, [{ ...movie, title: 'Saved after rollback' }]);
     expect(
       database.prepare('SELECT title FROM movies WHERE id = 1').get(),
     ).toMatchObject({ title: 'Saved after rollback' });

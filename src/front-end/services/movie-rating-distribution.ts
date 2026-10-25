@@ -53,7 +53,7 @@ export async function fetchMovieRatingDistribution(
         row.movieCount > 0,
     ) ||
     new Set(data.years.map((row) => row.year)).size !== data.years.length ||
-    data.buckets.reduce((total, row) => total + row.movieCount, 0) !==
+    data.buckets.reduce((total, row) => total + row.movieCount, 0) <
       data.years.reduce((total, row) => total + row.movieCount, 0)
   ) {
     throw new Error('Les statistiques des notes sont invalides.');

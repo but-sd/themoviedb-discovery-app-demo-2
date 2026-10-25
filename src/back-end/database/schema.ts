@@ -1,8 +1,8 @@
 import type { DatabaseSync } from 'node:sqlite';
 
 /**
- * Initialisation du schéma de la base de données.
- * @param database La base de données SQLite à initialiser.
+ * Initializes the database schema.
+ * @param database The SQLite database to initialize.
  */
 export function initializeSchema(database: DatabaseSync): void {
   database.exec(`
@@ -13,7 +13,7 @@ export function initializeSchema(database: DatabaseSync): void {
       original_language TEXT NOT NULL,
       overview TEXT NOT NULL,
       release_date TEXT,
-      release_year INTEGER NOT NULL,
+      release_year INTEGER GENERATED ALWAYS AS (CAST(strftime('%Y', release_date) AS INTEGER)) STORED,
       popularity REAL,
       vote_average REAL,
       vote_count INTEGER,

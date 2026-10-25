@@ -77,6 +77,25 @@ it('keeps existing data when initializing the same schema again', () => {
   }
 });
 
+it('defines an indexed stored release year that cannot be assigned directly', () => {
+  const database = new DatabaseSync(':memory:');
+  try {
+    initializeSchema(database);
+    expect(database.prepare('PRAGMA table_xinfo(movies)').all()).toContainEqual(
+      expect.objectContaining({
+        name: 'release_year',
+        type: 'INTEGER',
+        hidden: 3,
+      }),
+    );
+    expect(() =>
+      database.exec('UPDATE movies SET release_year = 2024'),
+    ).toThrow(/generated column/);
+  } finally {
+    database.close();
+  }
+});
+
 it.each(['runtime_minutes', 'budget', 'revenue'])(
   'allows unknown %s but requires positive values when provided',
   (column) => {
@@ -86,9 +105,9 @@ it.each(['runtime_minutes', 'budget', 'revenue'])(
       database.exec(`
         INSERT INTO movies (
           id, title, original_title, original_language, overview,
-          release_date, release_year, popularity, vote_average, vote_count,
+          release_date, popularity, vote_average, vote_count,
           collected_at
-        ) VALUES (1, 'Test', 'Test', 'fr', '', '2020-01-01', 2020, 1, 7, 1, '2026-01-01');
+        ) VALUES (1, 'Test', 'Test', 'fr', '', '2020-01-01', 1, 7, 1, '2026-01-01');
       `);
       const update = database.prepare(
         `UPDATE movies SET ${column} = ? WHERE id = 1`,

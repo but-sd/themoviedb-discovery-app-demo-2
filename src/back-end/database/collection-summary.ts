@@ -15,7 +15,7 @@ export function getCollectionSummary(
       .get();
     const years = database
       .prepare(`
-      SELECT DISTINCT release_year AS year FROM movies
+      SELECT DISTINCT release_year AS year FROM movies WHERE release_year IS NOT NULL
       ORDER BY year
     `)
       .all();
@@ -58,7 +58,7 @@ export function getCollectionSummary(
         ? {
             id: Number(row.id),
             title: String(row.title),
-            year: Number(row.release_year),
+            year: row.release_year === null ? null : Number(row.release_year),
             rating: row.vote_average === null ? null : Number(row.vote_average),
             voteCount: row.vote_count === null ? null : Number(row.vote_count),
             popularity: row.popularity === null ? null : Number(row.popularity),

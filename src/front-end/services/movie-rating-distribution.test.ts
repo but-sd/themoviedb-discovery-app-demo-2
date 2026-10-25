@@ -69,7 +69,7 @@ it.each([
       { year: 2020, averageRating: 9, movieCount: 5 },
     ],
   },
-  { ...data, years: [] },
+  { ...data, years: [{ year: 2020, averageRating: 8, movieCount: 11 }] },
 ])('rejects invalid or inconsistent statistics %j', async (result) => {
   vi.stubGlobal(
     'fetch',
@@ -83,6 +83,15 @@ it('reports HTTP failures', async () => {
   await expect(fetchMovieRatingDistribution()).rejects.toThrow(
     'Impossible de charger',
   );
+});
+
+it('accepts rated films without a known year in the rating buckets only', async () => {
+  const result = { ...data, years: [] };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({ ok: true, json: async () => result }),
+  );
+  expect(await fetchMovieRatingDistribution()).toEqual(result);
 });
 
 it('propagates network failures', async () => {

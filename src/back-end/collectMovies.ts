@@ -63,7 +63,7 @@ export async function collectMovies(
   }
   const database = createMoviesDatabase(databasePath);
   try {
-    upsertMovies(database, movies.values(), year, genres, details);
+    upsertMovies(database, movies.values(), genres, details);
   } finally {
     database.close();
   }

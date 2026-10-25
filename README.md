@@ -245,7 +245,7 @@ erDiagram
         TEXT original_language
         TEXT overview
         TEXT release_date "Facultatif"
-        INTEGER release_year
+        INTEGER release_year "Calcule depuis release_date"
         REAL popularity "Facultatif"
         REAL vote_average "Facultatif"
         INTEGER vote_count "Facultatif"
@@ -286,8 +286,11 @@ recherches par année et par genre.
 
 Les durées, budgets et recettes inconnus sont stockés à `NULL` ; lorsqu’ils sont
 renseignés, ils doivent être strictement positifs. `release_date` contient la
-date de sortie fournie par TMDB, ou `NULL` lorsqu’elle est absente, tandis que `release_year` correspond à l’année
-demandée lors de la collecte.
+date de sortie fournie par TMDB. `release_year` est une colonne générée stockée
+par SQLite : `CAST(strftime('%Y', release_date) AS INTEGER)`. Elle est recalculée
+automatiquement lors de la modification de la date et n’est jamais renseignée
+par la collecte. Une date absente ou inexploitable donne une année `NULL` :
+le film reste dans le catalogue mais est exclu des graphiques par année.
 
 La popularité absente est stockée à `NULL`, et non à zéro. Les films sans
 popularité connue sont exclus de la sélection du film le plus populaire.
@@ -335,7 +338,7 @@ La persistance est organisée dans `src/back-end/database/` :
 - `connection.ts` ouvre la base, active les clés étrangères et initialise le schéma
   via `createMoviesDatabase()`. L’appelant ferme la connexion après utilisation.
 - `schema.ts` définit l’ensemble des tables, colonnes, contraintes et index initiaux.
-- `movie-writer.ts` expose `upsertMovies(database, movies, year, genres, details)`
+- `movie-writer.ts` expose `upsertMovies(database, movies, genres, details)`
   pour enregistrer une collecte dans une transaction.
 - `movie-statistics.ts` fournit les distributions et les notes moyennes par genre.
 - `collection-summary.ts` regroupe les indicateurs et les films remarquables du catalogue.

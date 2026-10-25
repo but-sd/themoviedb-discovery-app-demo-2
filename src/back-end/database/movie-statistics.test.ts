@@ -40,11 +40,9 @@ it('excludes missing ratings from all averages without confusing them with rated
   try {
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(
-        database,
-        [{ ...movie, vote_average: null, vote_count: 1000 }],
-        2020,
-      );
+      upsertMovies(database, [
+        { ...movie, vote_average: null, vote_count: 1000 },
+      ]);
       expect(database.prepare('SELECT vote_average FROM movies').get()).toEqual(
         { vote_average: null },
       );
@@ -59,14 +57,10 @@ it('excludes missing ratings from all averages without confusing them with rated
         years: [],
         unratedMovieCount: 1,
       });
-      upsertMovies(
-        database,
-        [
-          { ...movie, id: 2, vote_average: 0, vote_count: 100 },
-          { ...movie, id: 3, vote_average: 8, vote_count: 100 },
-        ],
-        2021,
-      );
+      upsertMovies(database, [
+        { ...movie, id: 2, vote_average: 0, vote_count: 100 },
+        { ...movie, id: 3, vote_average: 8, vote_count: 100 },
+      ]);
       expect(getCollectionSummary(path)).toMatchObject({
         averageRating: 4,
         ratedMovieCount: 2,
@@ -82,7 +76,7 @@ it('excludes missing ratings from all averages without confusing them with rated
       ]);
       const distribution = getMovieRatingDistribution(path);
       expect(distribution.years).toEqual([
-        { year: 2021, averageRating: 4, movieCount: 2 },
+        { year: 2020, averageRating: 4, movieCount: 2 },
       ]);
       expect(distribution.unratedMovieCount).toBe(1);
       expect(
@@ -105,7 +99,7 @@ it('stores missing vote counts and treats those films as unrated in every aggreg
   try {
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(database, [{ ...movie, vote_count: null }], 2020);
+      upsertMovies(database, [{ ...movie, vote_count: null }]);
       expect(database.prepare('SELECT vote_count FROM movies').get()).toEqual({
         vote_count: null,
       });
@@ -123,7 +117,7 @@ it('stores missing vote counts and treats those films as unrated in every aggreg
       expect(
         distribution.buckets.every((bucket) => bucket.movieCount === 0),
       ).toBe(true);
-      upsertMovies(database, [movie], 2020);
+      upsertMovies(database, [movie]);
       expect(getCollectionSummary(path).ratedMovieCount).toBe(1);
       expect(getMovieRatingDistribution(path).unratedMovieCount).toBe(0);
     } finally {
@@ -144,11 +138,12 @@ it('ranks all production countries, counts coproductions once per country and re
     });
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(
-        database,
-        [movie, { ...movie, id: 2 }, { ...movie, id: 3 }, { ...movie, id: 4 }],
-        2020,
-      );
+      upsertMovies(database, [
+        movie,
+        { ...movie, id: 2 },
+        { ...movie, id: 3 },
+        { ...movie, id: 4 },
+      ]);
       expect(getMovieCountryDistribution(path)).toEqual({
         countries: [],
         unknownMovieCount: 4,
@@ -206,18 +201,20 @@ it('partitions rating boundaries including 0 and 10 and averages rated films per
         vote_average: rating,
         vote_count: index === 0 ? 1000 : 1,
       }));
-      upsertMovies(database, movies, 2020);
-      upsertMovies(database, [movies[0]], 2020);
-      upsertMovies(
-        database,
-        [{ ...movie, id: 21, vote_average: 10, vote_count: 5 }],
-        2024,
-      );
-      upsertMovies(
-        database,
-        [{ ...movie, id: 22, vote_average: 10, vote_count: 0 }],
-        2022,
-      );
+      upsertMovies(database, movies);
+      upsertMovies(database, [movies[0]]);
+      upsertMovies(database, [
+        {
+          ...movie,
+          id: 21,
+          vote_average: 10,
+          vote_count: 5,
+          release_date: '2024-01-01',
+        },
+      ]);
+      upsertMovies(database, [
+        { ...movie, id: 22, vote_average: 10, vote_count: 0 },
+      ]);
       const result = getMovieRatingDistribution(path);
       expect(result.buckets).toEqual(
         emptyBuckets.map((bucket, index) => ({
@@ -290,7 +287,6 @@ it('counts every runtime boundary once and keeps unknown durations separate', ()
       upsertMovies(
         database,
         movies,
-        2020,
         [],
         new Map(
           runtimes.map((runtime, index) => [
@@ -299,7 +295,7 @@ it('counts every runtime boundary once and keeps unknown durations separate', ()
           ]),
         ),
       );
-      upsertMovies(database, [movies[0]], 2020);
+      upsertMovies(database, [movies[0]]);
       const result = getMovieRuntimeDistribution(path);
       expect(result).toEqual({
         buckets: MOVIE_RUNTIME_RANGES.map(({ label }) => ({
@@ -334,10 +330,16 @@ it('counts distinct stored movies per release year in chronological order', () =
     expect(getMovieYearDistribution(path)).toEqual([]);
     const database = createMoviesDatabase(path);
     try {
-      upsertMovies(database, [{ ...movie, id: 3 }], 2024);
-      upsertMovies(database, [movie, { ...movie, id: 2 }], 2020);
-      upsertMovies(database, [movie], 2020);
-      upsertMovies(database, [], 2022);
+      upsertMovies(database, [{ ...movie, id: 3, release_date: '2024-01-01' }]);
+      upsertMovies(database, [movie, { ...movie, id: 2 }]);
+      upsertMovies(database, [movie]);
+      upsertMovies(database, []);
+      expect(getMovieYearDistribution(path)).toEqual([
+        { year: 2020, movieCount: 2 },
+        { year: 2024, movieCount: 1 },
+      ]);
+      upsertMovies(database, [{ ...movie, id: 5, release_date: null }]);
+      expect(getCollectionSummary(path).years).toEqual([2020, 2024]);
       expect(getMovieYearDistribution(path)).toEqual([
         { year: 2020, movieCount: 2 },
         { year: 2024, movieCount: 1 },
@@ -364,7 +366,6 @@ it('averages rated movies per genre without weighting or including unrated films
           { ...movie, id: 2, vote_average: 4, vote_count: 100 },
           { ...movie, id: 3, vote_average: 0, vote_count: 0 },
         ],
-        2020,
         [
           { id: 18, name: 'Drame' },
           { id: 12, name: 'Aventure' },
@@ -410,7 +411,6 @@ it('counts each movie once per genre and sorts by descending count', () => {
           { ...movie, id: 2, genre_ids: [18] },
           { ...movie, id: 3, genre_ids: [] },
         ],
-        2020,
         [
           { id: 18, name: 'Drame' },
           { id: 12, name: 'Aventure' },

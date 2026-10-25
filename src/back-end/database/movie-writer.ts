@@ -8,23 +8,21 @@ import type {
 export function upsertMovies(
   database: DatabaseSync,
   movies: Iterable<Movie>,
-  year: number,
   genres: Iterable<Genre> = [],
   details: ReadonlyMap<number, MovieCollectionDetails> = new Map(),
 ): void {
   const insert = database.prepare(`
       INSERT INTO movies (
         id, title, original_title, original_language, overview, release_date,
-        release_year, popularity, vote_average, vote_count, poster_path,
+        popularity, vote_average, vote_count, poster_path,
         backdrop_path, runtime_minutes, budget, revenue, collected_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         original_title = excluded.original_title,
         original_language = excluded.original_language,
         overview = excluded.overview,
         release_date = excluded.release_date,
-        release_year = excluded.release_year,
         popularity = excluded.popularity,
         vote_average = excluded.vote_average,
         vote_count = excluded.vote_count,
@@ -72,7 +70,6 @@ export function upsertMovies(
         movie.original_language,
         movie.overview,
         movie.release_date ?? null,
-        year,
         movie.popularity ?? null,
         movie.vote_average ?? null,
         movie.vote_count ?? null,
