@@ -49,6 +49,12 @@ tables de liaison. Son texte est autonome et sert de cahier des charges à
 EXPL-02. Le suivi détaillé des exécutions des étapes suivantes reste une
 extension distincte, absente de ce schéma de référence.
 
+L'année `movies.release_year` est une colonne SQLite générée et stockée à partir
+de `release_date`, et non l'année demandée au collecteur. Une date absente ou
+inexploitable donne une année NULL ; le film reste au catalogue mais ne participe
+pas aux regroupements par année. EXPL-02 prévoit les tests du calcul, de sa
+mise à jour automatique et de l'interdiction d'écrire directement cette colonne.
+
 EXPL-03 et EXPL-04 peuvent avancer en parallèle après leurs prérequis.
 Chaque ticket possède ses critères d'acceptation ; le
 champ Epic du projet associe les tickets à cette évolution, sans créer d'issue
