@@ -5,6 +5,16 @@ import type { DatabaseSync } from 'node:sqlite';
  * @param database The SQLite database to initialize.
  */
 export function initializeSchema(database: DatabaseSync): void {
+  initializeMoviesSchema(database);
+  initializeGenresSchema(database);
+  initializeCountriesSchema(database);
+}
+
+/**
+ * Initializes the movies table schema.
+ * @param database The SQLite database to initialize.
+ */
+function initializeMoviesSchema(database: DatabaseSync): void {
   database.exec(`
     CREATE TABLE IF NOT EXISTS movies (
       id INTEGER PRIMARY KEY,
@@ -25,6 +35,15 @@ export function initializeSchema(database: DatabaseSync): void {
       collected_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS movies_release_year ON movies(release_year);
+  `);
+}
+
+/**
+ * Initializes the genres table schema.
+ * @param database The SQLite database to initialize.
+ */
+function initializeGenresSchema(database: DatabaseSync): void {
+  database.exec(`
     CREATE TABLE IF NOT EXISTS genres (
       id INTEGER PRIMARY KEY,
       name TEXT
@@ -35,6 +54,15 @@ export function initializeSchema(database: DatabaseSync): void {
       PRIMARY KEY (movie_id, genre_id)
     );
     CREATE INDEX IF NOT EXISTS movie_genres_genre_id ON movie_genres(genre_id);
+  `);
+}
+
+/**
+ * Initializes the countries table schema.
+ * @param database The SQLite database to initialize.
+ */
+function initializeCountriesSchema(database: DatabaseSync): void {
+  database.exec(`
     CREATE TABLE IF NOT EXISTS countries (
       code TEXT PRIMARY KEY,
       name TEXT NOT NULL
