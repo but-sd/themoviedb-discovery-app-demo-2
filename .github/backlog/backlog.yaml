@@ -36,30 +36,122 @@ epics:
     tickets:
       - id: EXPL-01
         type: feature
-        title: Définir le périmètre et le dictionnaire des données
-        story: En tant qu'analyste, je veux connaître le périmètre des films collectés pour interpréter correctement les comparaisons entre années.
+        title: "Spécification : données et relations du catalogue d'exploration"
+        story: |
+          En tant qu'étudiant, je dispose de la spécification fonctionnelle des données
+          pour réaliser le schéma de la base dans EXPL-02, sans devoir redéfinir le modèle.
+
+          ### Référence et périmètre
+
+          Cette spécification reprend le modèle déjà réalisé dans le worktree
+          `alexandre-girard-maif-ubiquitous-meme`, décrit dans la section
+          « Base de données » du README et dans `src/back-end/database/schema.ts`.
+          Elle est autonome : l'étudiant n'a pas besoin d'accéder à ce worktree.
+          La cible est SQLite, avec cinq tables décrites ci-dessous.
+
+          Les films sont collectés depuis TMDB Discover sur une période inclusive
+          configurable, par exemple 2015 à 2024, avec une limite par année et un tri
+          par popularité documentés. Les détails TMDB enrichissent les films avec
+          leur durée, leur budget, leurs recettes et leurs pays de production.
+          Les genres sont identifiés par TMDB et leurs libellés sont récupérés en français.
+          Les notes et la popularité sont celles observées lors de la collecte :
+          elles ne reconstituent pas une évolution historique.
+
+          ### Dictionnaire des films : movies
+
+          | Attribut | Type SQLite | Obligatoire | Signification |
+          | --- | --- | --- | --- |
+          | id | INTEGER | Oui, clé primaire | Identifiant TMDB stable du film |
+          | title | TEXT | Oui | Titre traduit |
+          | original_title | TEXT | Oui | Titre original |
+          | original_language | TEXT | Oui | Code de langue originale fourni par TMDB |
+          | overview | TEXT | Oui | Résumé ; une chaîne vide est possible |
+          | release_date | TEXT | Non | Date de sortie TMDB au format YYYY-MM-DD |
+          | release_year | INTEGER | Oui | Année demandée lors de la collecte, comme dans la référence |
+          | popularity | REAL | Non | Score TMDB au moment de la collecte |
+          | vote_average | REAL | Non | Note moyenne sur 10 ; zéro reste une note possible |
+          | vote_count | INTEGER | Non | Nombre de votes |
+          | poster_path | TEXT | Non | Chemin relatif de l'affiche TMDB |
+          | backdrop_path | TEXT | Non | Chemin relatif de l'image de fond TMDB |
+          | runtime_minutes | INTEGER | Non | Durée strictement positive, en minutes |
+          | budget | INTEGER | Non | Budget strictement positif, en dollars US |
+          | revenue | INTEGER | Non | Recettes strictement positives, en dollars US |
+          | collected_at | TEXT | Oui | Horodatage de la dernière collecte au format ISO 8601 |
+
+          `release_year` est le rattachement à l'année de collecte demandée, pas une
+          valeur déduite artificiellement d'une date absente. Les filtres de collecte
+          portent sur les dates de sortie ; une discordance avec `release_date`
+          doit être signalée, pas corrigée silencieusement.
+
+          ### Référentiels et associations
+
+          | Table | Attributs | Rôle |
+          | --- | --- | --- |
+          | genres | id INTEGER clé primaire ; name TEXT nullable | Genre TMDB et libellé français lorsqu'il est connu |
+          | countries | code TEXT clé primaire ; name TEXT obligatoire | Pays de production, code ISO 3166-1 alpha-2 et libellé TMDB |
+          | movie_genres | movie_id INTEGER ; genre_id INTEGER | Association film-genre, clé primaire composée des deux attributs |
+          | production_countries | movie_id INTEGER ; country_code TEXT | Association film-pays, clé primaire composée des deux attributs |
+
+          Un film possède zéro à plusieurs genres ; un genre concerne zéro à plusieurs
+          films. Un film possède zéro à plusieurs pays de production ; un pays concerne
+          zéro à plusieurs films. Les tables de liaison portent les clés étrangères
+          vers `movies.id`, `genres.id` et `countries.code`. Les clés composées
+          interdisent les associations en double. Un film sans genre ou pays connu
+          reste stocké sans association : ne pas inventer de référence « Inconnu ».
+          Supprimer un film supprime ses associations, mais conserve les référentiels.
+
+          ### Valeurs absentes, actualisation et calculs
+
+          Les durées, budgets et recettes absents ou égaux à zéro deviennent NULL ;
+          une valeur renseignée doit être strictement positive. Popularité, note et
+          nombre de votes absents restent NULL, sans remplacement par zéro.
+          Un film contribue aux moyennes des notes uniquement si sa note est connue
+          et son nombre de votes strictement positif. Une note de zéro avec des votes
+          est valide. Une durée inconnue est exclue de la moyenne des durées.
+
+          Chaque film est unique par identifiant TMDB. Une nouvelle collecte actualise
+          ses attributs, son horodatage et ses associations dans une même transaction,
+          sans supprimer les films des autres années. Le nombre de films se calcule
+          sur les films distincts : les totaux par genre ou pays comptent des
+          associations et peuvent dépasser ce nombre pour les coproductions.
+
+          Le modèle de référence ne conserve ni table d'exécutions ni historique de
+          notes : `collected_at` décrit le dernier état connu. Le suivi détaillé des
+          collectes prévu dans les tickets suivants est une extension distincte,
+          à spécifier avant de l'ajouter, pas une sixième table implicite dans EXPL-02.
         size: S
         priority: P1
         dependsOn: []
         acceptance:
-          - Le périmètre utilise l'année de sortie des films et une période inclusive configurable, avec 2015 à 2024 comme exemple reproductible.
-          - Un dictionnaire décrit identifiant TMDB, titre, date de sortie, genres, langue originale, note moyenne, nombre de votes et popularité, avec types, unités et valeurs manquantes.
-          - La source, la langue, la région, les règles d'inclusion, l'ordre de collecte et une éventuelle limite par année sont documentés.
-          - Le document précise que notes et popularité sont observées à la date de collecte et ne représentent pas leurs valeurs historiques à la sortie des films.
-          - Les limites de couverture de TMDB sont explicites ; un échantillon tronqué ne doit pas être présenté comme exhaustif.
+          - L'équipe comprend le dictionnaire fourni et distingue date de sortie, année demandée et date de collecte.
+          - Le MCD attendu est reformulé avec les cardinalités film-genre et film-pays, sans nouvelle décision de modèle.
+          - Un exemple de film avec plusieurs genres et deux pays illustre les cinq tables et les clés de liaison.
+          - Un exemple sans durée, budget, recette ni votes explicite les NULL et les exclusions des calculs.
+          - Les critères d'EXPL-02 sont traçables à cette spécification ; la limite par année et la couverture non exhaustive sont explicites.
       - id: EXPL-02
         type: feature
-        title: Concevoir le modèle de la base d'exploration
-        story: En tant que développeur, je veux un modèle de données cohérent pour stocker les films et tracer leur collecte.
+        title: Mettre en place le schéma SQLite à partir de la spécification
+        story: |
+          En tant que développeur, je veux traduire la spécification EXPL-01 en
+          schéma SQLite pour stocker les films, leurs genres et leurs pays sans doublons.
+
+          Le livrable est une définition SQL versionnée, accompagnée du diagramme
+          relationnel et de tests sur une base temporaire. Il ne s'agit pas de choisir
+          un autre moteur ou de redéfinir les données : EXPL-01 constitue le cahier
+          des charges. EXPL-03 prendra ensuite en charge l'initialisation locale
+          et la procédure d'installation.
         size: M
         priority: P1
         dependsOn: [EXPL-01]
         acceptance:
-          - Un schéma relationnel décrit films, genres, associations film-genre et exécutions de collecte.
-          - Les identifiants TMDB sont uniques et les contraintes empêchent les doublons d'associations et les références invalides.
-          - Les exécutions conservent période, critères, horodatages, statut et compteurs de collecte, y compris les limites appliquées.
-          - Les valeurs absentes sont distinguées de zéro et les champs nécessaires aux filtres par année et genre sont identifiés.
-          - Le moteur de base est choisi et justifié pour un usage local étudiant ; le modèle est relu avant implémentation.
+          - Les cinq tables movies, genres, countries, movie_genres et production_countries reprennent tous les attributs, types et nullabilités d'EXPL-01.
+          - movies.id, genres.id et countries.code sont les clés primaires ; les deux tables de liaison utilisent les clés primaires composées spécifiées.
+          - Les clés étrangères sont activées sur chaque connexion de test ; un lien vers une référence absente et une association en double sont refusés.
+          - Les références au film utilisent ON DELETE CASCADE ; supprimer un film retire ses liaisons mais conserve les genres et pays de référence.
+          - Les contraintes CHECK imposent runtime_minutes > 0, budget > 0 et revenue > 0 lorsqu'ils sont renseignés, tout en autorisant NULL.
+          - Les index movies_release_year sur movies.release_year et movie_genres_genre_id sur movie_genres.genre_id sont créés.
+          - Des tests SQL sur base temporaire couvrent film multigenre et coproduction, valeurs NULL, note zéro avec votes, doublons, références absentes, valeurs positives et suppression en cascade.
+          - Un diagramme relationnel et une requête de comptage par année et genre documentent le schéma ; aucune table d'historique ou d'exécutions n'est ajoutée dans ce ticket.
       - id: EXPL-03
         type: feature
         title: Créer et initialiser la base de données locale

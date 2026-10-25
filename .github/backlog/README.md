@@ -31,8 +31,8 @@ recensement exhaustif.
 
 | Ticket  | Livraison attendue                                 | Taille | Prérequis        |
 | ------- | -------------------------------------------------- | ------ | ---------------- |
-| EXPL-01 | Périmètre et dictionnaire des données              | S      | Aucun            |
-| EXPL-02 | Modèle relationnel et choix justifié du moteur     | M      | EXPL-01          |
+| EXPL-01 | Spécification fournie des données et relations     | S      | Aucun            |
+| EXPL-02 | Mise en place du schéma SQLite spécifié            | M      | EXPL-01          |
 | EXPL-03 | Base locale et migrations                          | M      | EXPL-02          |
 | EXPL-04 | Extraction TMDB par année et pagination            | L      | EXPL-01          |
 | EXPL-05 | Nettoyage et contrôles de qualité                  | M      | EXPL-01, EXPL-04 |
@@ -43,9 +43,14 @@ recensement exhaustif.
 | EXPL-10 | Visualisations et interprétation                   | L      | EXPL-09          |
 | EXPL-11 | Démonstration reproductible et tests d'intégration | M      | EXPL-07, EXPL-10 |
 
-EXPL-03 et EXPL-04 peuvent avancer en parallèle après leurs prérequis. Le choix
-du moteur de base reste une décision à argumenter dans EXPL-02, pas une contrainte
-imposée par ce backlog. Chaque ticket possède ses critères d'acceptation ; le
+EXPL-01 reprend la documentation et le schéma déjà réalisés dans le worktree
+`alexandre-girard-maif-ubiquitous-meme` : SQLite, films, genres, pays et deux
+tables de liaison. Son texte est autonome et sert de cahier des charges à
+EXPL-02. Le suivi détaillé des exécutions des étapes suivantes reste une
+extension distincte, absente de ce schéma de référence.
+
+EXPL-03 et EXPL-04 peuvent avancer en parallèle après leurs prérequis.
+Chaque ticket possède ses critères d'acceptation ; le
 champ Epic du projet associe les tickets à cette évolution, sans créer d'issue
 parent supplémentaire. Ce backlog décrit le travail futur, il n'implémente pas
 encore la base, le CLI ni le tableau de bord.
@@ -243,8 +248,8 @@ pas GitHub et ne détermine donc pas quelles issues ont changé.
 6. **Rétrospective** : comparer ce qui a été prévu et livré, discuter les
    incertitudes et ajuster le découpage et les estimations du sprint suivant.
 
-Pour une première itération, commencer par **EXPL-01**, puis discuter le modèle
-**EXPL-02** et le contrat d'extraction **EXPL-04**. Construire ensuite un petit
+Pour une première itération, lire la spécification **EXPL-01**, puis réaliser le
+schéma **EXPL-02** et discuter le contrat d'extraction **EXPL-04**. Construire ensuite un petit
 incrément de bout en bout sur une période limitée avant d'élargir la collecte.
 Les tailles restent à réestimer ; découper les tickets L si nécessaire pour
 tenir l'objectif du sprint.
