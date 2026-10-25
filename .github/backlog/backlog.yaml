@@ -1,4 +1,7 @@
 version: 1
+milestones:
+  - title: 1.1.0
+    description: Version 1.1.0 de l'application.
 project:
   title: TMDB - Backlog pédagogique
   viewName: Backlog

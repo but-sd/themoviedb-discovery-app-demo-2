@@ -84,6 +84,23 @@ export function validateBacklog(config) {
     'Vues Features et Bugs invalides.',
   );
   const tickets = new Map();
+  const milestoneTitles = new Set();
+  requireValue(
+    config.milestones === undefined || Array.isArray(config.milestones),
+    'La liste des milestones est invalide.',
+  );
+  for (const milestone of config.milestones ?? []) {
+    requireValue(
+      typeof milestone?.title === 'string' &&
+        milestone.title.trim() === milestone.title &&
+        milestone.title.length > 0 &&
+        !milestoneTitles.has(milestone.title) &&
+        (milestone.description === undefined ||
+          typeof milestone.description === 'string'),
+      'Milestone invalide ou duplique.',
+    );
+    milestoneTitles.add(milestone.title);
+  }
   const epicIds = new Set();
   for (const epic of config.epics) {
     requireValue(
@@ -104,6 +121,10 @@ export function validateBacklog(config) {
       `${epic.id} : aucun ticket.`,
     );
     for (const ticket of epic.tickets) {
+      requireValue(
+        ticket.milestone === undefined || milestoneTitles.has(ticket.milestone),
+        `${ticket.id} : milestone inconnu.`,
+      );
       requireValue(
         typeof ticket.id === 'string' &&
           new RegExp(`^${epic.id}-\\d{2}$`).test(ticket.id) &&
@@ -661,10 +682,12 @@ export function instantiate(config, options, run = gh, log = console.log) {
         'Avec --apply, les titres et descriptions existants seront remplaces par la configuration, y compris les modifications manuelles.',
       );
     }
+    for (const milestone of config.milestones ?? [])
+      log(`Milestone | ${milestone.title}`);
     for (const epic of config.epics) {
       for (const ticket of epic.tickets)
         log(
-          `Backlog | ${ticket.id} | ${ticket.size} | ${ticket.priority} | ${ticket.title}`,
+          `Backlog | ${ticket.id} | ${ticket.size} | ${ticket.priority} | ${ticket.title}${ticket.milestone ? ` | Milestone : ${ticket.milestone}` : ''}`,
         );
     }
     return;
@@ -737,6 +760,51 @@ export function instantiate(config, options, run = gh, log = console.log) {
     if (matches[0]) {
       issueUrls.set(ticket.id, matches[0].html_url);
       issuesById.set(ticket.id, matches[0]);
+    }
+  }
+
+  const milestones = new Map();
+  if (config.milestones?.length) {
+    const pages = json(run, [
+      'api',
+      `repos/${options.repo}/milestones?state=all&per_page=100`,
+      '--paginate',
+      '--slurp',
+    ]);
+    for (const definition of config.milestones) {
+      const matches = pages
+        .flat()
+        .filter((milestone) => milestone.title === definition.title);
+      requireValue(
+        matches.length <= 1,
+        `Milestone duplique : ${definition.title}.`,
+      );
+      const milestone =
+        matches[0] ??
+        JSON.parse(
+          run(
+            [
+              'api',
+              `repos/${options.repo}/milestones`,
+              '--method',
+              'POST',
+              '--input',
+              '-',
+            ],
+            JSON.stringify({
+              title: definition.title,
+              ...(definition.description !== undefined
+                ? { description: definition.description }
+                : {}),
+            }),
+          ),
+        );
+      requireValue(
+        Number.isInteger(milestone.number) && milestone.number > 0,
+        `Numero de milestone manquant : ${definition.title}.`,
+      );
+      milestones.set(definition.title, milestone.number);
+      if (!matches.length) log(`Milestone cree : ${definition.title}`);
     }
   }
 
@@ -959,6 +1027,9 @@ export function instantiate(config, options, run = gh, log = console.log) {
           JSON.stringify({
             title: `[${ticket.id}] ${ticket.title}`,
             body: issueBody(epic, ticket, config, issueUrls),
+            ...(ticket.milestone
+              ? { milestone: milestones.get(ticket.milestone) }
+              : {}),
             ...(personal ? { labels: [ticket.type] } : { type: nativeType }),
           }),
         ),
@@ -968,6 +1039,24 @@ export function instantiate(config, options, run = gh, log = console.log) {
       log(`Issue creee : ${issue.html_url}`);
     }
     const existing = issuesById.get(ticket.id);
+    if (existing && ticket.milestone && !existing.milestone) {
+      requireValue(
+        Number.isInteger(existing.number) && existing.number > 0,
+        `Numero d issue manquant pour ${ticket.id}.`,
+      );
+      run(
+        [
+          'api',
+          `repos/${options.repo}/issues/${existing.number}`,
+          '--method',
+          'PATCH',
+          '--input',
+          '-',
+        ],
+        JSON.stringify({ milestone: milestones.get(ticket.milestone) }),
+      );
+      log(`Milestone ${ticket.milestone} affecte : ${existing.html_url}`);
+    }
     if (
       existing &&
       (personal

@@ -19,6 +19,7 @@ const configuredBacklog = parse(
 
 const config = {
   ...structuredClone(configuredBacklog),
+  milestones: [],
   epics: ['EXP', 'REL', 'WATCH', 'BUG'].map((id) => ({
     id,
     title: `Evolution ${id}`,
@@ -51,6 +52,123 @@ test('backlog accepts a growing set of ideas with unique tickets', () => {
     new Set(tickets.map((ticket) => ticket.id)).size,
     tickets.length,
   );
+});
+
+test('milestones are optional, unique and referenced by title', () => {
+  const valid = structuredClone(config);
+  delete valid.milestones;
+  validateBacklog(valid);
+  valid.milestones = [{ title: '1.1.0', description: 'Release' }];
+  valid.epics[0].tickets[0].milestone = '1.1.0';
+  validateBacklog(valid);
+  for (const milestones of [
+    null,
+    [{ title: '' }],
+    [{ title: 1.1 }],
+    [{ title: '1.1.0', description: 42 }],
+    [{ title: '1.1.0' }, { title: '1.1.0' }],
+    [],
+  ]) {
+    assert.throws(
+      () => validateBacklog({ ...valid, milestones }),
+      /milestone/i,
+    );
+  }
+});
+
+test('milestone simulation stays local and displays definitions and ticket references', () => {
+  const simulation = structuredClone(config);
+  simulation.milestones = [{ title: '1.1.0' }];
+  simulation.epics[0].tickets[0].milestone = '1.1.0';
+  const output = [];
+  instantiate(
+    simulation,
+    { repo: 'student/movies', owner: 'student', apply: false },
+    () => assert.fail('Unexpected GitHub call'),
+    (line) => output.push(line),
+  );
+  assert.ok(output.includes('Milestone | 1.1.0'));
+  assert.ok(output.some((line) => line.includes('Milestone : 1.1.0')));
+});
+
+test('milestones are created or reused across pages without overwriting existing assignments', () => {
+  for (const scenario of [
+    'create',
+    'reuse',
+    'assign',
+    'preserve',
+    'unassigned',
+  ]) {
+    const f = fixture({ existing: ['assign', 'preserve'].includes(scenario) });
+    if (scenario === 'preserve') f.options['update-existing'] = true;
+    f.small.milestones = [{ title: '1.1.0', description: 'Release' }];
+    if (scenario !== 'unassigned')
+      f.small.epics[0].tickets[0].milestone = '1.1.0';
+    const milestoneCalls = [];
+    const run = (args, input) => {
+      if (args[0] === 'api' && args[1].includes('/milestones')) {
+        milestoneCalls.push({ args, input });
+        if (args[1].includes('?')) {
+          assert.ok(args.includes('--paginate'));
+          assert.ok(args[1].includes('state=all'));
+          return JSON.stringify([
+            [],
+            scenario === 'create' || scenario === 'unassigned'
+              ? []
+              : [{ title: '1.1.0', number: 5, state: 'closed' }],
+          ]);
+        }
+        assert.deepEqual(JSON.parse(input), f.small.milestones[0]);
+        return JSON.stringify({ number: 5 });
+      }
+      if (args[0] === 'api' && args[1].includes('/issues?')) {
+        const pages = JSON.parse(f.run(args, input));
+        if (scenario === 'preserve') pages[0][0].milestone = { number: 9 };
+        return JSON.stringify(pages);
+      }
+      if (args[0] === 'api' && args[1].endsWith('/issues/1') && input) {
+        f.calls.push({ args, input });
+        return '{}';
+      }
+      return f.run(args, input);
+    };
+    instantiate(f.small, f.options, run, () => {});
+    assert.equal(
+      milestoneCalls.length,
+      ['create', 'unassigned'].includes(scenario) ? 2 : 1,
+    );
+    const assignments = f.calls.filter(
+      (call) => call.input && JSON.parse(call.input).milestone === 5,
+    );
+    assert.equal(
+      assignments.length,
+      ['preserve', 'unassigned'].includes(scenario) ? 0 : 1,
+    );
+    assert.ok(
+      !f.calls.some(
+        (call) => call.input && JSON.parse(call.input).milestone === null,
+      ),
+    );
+  }
+});
+
+test('milestone API failures and invalid responses stop the import', () => {
+  for (const response of [null, { number: 0 }]) {
+    const f = fixture();
+    f.small.milestones = [{ title: '1.1.0' }];
+    const run = (args, input) => {
+      if (args[0] === 'api' && args[1].includes('/milestones')) {
+        if (!response) throw new Error('Permission refusee');
+        return args[1].includes('?') ? '[[]]' : JSON.stringify(response);
+      }
+      return f.run(args, input);
+    };
+    assert.throws(
+      () => instantiate(f.small, f.options, run, () => {}),
+      /Permission refusee|Numero de milestone/,
+    );
+    assert.ok(!f.calls.some((call) => call.args[0] === 'project'));
+  }
 });
 
 test('invalid sizing, priorities, stories and criteria are rejected', () => {

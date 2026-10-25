@@ -185,6 +185,33 @@ copie avec `--config chemin/mon-backlog.yaml`. Après import, les modifications
 de contenu restent à effectuer dans GitHub : le script n'est pas un outil de
 synchronisation destructive.
 
+### Planifier des versions avec les milestones
+
+Les milestones GitHub sont définis au niveau du dépôt dans `backlog.yaml` :
+
+```yaml
+milestones:
+  - title: 1.1.0
+    description: Version 1.1.0 de l'application.
+```
+
+Le générateur crée les milestones manquants avec `--apply` et réutilise ceux
+dont le titre correspond exactement, même fermés. Il ne modifie ni leur
+description ni leur état lorsqu'ils existent déjà. Sans cette section, aucun
+milestone n'est créé. La simulation affiche les définitions sans appeler GitHub.
+
+Pour affecter un ticket à une version, ajouter `milestone: 1.1.0` à ce ticket,
+au même niveau que `size` et `priority`. Le titre doit être déclaré dans
+`milestones`. Ce rattachement est appliqué aux nouveaux tickets et aux tickets
+existants sans milestone ; un milestone déjà affecté manuellement est conservé,
+même avec `--update-existing`. Omettre ou retirer cette propriété ne détache
+jamais un ticket de sa version. Les erreurs de permission arrêtent l'import.
+
+La configuration fournie crée **1.1.0**, sans y rattacher automatiquement les
+tickets : l'équipe choisit le périmètre de la version pendant la planification.
+Une milestone regroupe un objectif de livraison, tandis que le statut du projet
+décrit l'avancement des tickets.
+
 ### Ajouter de nouvelles idées et relancer
 
 Ajouter des tickets à une évolution existante ou ajouter une évolution dans
