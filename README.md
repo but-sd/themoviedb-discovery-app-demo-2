@@ -6,7 +6,7 @@ projet pour des étudiants de BUT Science des données.
 ## Backlog pédagogique et GitHub Projects
 
 Les [7 idées d'évolution, leurs 21 tickets Feature et 3 tickets Bug](.github/backlog/README.md) sont
-configurés dans [`.github/backlog/backlog.json`](.github/backlog/backlog.json).
+configurés dans [`.github/backlog/backlog.yaml`](.github/backlog/backlog.yaml).
 Chaque ticket contient une user story, des critères d'acceptation, des
 dépendances, une priorité et une estimation initiale en taille de T-shirt.
 

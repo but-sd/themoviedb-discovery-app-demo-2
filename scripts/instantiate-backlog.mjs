@@ -4,9 +4,10 @@ import { resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { parse } from 'yaml';
 
 const defaultConfig = new URL(
-  '../.github/backlog/backlog.json',
+  '../.github/backlog/backlog.yaml',
   import.meta.url,
 );
 const fieldNames = ['Size', 'Weight', 'Epic', 'Priority'];
@@ -1082,7 +1083,7 @@ export function main(args = process.argv.slice(2)) {
     );
     return;
   }
-  const config = JSON.parse(
+  const config = parse(
     readFileSync(
       options.config ? resolve(options.config) : defaultConfig,
       'utf8',

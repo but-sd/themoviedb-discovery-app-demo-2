@@ -1,6 +1,6 @@
 # Un backlog agile pour les étudiants
 
-Le fichier [`backlog.json`](backlog.json) est la source versionnée des **7
+Le fichier [`backlog.yaml`](backlog.yaml) est la source versionnée des **7
 évolutions et 21 tickets Feature**, plus **3 tickets Bug**. Chaque étudiant peut l'adapter, puis instancier les
 issues et un GitHub Project dans **son propre dépôt personnel ou d'organisation**. Rien n'est créé dans le
 dépôt de l'enseignant automatiquement.
@@ -79,7 +79,7 @@ Prérequis :
   accès en écriture. Pour une organisation, les types Feature et Bug doivent être activés ;
   pour un dépôt personnel, les labels feature et bug sont gérés automatiquement.
 - Node.js dans la version prévue par le projet et le CLI `gh` à jour, disponible
-  sur le PATH. Aucun paquet npm supplémentaire n'est requis par ce script.
+  sur le PATH. Exécuter `npm ci` pour installer les dépendances, dont le lecteur YAML.
 - Une authentification GitHub autorisant les issues et les Projects. Pour une
   connexion OAuth classique au CLI :
 
@@ -153,15 +153,15 @@ L'import n'est pas transactionnel : en cas d'erreur, les créations déjà effec
 restent sur GitHub. Corriger le problème et reprendre avec le même numéro.
 Ne pas lancer deux imports simultanément vers le même dépôt/projet.
 
-Pour modifier le backlog avant import, éditer `backlog.json` ou utiliser une
-copie avec `--config chemin/mon-backlog.json`. Après import, les modifications
+Pour modifier le backlog avant import, éditer `backlog.yaml` ou utiliser une
+copie avec `--config chemin/mon-backlog.yaml`. Après import, les modifications
 de contenu restent à effectuer dans GitHub : le script n'est pas un outil de
 synchronisation destructive.
 
 ### Ajouter de nouvelles idées et relancer
 
 Ajouter des tickets à une évolution existante ou ajouter une évolution dans
-`backlog.json`. Utiliser de **nouveaux identifiants stables** : par exemple
+`backlog.yaml`. Utiliser de **nouveaux identifiants stables** : par exemple
 `EXP-04` pour un ticket supplémentaire, ou `NEW` et `NEW-01` pour une nouvelle
 évolution. Fournir les mêmes propriétés que les tickets existants, avec une
 taille, une priorité, des critères d'acceptation et une liste de dépendances.

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { parse } from 'yaml';
 import {
   instantiate,
   issueBody,
@@ -9,9 +10,9 @@ import {
   validateBacklog,
 } from '../instantiate-backlog.mjs';
 
-const config = JSON.parse(
+const config = parse(
   readFileSync(
-    new URL('../../.github/backlog/backlog.json', import.meta.url),
+    new URL('../../.github/backlog/backlog.yaml', import.meta.url),
     'utf8',
   ),
 );
