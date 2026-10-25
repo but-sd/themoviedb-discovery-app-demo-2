@@ -5,6 +5,7 @@ import type {
   MovieCollectionDetails,
 } from '../schemas/MoviesTypes';
 import { upsertGenres } from './genre-writer';
+import { upsertCountries } from './country-writer';
 import { upsertMovies as writeMovies } from './movie-writer';
 
 export function upsertMovies(
@@ -24,6 +25,12 @@ export function upsertMovies(
     }
     for (const genre of genres) namedGenres.set(genre.id, genre);
     upsertGenres(database, namedGenres.values());
+    upsertCountries(
+      database,
+      collectedMovies.flatMap(
+        (movie) => details.get(movie.id)?.productionCountries ?? [],
+      ),
+    );
     writeMovies(database, collectedMovies, details);
     database.exec('COMMIT');
   } catch (error) {

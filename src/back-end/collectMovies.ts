@@ -9,6 +9,7 @@ import {
   DEFAULT_DATABASE_PATH,
 } from './database/connection';
 import { upsertMovies } from './database/movie-writer';
+import { upsertCountries } from './database/country-writer';
 import { upsertGenres } from './database/genre-writer';
 import type { Movie, MovieCollectionDetails } from './schemas/MoviesTypes';
 
@@ -72,6 +73,12 @@ export async function collectMovies(
     try {
       // Upsert genres into the database
       upsertGenres(database, genres);
+      upsertCountries(
+        database,
+        Array.from(details.values()).flatMap(
+          (detail) => detail.productionCountries,
+        ),
+      );
 
       // Upsert movies into the database
       upsertMovies(database, movies.values(), details);

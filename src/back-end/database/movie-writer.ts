@@ -43,10 +43,6 @@ export function upsertMovies(
     const insertGenreLink = database.prepare(
       'INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?, ?)',
     );
-    const upsertCountry = database.prepare(`
-      INSERT INTO countries (code, name) VALUES (?, ?)
-      ON CONFLICT(code) DO UPDATE SET name = excluded.name
-    `);
     const deleteProductionCountries = database.prepare(
       'DELETE FROM production_countries WHERE movie_id = ?',
     );
@@ -83,7 +79,6 @@ export function upsertMovies(
         deleteProductionCountries.run(movie.id);
         for (const country of details.get(movie.id)?.productionCountries ??
           []) {
-          upsertCountry.run(country.code, country.name);
           insertProductionCountry.run(movie.id, country.code);
         }
       }

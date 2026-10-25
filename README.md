@@ -342,8 +342,11 @@ La persistance est organisée dans `src/back-end/database/` :
 - `movie-writer.ts` expose `upsertMovies(database, movies, details)`
   pour enregistrer les films et leurs associations dans un point de sauvegarde.
 - `genre-writer.ts` gère uniquement les genres et leurs libellés ; les associations
-  films-genres restent dans `movie-writer.ts`. `collectMovies.ts` appelle les deux
-  writers et pilote une transaction commune aux genres, films et associations.
+  films-genres restent dans `movie-writer.ts`.
+- `country-writer.ts` expose `upsertCountries(database, countries)` pour les pays
+  et leurs libellés ; les associations films-pays restent dans `movie-writer.ts`.
+  `collectMovies.ts` appelle les trois writers et pilote une transaction commune
+  aux genres, pays, films et associations.
 - `movie-statistics.ts` fournit les distributions et les notes moyennes par genre.
 - `collection-summary.ts` regroupe les indicateurs et les films remarquables du catalogue.
 
