@@ -35,6 +35,30 @@ describe('schema.ts', () => {
 
       database.close();
     });
+
+    it('rolls back schema initialization and rethrows when initialization fails', () => {
+      const directory = mkdtempSync(join(tmpdir(), 'movies-database-'));
+      const databasePath = join(directory, 'movies.sqlite');
+      const existingDatabase = new DatabaseSync(databasePath);
+
+      // Create an existing movies table without the release_year column to simulate a schema initialization failure
+      existingDatabase.exec('CREATE TABLE movies (id INTEGER PRIMARY KEY)');
+      existingDatabase.close();
+
+      // Attempt to get the database, which should fail due to the missing release_year column
+      expect(() => getDatabase(databasePath)).toThrow(
+        /no such column: release_year/,
+      );
+
+      // Verify that the schema initialization was rolled back and the movies table remains unchanged
+      const database = new DatabaseSync(databasePath);
+      const tables = database
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+        .all()
+        .map((row) => row.name);
+      expect(tables).toEqual(['movies']);
+      database.close();
+    });
   });
 
   describe('initializeSchema', () => {
