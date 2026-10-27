@@ -1,4 +1,42 @@
-import type { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync } from 'node:sqlite';
+import { dirname, resolve } from 'node:path';
+import { mkdirSync } from 'node:fs';
+
+// Default path for the movies database
+export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
+
+/**
+ * Creates and initializes the database schema for movies, genres, and countries
+ * if it does not already exist else returns the existing schema.
+ * @param databasePath The path to the SQLite database file.
+ * @returns A `DatabaseSync` instance connected to the specified database.
+ */
+export function getDatabase(
+  databasePath = DEFAULT_DATABASE_PATH,
+): DatabaseSync {
+  // Create the directory for the database file if it doesn't exist
+  mkdirSync(dirname(databasePath), { recursive: true });
+
+  // Initialize the database connection
+  const database = new DatabaseSync(databasePath);
+
+  // Before initializing the schema, enable foreign key constraints to ensure referential integrity
+  database.exec('PRAGMA foreign_keys = ON;');
+
+  // Begin a transaction to initialize the schema
+  database.exec('BEGIN TRANSACTION;');
+  try {
+    initializeSchema(database);
+    database.exec('COMMIT;');
+    // Schema initialized successfully, commit the transaction
+  } catch (error) {
+    // An error occurred while initializing the schema, rollback the transaction
+    database.exec('ROLLBACK;');
+    throw error;
+  }
+
+  return database;
+}
 
 /**
  * Initializes the database schema.
