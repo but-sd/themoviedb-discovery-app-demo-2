@@ -15,6 +15,7 @@ const getDatabaseMock = vi.fn(() => ({
   prepare: prepareMock,
 }));
 const upsertGenresMock = vi.fn();
+const upsertCountriesMock = vi.fn();
 
 vi.mock('./database/schema.ts', () => ({
   DEFAULT_DATABASE_PATH,
@@ -23,6 +24,10 @@ vi.mock('./database/schema.ts', () => ({
 
 vi.mock('./database/genre-repository.ts', () => ({
   upsertGenres: upsertGenresMock,
+}));
+
+vi.mock('./database/country-repository.ts', () => ({
+  upsertCountries: upsertCountriesMock,
 }));
 
 /**
@@ -43,6 +48,30 @@ describe('backend-cli.ts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+  });
+
+  it('rolls back and closes the database when a country import fails', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'country-import-'));
+    const csvFile = join(directory, 'countries.csv');
+    writeFileSync(csvFile, 'code,name\nFR,France\n');
+    const error = new Error('Country write failed');
+    upsertCountriesMock.mockImplementationOnce(() => {
+      throw error;
+    });
+
+    try {
+      await expect(runCliWithArgs(['add-countries', csvFile])).rejects.toThrow(
+        error,
+      );
+      expect(getDatabaseMock).toHaveBeenCalledWith(DEFAULT_DATABASE_PATH);
+      expect(execMock.mock.calls).toEqual([
+        ['BEGIN TRANSACTION;'],
+        ['ROLLBACK;'],
+      ]);
+      expect(closeMock).toHaveBeenCalledOnce();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it('adds genres from a CSV file to the selected database', async () => {

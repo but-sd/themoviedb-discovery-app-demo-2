@@ -72,3 +72,6 @@ export type ApiErrorResponse = {
 
 // TypeScript type for a movie genre, containing an ID and a name.
 export type Genre = { id: number; name: string };
+
+// TypeScript type for a country, containing a code and a name.
+export type Country = { code: string; name: string };
