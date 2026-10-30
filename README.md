@@ -44,28 +44,3 @@ Pour supprimer uniquement les genres qui ne sont associés à aucun film :
 ```sh
 node src/back-end/backend-cli.ts clean-genres
 ```
-
-Pour ajouter ou mettre à jour des pays, utiliser un CSV avec les colonnes `code`
-et `name`. Le code pays doit contenir deux lettres majuscules (ISO 3166-1 alpha-2) :
-
-```csv
-code,name
-FR,France
-GB,United Kingdom
-US,United States of America
-```
-
-Le fichier `data/countries.csv` fournit ces trois pays comme exemples.
-
-```sh
-node src/back-end/backend-cli.ts add-countries ./data/countries.csv
-node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite add-countries ./data/countries.csv
-```
-
-Pour supprimer uniquement les pays qui ne sont associés à aucun film dans
-`production_countries` :
-
-```sh
-node src/back-end/backend-cli.ts clean-countries
-node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite clean-countries
-```

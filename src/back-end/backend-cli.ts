@@ -2,10 +2,8 @@
 import { Command } from 'commander';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { upsertCountries } from './database/country-repository.ts';
 import { upsertGenres } from './database/genre-repository.ts';
 import { DEFAULT_DATABASE_PATH, getDatabase } from './database/schema.ts';
-import { parseCountriesCsv } from './country-csv.ts';
 import { parseGenresCsv } from './genre-csv.ts';
 
 /**
@@ -62,53 +60,6 @@ cli.addCommand(
           )
           .run();
         console.log(`Removed ${changes} unused genres from ${resolve(path)}`);
-      } finally {
-        database.close();
-      }
-    }),
-);
-
-cli.addCommand(
-  new Command('add-countries')
-    .description('Add or update countries from a CSV file')
-    .argument('<csv-file>', 'CSV file with code and name columns')
-    .action((csvFile: string) => {
-      const countries = parseCountriesCsv(readFileSync(csvFile, 'utf8'));
-      const { path } = cli.opts<{ path: string }>();
-      const database = getDatabase(path);
-      try {
-        database.exec('BEGIN TRANSACTION;');
-        try {
-          upsertCountries(database, countries);
-          database.exec('COMMIT;');
-        } catch (error) {
-          database.exec('ROLLBACK;');
-          throw error;
-        }
-      } finally {
-        database.close();
-      }
-      console.log(
-        `Imported ${countries.length} countries into ${resolve(path)}`,
-      );
-    }),
-);
-
-cli.addCommand(
-  new Command('clean-countries')
-    .description('Remove countries that are not linked to any movie')
-    .action(() => {
-      const { path } = cli.opts<{ path: string }>();
-      const database = getDatabase(path);
-      try {
-        const { changes } = database
-          .prepare(
-            'DELETE FROM countries WHERE NOT EXISTS (SELECT 1 FROM production_countries WHERE production_countries.country_code = countries.code)',
-          )
-          .run();
-        console.log(
-          `Removed ${changes} unused countries from ${resolve(path)}`,
-        );
       } finally {
         database.close();
       }
