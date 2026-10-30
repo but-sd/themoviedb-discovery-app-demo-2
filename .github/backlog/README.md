@@ -1,6 +1,6 @@
 # Un backlog agile pour les étudiants
 
-Le fichier [`backlog.yaml`](backlog.yaml) contient une **epic active et 11 tickets
+Le fichier [`backlog.yaml`](backlog.yaml) contient une **epic active et 14 tickets
 Feature** pour construire un tableau de bord d'exploration des films sur plusieurs
 années. Les anciennes idées restent commentées et ne sont pas importées.
 Chaque étudiant peut l'adapter, puis instancier les
@@ -11,8 +11,12 @@ dépôt de l'enseignant automatiquement.
 
 Chaque évolution contient un identifiant stable, un objectif pédagogique et des
 tickets. Chaque ticket possède une user story, une estimation, une priorité, des
-critères d'acceptation et des dépendances. Les identifiants servent aussi à
-reconnaître les issues lors d'une reprise : ne pas les renommer après import.
+critères d'acceptation et des dépendances. Par défaut, `id` sert aussi à
+reconnaître les issues lors d'une reprise. Pour renuméroter un ticket déjà
+importé, conserver sa valeur `key` ou, si elle n'existe pas encore, placer son
+ancien identifiant dans `key` avant de modifier `id`.
+La clé stable, unique dans le backlog, reste ensuite inchangée ; `dependsOn`
+utilise toujours les identifiants affichés actuels.
 
 Chaque ticket porte `"type": "feature"` ou `"type": "bug"`. Dans une organisation, le générateur
 utilise les **types d'issue natifs GitHub Feature et Bug** et vérifie qu'ils sont activés.
@@ -34,14 +38,29 @@ recensement exhaustif.
 | EXPL-01 | Spécification fournie des données et relations     | S      | Aucun            |
 | EXPL-02 | Mise en place du schéma SQLite spécifié            | M      | EXPL-01          |
 | EXPL-03 | Base locale et migrations                          | M      | EXPL-02          |
-| EXPL-04 | Extraction TMDB par année et pagination            | L      | EXPL-01          |
-| EXPL-05 | Nettoyage et contrôles de qualité                  | M      | EXPL-01, EXPL-04 |
-| EXPL-06 | Chargement idempotent et suivi des exécutions      | L      | EXPL-03, EXPL-05 |
-| EXPL-07 | CLI de pilotage et simulation                      | M      | EXPL-06          |
-| EXPL-08 | API de lecture et agrégations                      | L      | EXPL-06          |
-| EXPL-09 | Page, filtres et tableau paginé                    | M      | EXPL-08          |
-| EXPL-10 | Visualisations et interprétation                   | L      | EXPL-09          |
-| EXPL-11 | Démonstration reproductible et tests d'intégration | M      | EXPL-07, EXPL-10 |
+| EXPL-04 | CLI d'initialisation et chemin configurable        | S      | EXPL-03          |
+| EXPL-05 | Import CSV et entretien des genres                 | M      | EXPL-04          |
+| EXPL-06 | Import CSV et entretien des pays de production     | M      | EXPL-05          |
+| EXPL-07 | Extraction TMDB par année et pagination            | L      | EXPL-01          |
+| EXPL-08 | Nettoyage et contrôles de qualité                  | M      | EXPL-01, EXPL-07 |
+| EXPL-09 | Chargement idempotent et suivi des exécutions      | L      | EXPL-03, EXPL-08 |
+| EXPL-10 | CLI de pilotage et simulation                      | M      | EXPL-04, EXPL-09 |
+| EXPL-11 | API de lecture et agrégations                      | L      | EXPL-09          |
+| EXPL-12 | Page, filtres et tableau paginé                    | M      | EXPL-11          |
+| EXPL-13 | Visualisations et interprétation                   | L      | EXPL-12          |
+| EXPL-14 | Démonstration reproductible et tests d'intégration | M      | EXPL-10, EXPL-13 |
+
+EXPL-04, EXPL-05 et EXPL-06 spécifient respectivement les apports des PR
+[#50](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/50),
+[#51](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/51) et
+[#52](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/52).
+Ces PR contiennent aussi le socle des précédentes : les tickets distinguent
+leurs apports pour éviter de redemander les mêmes développements.
+Les anciens EXPL-04 à EXPL-11 deviennent EXPL-07 à EXPL-14 ; leurs clés stables
+conservent leurs issues et leur suivi. Les trois nouveaux tickets ont des clés
+distinctes pour ne pas reprendre les anciennes issues portant ces numéros.
+Relancer avec `--update-existing --apply` pour actualiser les titres et les
+dépendances des issues déjà importées.
 
 EXPL-01 décrit le besoin d'exploration, le parcours Discover puis détail d'un film
 et un dictionnaire des données brutes avec leur provenance dans l'API TMDB.
@@ -57,7 +76,7 @@ regroupements par année. EXPL-02 choisit de traduire cette règle par une colon
 SQLite générée et stockée, avec les tests du calcul, de sa mise à jour automatique
 et de l'interdiction d'écrire directement cette colonne.
 
-EXPL-03 et EXPL-04 peuvent avancer en parallèle après leurs prérequis.
+EXPL-03 et EXPL-07 peuvent avancer en parallèle après leurs prérequis.
 Chaque ticket possède ses critères d'acceptation ; le
 champ Epic du projet associe les tickets à cette évolution, sans créer d'issue
 parent supplémentaire. Ce backlog décrit le travail futur, il n'implémente pas
@@ -285,7 +304,7 @@ pas GitHub et ne détermine donc pas quelles issues ont changé.
    incertitudes et ajuster le découpage et les estimations du sprint suivant.
 
 Pour une première itération, lire la spécification **EXPL-01**, puis réaliser le
-schéma **EXPL-02** et discuter le contrat d'extraction **EXPL-04**. Construire ensuite un petit
+schéma **EXPL-02** et discuter le contrat d'extraction **EXPL-07**. Construire ensuite un petit
 incrément de bout en bout sur une période limitée avant d'élargir la collecte.
 Les tailles restent à réestimer ; découper les tickets L si nécessaire pour
 tenir l'objectif du sprint.

@@ -218,6 +218,86 @@ epics:
           - La configuration de connexion est externalisée et les secrets ainsi que les fichiers locaux de base ne sont pas versionnés.
           - Un test sur une base temporaire vérifie les migrations et le refus des doublons.
       - id: EXPL-04
+        key: EXPL-CLI-INIT
+        type: feature
+        title: Initialiser la base depuis un CLI avec un chemin configurable
+        story: |
+          En tant qu'étudiant, je veux disposer d'un point d'entrée en ligne de
+          commande pour ouvrir ou créer ma base locale et savoir où elle se trouve.
+
+          Ce ticket formalise le socle livré dans la
+          [PR #50](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/50).
+          Il réutilise le schéma d'EXPL-02 et l'initialisation d'EXPL-03 ; il ne
+          redemande pas leur conception. Le CLI servira ensuite aux commandes
+          de gestion des genres et des pays, puis au pipeline de collecte.
+          La PR initialise le schéma existant, mais ne fournit pas de moteur
+          de migration d'une ancienne base incompatible.
+        size: S
+        priority: P1
+        dependsOn: [EXPL-03]
+        acceptance:
+          - La commande node src/back-end/backend-cli.ts utilise Commander et initialise par défaut data/movies.sqlite.
+          - L'option -p ou --path permet de choisir un autre fichier ; les répertoires parents absents sont créés.
+          - L'ouverture active les clés étrangères et initialise les cinq tables et les index dans une transaction ; une erreur annule cette initialisation et reste visible.
+          - Une base compatible peut être rouverte sans perte de données ; une base incompatible n'est pas présentée comme migrée avec succès.
+          - La connexion est fermée après une initialisation réussie et le terminal affiche le chemin absolu du fichier disponible.
+          - Des tests couvrent les chemins par défaut et personnalisé, les tables et index attendus, les références absentes et l'annulation en cas d'échec.
+          - Le README documente les commandes et la configuration TypeScript permet les imports .ts utilisés par le CLI.
+      - id: EXPL-05
+        key: EXPL-GENRES-CSV
+        type: feature
+        title: Importer et entretenir les genres depuis un fichier CSV
+        story: |
+          En tant qu'analyste, je veux alimenter les genres à partir d'un CSV,
+          corriger leurs libellés sans doublon et retirer ceux qui ne servent à
+          aucun film.
+
+          Ce ticket formalise l'apport propre de la
+          [PR #51](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/51),
+          au-delà du socle d'initialisation de la PR #50. L'import est local :
+          il ne collecte pas les genres auprès de TMDB et ne charge pas de films.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-04]
+        acceptance:
+          - Un module dédié permet de rechercher un genre par identifiant, de lister les genres triés par identifiant et d'insérer ou actualiser leurs libellés.
+          - La commande add-genres <csv-file> accepte exactement les colonnes id et name, sans dépendre de leur ordre ni de la casse des en-têtes.
+          - Le lecteur CSV prend en charge le BOM, les espaces autour des valeurs et les champs entre guillemets ; il ignore les lignes vides ou dont les deux valeurs sont vides.
+          - Chaque identifiant est un entier strictement positif représentable sans perte de précision et chaque nom est non vide ; une erreur de valeur indique la ligne concernée.
+          - Le fichier est entièrement lu et validé avant ouverture de la base ; l'import est transactionnel, actualise le nom d'un identifiant existant et ne crée pas de doublon à la relance.
+          - La commande clean-genres supprime uniquement les genres sans film dans movie_genres et conserve ceux qui sont utilisés.
+          - Les deux commandes respectent --path, ferment la connexion après traitement et affichent le nombre de lignes importées ou de genres supprimés ainsi que le chemin de la base.
+          - Des tests couvrent recherche absente, tri, insertion et mise à jour, CSV invalides, noms contenant une virgule, nettoyage sélectif et annulation de l'import en cas d'erreur.
+          - Un CSV d'exemple et les commandes d'import et de nettoyage sont documentés.
+      - id: EXPL-06
+        key: EXPL-COUNTRIES-CSV
+        type: feature
+        title: Importer et entretenir les pays de production depuis un fichier CSV
+        story: |
+          En tant qu'analyste, je veux alimenter les pays de production à partir
+          d'un CSV, actualiser leurs noms et supprimer seulement les pays qui ne
+          sont utilisés par aucun film.
+
+          Ce ticket formalise l'apport propre de la
+          [PR #52](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/52).
+          Il prolonge le CLI utilisé pour les genres sans réimplémenter leurs
+          commandes. Le contrôle porte sur le format du code pays ; il ne s'agit
+          pas d'une vérification de son existence dans un catalogue ISO complet.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-05]
+        acceptance:
+          - Un module dédié permet de rechercher un pays par code, de lister les pays triés par code et d'insérer ou actualiser leurs noms sans doublon.
+          - La commande add-countries <csv-file> accepte exactement les colonnes code et name, sans dépendre de leur ordre ni de la casse des en-têtes.
+          - Le lecteur CSV accepte le BOM, les espaces autour des valeurs et les champs entre guillemets ; il ignore les lignes vides ou dont les deux valeurs sont vides.
+          - Le code contient exactement deux lettres majuscules et le nom est non vide ; une valeur invalide produit une erreur avec la ligne concernée, sans convertir silencieusement le code.
+          - Le fichier est entièrement lu et validé avant ouverture de la base ; l'import est transactionnel et actualise le nom d'un code déjà présent sans ajouter de pays en double.
+          - La commande clean-countries retire uniquement les pays absents de production_countries et préserve ceux qui participent à un film.
+          - Les commandes respectent --path, ferment la connexion et affichent les compteurs d'import ou de suppression ainsi que le chemin de la base ; les erreurs ne produisent pas de message de succès.
+          - Des tests couvrent recherche absente, tri, insertion et mise à jour, codes et noms invalides, CSV avec guillemets, nettoyage sélectif et annulation de l'import.
+          - Le fichier data/countries.csv fournit les exemples FR, GB et US ; le README explique import et nettoyage sur la base par défaut et sur une base personnalisée.
+      - id: EXPL-07
+        key: EXPL-04
         type: feature
         title: Extraire les films TMDB sur une plage d'années
         story: En tant qu'analyste, je veux collecter les films de chaque année demandée sans me limiter aux films populaires de la page d'accueil.
@@ -230,51 +310,55 @@ epics:
           - Les limites de pagination et de requêtes de TMDB ainsi que les plafonds choisis sont respectés et toute collecte tronquée est signalée.
           - Un HTTP 429 déclenche une attente bornée respectant Retry-After ; les erreurs persistantes sont explicites et ne produisent pas un succès apparent.
           - Des réponses TMDB simulées couvrent plusieurs pages, une année vide, un doublon, un HTTP 429 et une erreur persistante.
-      - id: EXPL-05
+      - id: EXPL-08
+        key: EXPL-05
         type: feature
         title: Nettoyer et contrôler les données collectées
         story: En tant qu'analyste, je veux des données validées et un bilan de qualité avant leur chargement.
         size: M
         priority: P1
-        dependsOn: [EXPL-01, EXPL-04]
+        dependsOn: [EXPL-01, EXPL-07]
         acceptance:
           - Les types, dates, identifiants, genres et valeurs numériques sont contrôlés selon le dictionnaire.
           - Une note sans vote ne contribue pas aux statistiques de notes ; une valeur manquante n'est pas remplacée arbitrairement par zéro.
           - Les lignes rejetées sont comptées avec un motif explicite sans exposer le jeton TMDB.
           - Les transformations sont vérifiées sur des exemples valides, incomplets et invalides dont les résultats attendus sont connus.
-      - id: EXPL-06
+      - id: EXPL-09
+        key: EXPL-06
         type: feature
         title: Charger les données en base de façon idempotente
         story: En tant qu'analyste, je veux relancer une alimentation sans doublonner les films ni masquer une collecte incomplète.
         size: L
         priority: P1
-        dependsOn: [EXPL-03, EXPL-05]
+        dependsOn: [EXPL-03, EXPL-08]
         acceptance:
           - Le chargement insère les nouveaux films, actualise les existants et synchronise leurs genres avec des transactions cohérentes.
           - Deux chargements du même jeu ne modifient pas les effectifs des films et associations.
           - Chaque exécution conserve son statut et ses compteurs insérés, actualisés, rejetés et collectés ainsi que son périmètre.
           - Une panne en cours d'alimentation est signalée comme échec ou exécution incomplète ; une relance ne double pas les données déjà chargées.
           - Un test sur base temporaire couvre deux chargements identiques, une mise à jour et une interruption.
-      - id: EXPL-07
+      - id: EXPL-10
+        key: EXPL-07
         type: feature
         title: Piloter l'alimentation avec un petit CLI
         story: En tant qu'étudiant, je veux lancer le pipeline depuis le terminal en choisissant les années sans modifier son code.
         size: M
         priority: P1
-        dependsOn: [EXPL-06]
+        dependsOn: [EXPL-04, EXPL-09]
         acceptance:
           - Une commande npm expose une aide et des options de début, fin et limite par année avec un exemple pour 2015 à 2024.
           - Le CLI appelle le pipeline partagé d'extraction, validation et chargement sans dupliquer sa logique.
           - Les options invalides et une période inversée sont refusées avant tout appel TMDB ou écriture en base.
           - Un mode simulation affiché le périmètre et les limites sans appel réseau ni modification de la base.
           - Le terminal affiché les compteurs et la durée ; un échec renvoie un code non nul et n'affiché aucun secret.
-      - id: EXPL-08
+      - id: EXPL-11
+        key: EXPL-08
         type: feature
         title: Exposer les données et indicateurs d'exploration dans l'API
         story: En tant que visiteur, je veux explorer les données stockées sans déclencher de nouvelle collecte TMDB.
         size: L
         priority: P2
-        dependsOn: [EXPL-06]
+        dependsOn: [EXPL-09]
         acceptance:
           - Des routes documentées lisent uniquement la base et acceptent période inclusive, genre et pagination valides.
           - L'API fournit liste de films et agrégats par année avec effectif, nombre de films notés, moyenne et médiane des notes valides.
@@ -282,39 +366,42 @@ epics:
           - Le comptage des films reste unique lorsqu'un film possède plusieurs genres ; la pondération éventuelle par nombre de votes est distinguée de la moyenne simple.
           - Les réponses précisent date et périmètre de collecte, années manquantes et couverture partielle ; une base vide a une réponse explicite.
           - Un jeu de données connu vérifie les calculs, filtres, valeurs manquantes et erreurs de paramètres.
-      - id: EXPL-09
+      - id: EXPL-12
+        key: EXPL-09
         type: feature
         title: Créer la page d'exploration et ses filtres
         story: En tant que visiteur, je veux choisir une plage d'années et un genre puis consulter les films correspondants.
         size: M
         priority: P2
-        dependsOn: [EXPL-08]
+        dependsOn: [EXPL-11]
         acceptance:
           - Une page Tableau de bord est accessible depuis la navigation sans modifier la liste existante des films populaires.
           - Les années de début et fin et le genre sont conservés dans l'URL et restaurés au rechargement.
           - Le tableau paginé affiché titre, année, genres, note et nombre de votes avec un lien vers la fiche du film.
           - Chargement, base vide, aucun résultat et erreur sont distingués ; une erreur permet de réessayer et une réponse obsolète ne remplace pas la dernière sélection.
           - Les filtres sont utilisables au clavier avec des libellés explicites.
-      - id: EXPL-10
+      - id: EXPL-13
+        key: EXPL-10
         type: feature
         title: Visualiser et comparer les années du catalogue
         story: En tant qu'analyste, je veux comparer distributions et indicateurs entre années sans confondre absence de données et valeur nulle.
         size: L
         priority: P2
-        dependsOn: [EXPL-09]
+        dependsOn: [EXPL-12]
         acceptance:
           - La page affiché effectif et moyenne ou médiane des notes ainsi que des graphiques de répartition par année et par genre pour les filtres actifs.
           - Les titres, axes, unités, effectifs et règles de calcul sont visibles ; une alternative tabulaire restitue les valeurs.
           - Les années sans collecte sont distinguées des années collectées sans résultat et aucune interpolation n'invente de valeur.
           - La date de collecte et les limites de couverture sont affichees ; la page ne présente pas la popularité actuelle comme une mesure historique.
           - Les résultats affiches correspondent aux valeurs attendues du jeu de démonstration et restent lisibles sur mobile.
-      - id: EXPL-11
+      - id: EXPL-14
+        key: EXPL-11
         type: feature
         title: Livrer un parcours reproductible de la base au tableau de bord
         story: En tant qu'étudiant ou enseignant, je veux démontrer le parcours complet sans dépendance à un jeton TMDB réel.
         size: M
         priority: P2
-        dependsOn: [EXPL-07, EXPL-10]
+        dependsOn: [EXPL-10, EXPL-13]
         acceptance:
           - Un petit jeu synthétique documenté couvre plusieurs années, plusieurs genres, une valeur manquante et une année sans données.
           - Une procédure depuis un clone explique installation, initialisation, alimentation de démonstration, lancement et consultation du tableau de bord.

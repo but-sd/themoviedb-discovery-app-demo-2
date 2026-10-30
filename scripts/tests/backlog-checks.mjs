@@ -199,6 +199,133 @@ test('unknown dependencies, duplicated identifiers and cycles are rejected', () 
   assert.throws(() => validateBacklog(duplicate), /duplique/);
 });
 
+test('stable ticket keys must be valid and unique including implicit keys', () => {
+  for (const key of ['', null, 42, 'with spaces', 'WATCH-02']) {
+    const invalid = structuredClone(config);
+    invalid.epics.find((epic) => epic.id === 'WATCH').tickets[0].key = key;
+    assert.throws(() => validateBacklog(invalid), /Cle stable/);
+  }
+  const duplicate = structuredClone(config);
+  duplicate.epics[0].tickets[0].key = 'SHARED';
+  duplicate.epics[0].tickets[1].key = 'SHARED';
+  assert.throws(() => validateBacklog(duplicate), /Cle stable/);
+});
+
+test('renumbering keeps existing issue identity and dependencies across reruns', () => {
+  const f = fixture({ existing: true });
+  const epic = f.small.epics[0];
+  const original = epic.tickets[0];
+  original.key = original.id;
+  original.id = 'WATCH-02';
+  const inserted = {
+    ...structuredClone(original),
+    id: 'WATCH-01',
+    key: 'WATCH-NEW',
+    title: 'Nouvelle étape',
+    dependsOn: [],
+  };
+  original.dependsOn = [inserted.id];
+  epic.tickets.unshift(inserted);
+  const issues = [
+    {
+      number: 1,
+      title: '[WATCH-01] Ancienne étape',
+      body: marker('WATCH-01'),
+      type: { name: 'Feature' },
+      html_url: 'https://github.com/student/movies/issues/1',
+      milestone: { number: 9 },
+    },
+  ];
+  const fields = JSON.parse(f.run(['project', 'field-list'])).fields;
+  const originalItem = {
+    id: 'original',
+    content: { url: issues[0].html_url },
+    fieldValues: {
+      nodes: fields.map((field) => ({
+        field: { name: field.name },
+        name: 'Done',
+        number: 8,
+      })),
+    },
+  };
+  const items = [structuredClone(originalItem)];
+  let created = 0;
+  let updated = 0;
+  function run(args, input) {
+    if (args[0] === 'api' && args[1].includes('/issues?'))
+      return JSON.stringify([issues]);
+    if (
+      args[0] === 'api' &&
+      args[1].endsWith('/issues') &&
+      args.includes('POST')
+    ) {
+      created++;
+      const payload = JSON.parse(input);
+      const issue = {
+        ...payload,
+        number: 2,
+        type: { name: payload.type },
+        html_url: 'https://github.com/student/movies/issues/2',
+      };
+      issues.push(issue);
+      return JSON.stringify(issue);
+    }
+    if (args[0] === 'api' && args.includes('PATCH')) {
+      const number = Number(args[1].split('/').at(-1));
+      Object.assign(
+        issues.find((issue) => issue.number === number),
+        JSON.parse(input),
+      );
+      updated++;
+      return '{}';
+    }
+    if (args[1] === 'item-add') {
+      const item = {
+        id: 'new',
+        content: { url: issues[1].html_url },
+        fieldValues: { nodes: [] },
+      };
+      items.push(item);
+      return JSON.stringify(item);
+    }
+    if (args[1] === 'item-edit') {
+      const item = items.find(
+        (item) => item.id === args[args.indexOf('--id') + 1],
+      );
+      assert.notEqual(item.id, 'original');
+      const field = fields.find(
+        (field) => field.id === args[args.indexOf('--field-id') + 1],
+      );
+      item.fieldValues.nodes.push({ field: { name: field.name } });
+      return '';
+    }
+    if (
+      args[1] === 'graphql' &&
+      JSON.parse(input).query.includes('items(first: 100')
+    )
+      return JSON.stringify({
+        data: {
+          node: { items: { nodes: items, pageInfo: { hasNextPage: false } } },
+        },
+      });
+    return f.run(args, input);
+  }
+  const options = { ...f.options, 'update-existing': true };
+  instantiate(f.small, options, run, () => {});
+  assert.equal(created, 1);
+  assert.equal(updated, 1);
+  assert.equal(issues[0].title, `[WATCH-02] ${original.title}`);
+  assert.ok(issues[0].body.startsWith(marker('WATCH-01')));
+  assert.ok(issues[0].body.includes(issues[1].html_url));
+  assert.ok(issues[1].body.startsWith(marker('WATCH-NEW')));
+  assert.equal(issues[0].milestone.number, 9);
+  assert.deepEqual(items[0], originalItem);
+  instantiate(f.small, options, run, () => {});
+  assert.equal(created, 1);
+  assert.equal(updated, 1);
+  assert.equal(items.length, 2);
+});
+
 test('target is explicit and writes require --apply', () => {
   const options = parseOptions([
     '--repo',

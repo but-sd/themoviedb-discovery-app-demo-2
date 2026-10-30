@@ -84,6 +84,7 @@ export function validateBacklog(config) {
     'Vues Features et Bugs invalides.',
   );
   const tickets = new Map();
+  const ticketKeys = new Set();
   const milestoneTitles = new Set();
   requireValue(
     config.milestones === undefined || Array.isArray(config.milestones),
@@ -131,6 +132,15 @@ export function validateBacklog(config) {
           !tickets.has(ticket.id),
         'Identifiant de ticket invalide ou duplique.',
       );
+      const key = ticket.key ?? ticket.id;
+      requireValue(
+        (ticket.key === undefined || typeof ticket.key === 'string') &&
+          typeof key === 'string' &&
+          /^[A-Z][A-Z0-9-]*$/.test(key) &&
+          !ticketKeys.has(key),
+        'Cle stable de ticket invalide ou dupliquee.',
+      );
+      ticketKeys.add(key);
       for (const key of ['title', 'story']) {
         requireValue(
           typeof ticket[key] === 'string' && ticket[key].trim(),
@@ -200,7 +210,7 @@ export function issueBody(epic, ticket, config, issueUrls) {
     ? ticket.dependsOn.map((id) => `- ${issueUrls.get(id) ?? id}`).join('\n')
     : 'Aucune.';
   return [
-    marker(ticket.id),
+    marker(ticket.key ?? ticket.id),
     '## User story',
     ticket.story,
     ...(ticket.type === 'bug'
@@ -751,7 +761,7 @@ export function instantiate(config, options, run = gh, log = console.log) {
   const issuesById = new Map();
   for (const ticket of allTickets) {
     const matches = existingIssues.filter((issue) =>
-      issue.body?.includes(marker(ticket.id)),
+      issue.body?.includes(marker(ticket.key ?? ticket.id)),
     );
     requireValue(
       matches.length <= 1,

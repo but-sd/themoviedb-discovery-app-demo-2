@@ -7,8 +7,8 @@ projet pour des étudiants de BUT Science des données.
 
 L'[epic d'exploration des films sur plusieurs années](.github/backlog/README.md)
 est configurée dans [`.github/backlog/backlog.yaml`](.github/backlog/backlog.yaml)
-avec 11 tickets Feature, du cadrage des données au tableau de bord, en passant
-par la base, le pipeline d'alimentation et son CLI. Les anciennes idées restent
+avec 14 tickets Feature, du cadrage des données au tableau de bord, en passant
+par la base, les imports CSV des genres et pays, le pipeline d'alimentation et son CLI. Les anciennes idées restent
 commentées et ne sont pas générées.
 Chaque ticket contient une user story, des critères d'acceptation, des
 dépendances, une priorité et une estimation initiale en taille de T-shirt.
