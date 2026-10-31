@@ -1,9 +1,22 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { upsertMovie } from './movie-repository.ts';
+import { upsertMovies } from './movie-repository.ts';
 import { getDatabase } from './schema.ts';
 
-const movie: Parameters<typeof upsertMovie>[1] = {
+type StoredMovie =
+  Parameters<typeof upsertMovies>[1] extends Iterable<infer Movie>
+    ? Movie
+    : never;
+
+function upsertMovie(
+  database: DatabaseSync,
+  movie: StoredMovie,
+  collectedAt?: string,
+): void {
+  upsertMovies(database, [movie], collectedAt);
+}
+
+const movie: StoredMovie = {
   id: 1,
   title: 'Example',
   original_title: 'Original title',
@@ -34,7 +47,88 @@ describe('movie-repository', () => {
     vi.useRealTimers();
   });
 
-  describe('upsertMovie', () => {
+  describe('upsertMovies', () => {
+    it.each([
+      { field: 'revenue', column: 'revenue' },
+      { field: 'runtime', column: 'runtime_minutes' },
+    ] as const)(
+      'inserts and updates movies with null $field',
+      ({ field, column }) => {
+        upsertMovies(database, [{ ...movie, [field]: null }], collectedAt);
+        expect(
+          database.prepare(`SELECT ${column} AS value FROM movies`).get(),
+        ).toEqual({ value: null });
+        upsertMovies(database, [movie], collectedAt);
+        upsertMovies(database, [{ ...movie, [field]: null }], collectedAt);
+        expect(
+          database.prepare(`SELECT ${column} AS value FROM movies`).all(),
+        ).toEqual([{ value: null }]);
+      },
+    );
+
+    it('inserts and updates movies with a null budget', () => {
+      upsertMovies(database, [{ ...movie, budget: null }], collectedAt);
+      expect(database.prepare('SELECT budget FROM movies').get()).toEqual({
+        budget: null,
+      });
+      upsertMovies(database, [movie], collectedAt);
+      upsertMovies(database, [{ ...movie, budget: null }], collectedAt);
+      expect(database.prepare('SELECT budget FROM movies').all()).toEqual([
+        { budget: null },
+      ]);
+    });
+
+    it('inserts all movies in an iterable and keeps the last duplicate value', () => {
+      function* movies() {
+        yield movie;
+        yield { ...movie, id: 2 };
+        yield { ...movie, title: 'Updated' };
+      }
+      upsertMovies(database, movies(), collectedAt);
+      expect(
+        database.prepare('SELECT id, title FROM movies ORDER BY id').all(),
+      ).toEqual([
+        { id: 1, title: 'Updated' },
+        { id: 2, title: 'Example' },
+      ]);
+    });
+
+    it('rolls back the whole batch if a later movie is rejected', () => {
+      expect(() =>
+        upsertMovies(database, [movie, { ...movie, id: 2, budget: -1 }]),
+      ).toThrow('CHECK constraint failed');
+      expect(database.prepare('SELECT * FROM movies').all()).toEqual([]);
+      expect(database.isTransaction).toBe(false);
+    });
+
+    it('accepts an empty iterable without changing existing movies', () => {
+      upsertMovies(database, [movie], collectedAt);
+      const original = database.prepare('SELECT * FROM movies').all();
+      upsertMovies(database, []);
+      expect(database.prepare('SELECT * FROM movies').all()).toEqual(original);
+    });
+    it('participates in a caller transaction without committing it', () => {
+      database.exec('BEGIN TRANSACTION;');
+      upsertMovie(database, movie, collectedAt);
+      expect(database.isTransaction).toBe(true);
+      database.exec('ROLLBACK;');
+      expect(database.prepare('SELECT * FROM movies').all()).toEqual([]);
+    });
+
+    it('rolls back its own failed write without undoing caller writes', () => {
+      database.exec(
+        "BEGIN TRANSACTION; INSERT INTO genres (id, name) VALUES (99, 'Caller genre');",
+      );
+      expect(() => upsertMovie(database, { ...movie, budget: -1 })).toThrow(
+        'CHECK constraint failed',
+      );
+      expect(database.isTransaction).toBe(true);
+      expect(database.prepare('SELECT * FROM genres').all()).toEqual([
+        { id: 99, name: 'Caller genre' },
+      ]);
+      database.exec('COMMIT;');
+    });
+
     it('inserts every movie field and derives the release year', () => {
       upsertMovie(database, movie, collectedAt);
 
@@ -210,7 +304,9 @@ describe('movie-repository', () => {
       ({ field, value, column }) => {
         expect(() =>
           upsertMovie(database, { ...movie, [field]: value }, collectedAt),
-        ).toThrow(`CHECK constraint failed: ${column} > 0`);
+        ).toThrow(
+          `CHECK constraint failed: ${column} IS NULL OR ${column} > 0`,
+        );
 
         expect(database.prepare('SELECT * FROM movies').all()).toEqual([]);
         expect(database.isTransaction).toBe(false);

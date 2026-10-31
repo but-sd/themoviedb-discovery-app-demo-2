@@ -129,5 +129,22 @@ describe('genre-repository', () => {
         database.prepare('INSERT INTO genres (id) VALUES (?)').run(21),
       ).toThrow(/NOT NULL constraint failed: genres.name/);
     });
+
+    it('rolls back changes when an error occurs', () => {
+      database
+        .prepare('INSERT INTO genres (id, name) VALUES (?, ?)')
+        .run(1, 'Action');
+
+      expect(() => {
+        upsertGenres(database, [
+          { id: 1, name: 'Updated name' },
+          // This will cause a NOT NULL constraint failure
+          { id: 2, name: null as unknown as string },
+        ]);
+      }).toThrow();
+
+      // The database should remain unchanged
+      expect(getGenres(database)).toEqual([{ id: 1, name: 'Action' }]);
+    });
   });
 });

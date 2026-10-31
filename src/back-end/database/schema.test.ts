@@ -62,6 +62,34 @@ describe('schema.ts', () => {
   });
 
   describe('initializeSchema', () => {
+    it.each(['budget', 'revenue', 'runtime_minutes'])(
+      'allows null or positive %s and rejects zero or negative values',
+      (column) => {
+        const database = new DatabaseSync(':memory:');
+        try {
+          initializeSchema(database);
+          const insert = database.prepare(`
+          INSERT INTO movies (id, title, original_title, original_language, overview, ${column}, collected_at)
+          VALUES (?, 'Example', 'Example', 'en', '', ?, 'collected')
+        `);
+          insert.run(1, null);
+          insert.run(2, 1000);
+          expect(
+            database
+              .prepare(`SELECT id, ${column} AS value FROM movies ORDER BY id`)
+              .all(),
+          ).toEqual([
+            { id: 1, value: null },
+            { id: 2, value: 1000 },
+          ]);
+          expect(() => insert.run(3, 0)).toThrow('CHECK constraint failed');
+          expect(() => insert.run(4, -1)).toThrow('CHECK constraint failed');
+        } finally {
+          database.close();
+        }
+      },
+    );
+
     it('creates every table, index and optional movie column in the initial schema', () => {
       const database = new DatabaseSync(':memory:');
       try {

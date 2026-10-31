@@ -39,7 +39,16 @@ export function upsertGenres(
     ON CONFLICT(id) DO UPDATE SET name = excluded.name
   `);
 
-  for (const genre of genres) {
-    upsertGenre.run(genre.id, genre.name);
+  database.exec('SAVEPOINT genres_upsert;');
+  try {
+    for (const genre of genres) {
+      upsertGenre.run(genre.id, genre.name);
+    }
+    database.exec('RELEASE SAVEPOINT genres_upsert;');
+  } catch (error) {
+    database.exec(
+      'ROLLBACK TO SAVEPOINT genres_upsert; RELEASE SAVEPOINT genres_upsert;',
+    );
+    throw error;
   }
 }

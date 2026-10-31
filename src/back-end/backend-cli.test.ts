@@ -16,9 +16,11 @@ const getDatabaseMock = vi.fn(() => ({
 }));
 const upsertGenresMock = vi.fn();
 const upsertCountriesMock = vi.fn();
-const importMoviesMock = vi.fn();
+const upsertMoviesMock = vi.fn();
 
-vi.mock('./movie-writer.ts', () => ({ importMovies: importMoviesMock }));
+vi.mock('./database/movie-repository.ts', () => ({
+  upsertMovies: upsertMoviesMock,
+}));
 
 vi.mock('./database/schema.ts', () => ({
   DEFAULT_DATABASE_PATH,
@@ -48,69 +50,136 @@ async function runCliWithArgs(args: string[]): Promise<void> {
 }
 
 describe('backend-cli.ts', () => {
+  it.each([{ options: [] }, { options: ['--path', './data/custom.sqlite'] }])(
+    'creates an empty database through the explicit command with %j',
+    async ({ options }) => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      try {
+        await runCliWithArgs([...options, 'create-database']);
+        expect(getDatabaseMock).toHaveBeenCalledWith(
+          options[1] ?? DEFAULT_DATABASE_PATH,
+        );
+        expect(closeMock).toHaveBeenCalledOnce();
+        expect(upsertMoviesMock).not.toHaveBeenCalled();
+        expect(upsertGenresMock).not.toHaveBeenCalled();
+        expect(upsertCountriesMock).not.toHaveBeenCalled();
+        expect(prepareMock).not.toHaveBeenCalled();
+      } finally {
+        log.mockRestore();
+      }
+    },
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
   });
 
-  it('imports movies with the selected year, database, language and region', async () => {
-    importMoviesMock.mockResolvedValueOnce(3);
+  it.each([{ options: [] }, { options: ['--path', './data/custom.sqlite'] }])(
+    'cleans movies with path options %j',
+    async ({ options }) => {
+      const path = options[1] ?? DEFAULT_DATABASE_PATH;
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      try {
+        await runCliWithArgs([...options, 'clean-movies']);
+        expect(getDatabaseMock).toHaveBeenCalledWith(path);
+        expect(prepareMock).toHaveBeenCalledWith('DELETE FROM movies');
+        expect(runMock).toHaveBeenCalledOnce();
+        expect(closeMock).toHaveBeenCalledOnce();
+        expect(log).toHaveBeenCalledWith(
+          `Removed 2 movies from ${resolve(path)}`,
+        );
+      } finally {
+        log.mockRestore();
+      }
+    },
+  );
+
+  it('closes the database and propagates a movie cleanup failure', async () => {
+    runMock.mockImplementationOnce(() => {
+      throw new Error('Movie deletion failed');
+    });
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await expect(runCliWithArgs(['clean-movies'])).rejects.toThrow(
+        'Movie deletion failed',
+      );
+      expect(closeMock).toHaveBeenCalledOnce();
+      expect(log).not.toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it('imports movies from CSV into the selected database', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     try {
       await runCliWithArgs([
         '--path',
         './data/custom.sqlite',
         'add-movies',
-        '2020',
-        '--language',
-        'en-US',
-        '--region',
-        'US',
+        './src/back-end/fixtures/movies.csv',
       ]);
       expect(getDatabaseMock).toHaveBeenCalledWith('./data/custom.sqlite');
-      expect(importMoviesMock).toHaveBeenCalledWith(
+      expect(upsertMoviesMock).toHaveBeenCalledWith(
         getDatabaseMock.mock.results[0].value,
-        {
-          year: '2020',
-          language: 'en-US',
-          region: 'US',
-        },
+        [
+          expect.objectContaining({
+            id: 1,
+            genres: [28],
+          }),
+        ],
       );
       expect(closeMock).toHaveBeenCalledOnce();
       expect(logSpy).toHaveBeenCalledWith(
-        `Imported 3 movies into ${resolve('./data/custom.sqlite')}`,
+        `Imported 1 movies into ${resolve('./data/custom.sqlite')}`,
       );
+      expect(execMock.mock.calls).toEqual([
+        ['BEGIN TRANSACTION;'],
+        ['COMMIT;'],
+      ]);
     } finally {
       logSpy.mockRestore();
     }
   });
 
   it('uses the movie import defaults', async () => {
-    importMoviesMock.mockResolvedValueOnce(0);
-    await runCliWithArgs(['add-movies', '2020']);
-    expect(importMoviesMock).toHaveBeenCalledWith(expect.anything(), {
-      year: '2020',
-      language: 'fr-FR',
-      region: 'FR',
-    });
+    await runCliWithArgs(['add-movies', './src/back-end/fixtures/movies.csv']);
+    expect(upsertMoviesMock).toHaveBeenCalledOnce();
     expect(getDatabaseMock).toHaveBeenCalledWith(DEFAULT_DATABASE_PATH);
     expect(closeMock).toHaveBeenCalledOnce();
   });
 
   it('closes the database and propagates import failures', async () => {
-    importMoviesMock.mockRejectedValueOnce(new Error('TMDB failed'));
-    await expect(runCliWithArgs(['add-movies', '2020'])).rejects.toThrow(
-      'TMDB failed',
-    );
+    upsertMoviesMock.mockImplementationOnce(() => {
+      throw new Error('Movie write failed');
+    });
+    await expect(
+      runCliWithArgs(['add-movies', './src/back-end/fixtures/movies.csv']),
+    ).rejects.toThrow('Movie write failed');
     expect(closeMock).toHaveBeenCalledOnce();
+    expect(execMock.mock.calls).toEqual([
+      ['BEGIN TRANSACTION;'],
+      ['ROLLBACK;'],
+    ]);
   });
 
-  it('rejects an invalid import year before opening the database', async () => {
-    await expect(runCliWithArgs(['add-movies', '20'])).rejects.toThrow(
-      'four-digit year',
-    );
+  it('rejects a missing CSV file before opening the database', async () => {
+    await expect(
+      runCliWithArgs(['add-movies', './data/missing-movies.csv']),
+    ).rejects.toThrow('ENOENT');
     expect(getDatabaseMock).not.toHaveBeenCalled();
-    expect(importMoviesMock).not.toHaveBeenCalled();
+    expect(upsertMoviesMock).not.toHaveBeenCalled();
+  });
+
+  it('imports movies without looking up or writing genres and countries', async () => {
+    await runCliWithArgs(['add-movies', './src/back-end/fixtures/movies.csv']);
+    expect(upsertMoviesMock).toHaveBeenCalledOnce();
+    expect(upsertGenresMock).not.toHaveBeenCalled();
+    expect(upsertCountriesMock).not.toHaveBeenCalled();
+    expect(prepareMock).not.toHaveBeenCalled();
+    expect(closeMock).toHaveBeenCalledOnce();
+    expect(execMock.mock.calls).toEqual([['BEGIN TRANSACTION;'], ['COMMIT;']]);
   });
 
   it('rolls back and closes the database when a country import fails', async () => {

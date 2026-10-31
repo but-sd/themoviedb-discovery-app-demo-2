@@ -1,12 +1,25 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDatabase } from './database/schema.ts';
-import { upsertMovie } from './database/movie-repository.ts';
+import { upsertMovies } from './database/movie-repository.ts';
 import { importMovies } from './movie-writer.ts';
+import { saveMovieDetails } from './movie-persistence-service.ts';
 import type { TmdbMovieDetails } from './schemas/MoviesTypes.ts';
 import { toSupportedMovieDetails } from './utils.ts';
 
 vi.mock('./config.ts', () => ({ tmdbAccessToken: 'test-access-token' }));
+
+type StoredMovie =
+  Parameters<typeof upsertMovies>[1] extends Iterable<infer Movie>
+    ? Movie
+    : never;
+function upsertMovie(
+  database: DatabaseSync,
+  movie: StoredMovie,
+  collectedAt?: string,
+): void {
+  upsertMovies(database, [movie], collectedAt);
+}
 
 const details: TmdbMovieDetails = {
   adult: false,
@@ -62,7 +75,7 @@ describe('movie writer', () => {
     vi.unstubAllGlobals();
   });
 
-  it('imports all pages and stores enriched movies without genres or countries', async () => {
+  it('imports all pages and stores enriched movies with genres and countries', async () => {
     fetchMock
       .mockResolvedValueOnce(discoverPage(1, [1]))
       .mockResolvedValueOnce(new Response(JSON.stringify(details)))
@@ -104,19 +117,29 @@ describe('movie writer', () => {
         collected_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
       },
     );
-    expect(database.prepare('SELECT * FROM genres').all()).toEqual([]);
-    expect(database.prepare('SELECT * FROM countries').all()).toEqual([]);
+    expect(database.prepare('SELECT * FROM genres').all()).toEqual([
+      { id: 28, name: 'Action' },
+    ]);
+    expect(database.prepare('SELECT * FROM countries').all()).toEqual([
+      { code: 'FR', name: 'France' },
+    ]);
     expect(
       database.prepare('SELECT * FROM movie_genres ORDER BY movie_id').all(),
-    ).toEqual([]);
+    ).toEqual([
+      { movie_id: 1, genre_id: 28 },
+      { movie_id: 2, genre_id: 28 },
+    ]);
     expect(
       database
         .prepare('SELECT * FROM production_countries ORDER BY movie_id')
         .all(),
-    ).toEqual([]);
+    ).toEqual([
+      { movie_id: 1, country_code: 'FR' },
+      { movie_id: 2, country_code: 'FR' },
+    ]);
   });
 
-  it('updates existing movies without duplicates and leaves associations untouched', async () => {
+  it('updates existing movies without duplicates and replaces their associations', async () => {
     upsertMovie(
       database,
       toSupportedMovieDetails(details),
@@ -164,16 +187,20 @@ describe('movie writer', () => {
       backdrop_path: null,
     });
     expect(database.prepare('SELECT * FROM movie_genres').all()).toEqual([
-      { movie_id: 1, genre_id: 28 },
+      { movie_id: 1, genre_id: 35 },
     ]);
     expect(
       database.prepare('SELECT * FROM production_countries').all(),
-    ).toEqual([{ movie_id: 1, country_code: 'FR' }]);
-    expect(database.prepare('SELECT * FROM genres').all()).toEqual([
+    ).toEqual([{ movie_id: 1, country_code: 'US' }]);
+    expect(database.prepare('SELECT * FROM genres ORDER BY id').all()).toEqual([
       { id: 28, name: 'Action' },
+      { id: 35, name: 'Comedy' },
     ]);
-    expect(database.prepare('SELECT * FROM countries').all()).toEqual([
+    expect(
+      database.prepare('SELECT * FROM countries ORDER BY code').all(),
+    ).toEqual([
       { code: 'FR', name: 'France' },
+      { code: 'US', name: 'United States' },
     ]);
     expect(
       database.prepare('SELECT collected_at FROM movies').get()?.collected_at,
@@ -187,7 +214,7 @@ describe('movie writer', () => {
       BEGIN SELECT RAISE(ABORT, 'Movie write failed'); END;
     `);
     expect(() =>
-      upsertMovie(database, {
+      saveMovieDetails(database, {
         ...toSupportedMovieDetails(details),
         title: 'Should rollback',
       }),
@@ -202,7 +229,7 @@ describe('movie writer', () => {
     'rejects invalid financial/runtime data: %s',
     (value) => {
       expect(() =>
-        upsertMovie(database, {
+        saveMovieDetails(database, {
           ...toSupportedMovieDetails(details),
           budget: value,
         }),

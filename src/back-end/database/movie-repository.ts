@@ -1,43 +1,45 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { MovieDetails } from '../schemas/MoviesTypes.ts';
 
-/**
- * Upserts a movie into the database (inserts if it doesn't exist, updates if it does)
- * @param database The SQLite database instance to use for storing movie details
- * @param movie The movie details to insert or update in the database
- * @param collectedAt The timestamp when the movie details were collected (defaults to the current time)
- */
-export function upsertMovie(
+export function upsertMovies(
   database: DatabaseSync,
-  movie: Omit<MovieDetails, 'genres' | 'production_countries' | 'tagline'>,
+  movies: Iterable<
+    Omit<
+      MovieDetails,
+      'genres' | 'production_countries' | 'tagline' | 'budget' | 'revenue'
+    > & {
+      budget: number | null;
+      revenue: number | null;
+    }
+  >,
   collectedAt = new Date().toISOString(),
 ): void {
-  database.exec('BEGIN TRANSACTION;');
+  database.exec('SAVEPOINT movies_upsert;');
   try {
-    database
-      .prepare(`
-      INSERT INTO movies (
-        id, title, original_title, original_language, overview, release_date,
-        popularity, vote_average, vote_count, poster_path, backdrop_path,
-        runtime_minutes, budget, revenue, collected_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        title = excluded.title,
-        original_title = excluded.original_title,
-        original_language = excluded.original_language,
-        overview = excluded.overview,
-        release_date = excluded.release_date,
-        popularity = excluded.popularity,
-        vote_average = excluded.vote_average,
-        vote_count = excluded.vote_count,
-        poster_path = excluded.poster_path,
-        backdrop_path = excluded.backdrop_path,
-        runtime_minutes = excluded.runtime_minutes,
-        budget = excluded.budget,
-        revenue = excluded.revenue,
-        collected_at = excluded.collected_at
-    `)
-      .run(
+    const insert = database.prepare(`
+        INSERT INTO movies (
+          id, title, original_title, original_language, overview, release_date,
+          popularity, vote_average, vote_count, poster_path, backdrop_path,
+          runtime_minutes, budget, revenue, collected_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          title = excluded.title,
+          original_title = excluded.original_title,
+          original_language = excluded.original_language,
+          overview = excluded.overview,
+          release_date = excluded.release_date,
+          popularity = excluded.popularity,
+          vote_average = excluded.vote_average,
+          vote_count = excluded.vote_count,
+          poster_path = excluded.poster_path,
+          backdrop_path = excluded.backdrop_path,
+          runtime_minutes = excluded.runtime_minutes,
+          budget = excluded.budget,
+          revenue = excluded.revenue,
+          collected_at = excluded.collected_at
+      `);
+    for (const movie of movies) {
+      insert.run(
         movie.id,
         movie.title,
         movie.original_title,
@@ -54,9 +56,12 @@ export function upsertMovie(
         movie.revenue,
         collectedAt,
       );
-    database.exec('COMMIT;');
+    }
+    database.exec('RELEASE SAVEPOINT movies_upsert;');
   } catch (error) {
-    database.exec('ROLLBACK;');
+    database.exec(
+      'ROLLBACK TO SAVEPOINT movies_upsert; RELEASE SAVEPOINT movies_upsert;',
+    );
     throw error;
   }
 }
