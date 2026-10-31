@@ -44,11 +44,12 @@ node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite add-movies 2
 
 La langue et la région par défaut sont `fr-FR` et `FR`. Le détail expose aussi
 `runtime`, `budget`, `revenue` et `production_countries`. L'import stocke la durée
-dans `runtime_minutes`, actualise les genres et les pays de production, et
+dans `runtime_minutes` et
 renseigne `collected_at` ; `release_year` est calculé par SQLite. Les valeurs
 TMDB inconnues (durée, budget ou recettes à zéro, date vide) deviennent `NULL`.
 
-Chaque film et ses associations sont enregistrés dans une transaction.
+L'import modifie uniquement la table `movies` : les genres, les pays et leurs
+associations restent inchangés. Chaque film est enregistré dans une transaction.
 Une erreur arrête la commande avec un code non nul, sans supprimer les films
 déjà importés ; relancer la commande met à jour les mêmes identifiants sans
 doublons. Les années dépassant la limite TMDB de 500 pages sont rejetées

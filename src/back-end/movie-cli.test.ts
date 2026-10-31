@@ -117,18 +117,14 @@ describe('movie CLI integration', () => {
       ]);
       expect(
         database.prepare('SELECT * FROM movie_genres ORDER BY movie_id').all(),
-      ).toEqual([
-        { movie_id: 1, genre_id: 28 },
-        { movie_id: 2, genre_id: 28 },
-      ]);
+      ).toEqual([]);
       expect(
         database
           .prepare('SELECT * FROM production_countries ORDER BY movie_id')
           .all(),
-      ).toEqual([
-        { movie_id: 1, country_code: 'FR' },
-        { movie_id: 2, country_code: 'FR' },
-      ]);
+      ).toEqual([]);
+      expect(database.prepare('SELECT * FROM genres').all()).toEqual([]);
+      expect(database.prepare('SELECT * FROM countries').all()).toEqual([]);
     } finally {
       database.close();
     }

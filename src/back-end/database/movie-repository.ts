@@ -1,7 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { MovieDetails } from '../schemas/MoviesTypes.ts';
-import { upsertCountries } from './country-repository.ts';
-import { upsertGenres } from './genre-repository.ts';
 
 function positiveOrNull(value: number | null): number | null {
   if (value === null || value === 0) {
@@ -17,7 +15,7 @@ function positiveOrNull(value: number | null): number | null {
 
 export function upsertMovie(
   database: DatabaseSync,
-  movie: MovieDetails,
+  movie: Omit<MovieDetails, 'genres' | 'production_countries' | 'tagline'>,
   collectedAt = new Date().toISOString(),
 ): void {
   database.exec('BEGIN TRANSACTION;');
@@ -62,32 +60,6 @@ export function upsertMovie(
         positiveOrNull(movie.revenue),
         collectedAt,
       );
-    upsertGenres(database, movie.genres);
-    upsertCountries(
-      database,
-      movie.production_countries.map((country) => ({
-        code: country.iso_3166_1,
-        name: country.name,
-      })),
-    );
-    database
-      .prepare('DELETE FROM movie_genres WHERE movie_id = ?')
-      .run(movie.id);
-    database
-      .prepare('DELETE FROM production_countries WHERE movie_id = ?')
-      .run(movie.id);
-    const insertGenre = database.prepare(
-      'INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?) ON CONFLICT(movie_id, genre_id) DO NOTHING',
-    );
-    for (const genre of movie.genres) {
-      insertGenre.run(movie.id, genre.id);
-    }
-    const insertCountry = database.prepare(
-      'INSERT INTO production_countries (movie_id, country_code) VALUES (?, ?) ON CONFLICT(movie_id, country_code) DO NOTHING',
-    );
-    for (const country of movie.production_countries) {
-      insertCountry.run(movie.id, country.iso_3166_1);
-    }
     database.exec('COMMIT;');
   } catch (error) {
     database.exec('ROLLBACK;');

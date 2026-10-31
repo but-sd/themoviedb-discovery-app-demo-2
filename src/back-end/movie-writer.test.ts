@@ -62,7 +62,7 @@ describe('movie writer', () => {
     vi.unstubAllGlobals();
   });
 
-  it('imports all pages, enriches each movie and stores all columns and relations', async () => {
+  it('imports all pages and stores enriched movies without genres or countries', async () => {
     fetchMock
       .mockResolvedValueOnce(discoverPage(1, [1]))
       .mockResolvedValueOnce(new Response(JSON.stringify(details)))
@@ -104,34 +104,30 @@ describe('movie writer', () => {
         collected_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
       },
     );
-    expect(database.prepare('SELECT * FROM genres').all()).toEqual([
-      { id: 28, name: 'Action' },
-    ]);
-    expect(database.prepare('SELECT * FROM countries').all()).toEqual([
-      { code: 'FR', name: 'France' },
-    ]);
+    expect(database.prepare('SELECT * FROM genres').all()).toEqual([]);
+    expect(database.prepare('SELECT * FROM countries').all()).toEqual([]);
     expect(
       database.prepare('SELECT * FROM movie_genres ORDER BY movie_id').all(),
-    ).toEqual([
-      { movie_id: 1, genre_id: 28 },
-      { movie_id: 2, genre_id: 28 },
-    ]);
+    ).toEqual([]);
     expect(
       database
         .prepare('SELECT * FROM production_countries ORDER BY movie_id')
         .all(),
-    ).toEqual([
-      { movie_id: 1, country_code: 'FR' },
-      { movie_id: 2, country_code: 'FR' },
-    ]);
+    ).toEqual([]);
   });
 
-  it('updates existing movies without duplicates and replaces associations', async () => {
+  it('updates existing movies without duplicates and leaves associations untouched', async () => {
     upsertMovie(
       database,
       toSupportedMovieDetails(details),
       '2020-01-01T00:00:00.000Z',
     );
+    database.exec(`
+      INSERT INTO genres (id, name) VALUES (28, 'Action');
+      INSERT INTO countries (code, name) VALUES ('FR', 'France');
+      INSERT INTO movie_genres (movie_id, genre_id) VALUES (1, 28);
+      INSERT INTO production_countries (movie_id, country_code) VALUES (1, 'FR');
+    `);
     const updated = {
       ...details,
       title: 'Updated',
@@ -168,45 +164,38 @@ describe('movie writer', () => {
       backdrop_path: null,
     });
     expect(database.prepare('SELECT * FROM movie_genres').all()).toEqual([
-      { movie_id: 1, genre_id: 35 },
-    ]);
-    expect(
-      database.prepare('SELECT * FROM production_countries').all(),
-    ).toEqual([{ movie_id: 1, country_code: 'US' }]);
-    expect(
-      database.prepare('SELECT collected_at FROM movies').get()?.collected_at,
-    ).not.toBe('2020-01-01T00:00:00.000Z');
-  });
-
-  it('rolls back the movie and reference data when an association write fails', () => {
-    upsertMovie(database, toSupportedMovieDetails(details), 'original');
-    database.exec(`
-      CREATE TRIGGER reject_country BEFORE INSERT ON production_countries
-      WHEN NEW.country_code = 'US' BEGIN SELECT RAISE(ABORT, 'Country write failed'); END;
-    `);
-    expect(() =>
-      upsertMovie(database, {
-        ...toSupportedMovieDetails(details),
-        title: 'Should rollback',
-        genres: [{ id: 35, name: 'Comedy' }],
-        production_countries: [{ iso_3166_1: 'US', name: 'United States' }],
-      }),
-    ).toThrow('Country write failed');
-    expect(
-      database.prepare('SELECT title, collected_at FROM movies').get(),
-    ).toEqual({ title: details.title, collected_at: 'original' });
-    expect(database.prepare('SELECT * FROM genres').all()).toEqual(
-      details.genres,
-    );
-    expect(database.prepare('SELECT * FROM countries').all()).toEqual([
-      { code: 'FR', name: 'France' },
-    ]);
-    expect(database.prepare('SELECT * FROM movie_genres').all()).toEqual([
       { movie_id: 1, genre_id: 28 },
     ]);
     expect(
       database.prepare('SELECT * FROM production_countries').all(),
     ).toEqual([{ movie_id: 1, country_code: 'FR' }]);
+    expect(database.prepare('SELECT * FROM genres').all()).toEqual([
+      { id: 28, name: 'Action' },
+    ]);
+    expect(database.prepare('SELECT * FROM countries').all()).toEqual([
+      { code: 'FR', name: 'France' },
+    ]);
+    expect(
+      database.prepare('SELECT collected_at FROM movies').get()?.collected_at,
+    ).not.toBe('2020-01-01T00:00:00.000Z');
+  });
+
+  it('preserves the existing movie when a movie update fails', () => {
+    upsertMovie(database, toSupportedMovieDetails(details), 'original');
+    database.exec(`
+      CREATE TRIGGER reject_movie BEFORE UPDATE ON movies
+      BEGIN SELECT RAISE(ABORT, 'Movie write failed'); END;
+    `);
+    expect(() =>
+      upsertMovie(database, {
+        ...toSupportedMovieDetails(details),
+        title: 'Should rollback',
+      }),
+    ).toThrow('Movie write failed');
+    expect(
+      database.prepare('SELECT title, collected_at FROM movies').get(),
+    ).toEqual({ title: details.title, collected_at: 'original' });
+    expect(database.isTransaction).toBe(false);
   });
 
   it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
@@ -222,12 +211,16 @@ describe('movie writer', () => {
     },
   );
 
-  it('stores nullable duration and no associations', () => {
+  it('accepts movie fields without genre or country properties', () => {
+    const {
+      genres: _genres,
+      production_countries: _countries,
+      tagline: _tagline,
+      ...movie
+    } = toSupportedMovieDetails(details);
     upsertMovie(database, {
-      ...toSupportedMovieDetails(details),
+      ...movie,
       runtime: null,
-      genres: [],
-      production_countries: [],
     });
     expect(
       database.prepare('SELECT runtime_minutes FROM movies').get(),
