@@ -27,6 +27,33 @@ Les données collectées sont stockées dans SQLite, par défaut dans
 
 ## Base de données
 
+### Importer des films
+
+Le service `importMovies` (`src/back-end/movie-writer.ts`) parcourt les pages
+Discover pour une année de sortie principale et récupère le détail de chaque
+film avant de l'ajouter ou de le mettre à jour dans `movies`. Il utilise les
+mêmes appels TMDB que `/api/discover/movies` et `/api/movies/:id` ; il n'est pas
+nécessaire de démarrer le serveur HTTP.
+
+Définir `TMDB_ACCESS_TOKEN` dans l'environnement ou dans `.env`, puis lancer :
+
+```sh
+node src/back-end/backend-cli.ts add-movies 2020
+node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite add-movies 2020 --language en-US --region US
+```
+
+La langue et la région par défaut sont `fr-FR` et `FR`. Le détail expose aussi
+`runtime`, `budget`, `revenue` et `production_countries`. L'import stocke la durée
+dans `runtime_minutes`, actualise les genres et les pays de production, et
+renseigne `collected_at` ; `release_year` est calculé par SQLite. Les valeurs
+TMDB inconnues (durée, budget ou recettes à zéro, date vide) deviennent `NULL`.
+
+Chaque film et ses associations sont enregistrés dans une transaction.
+Une erreur arrête la commande avec un code non nul, sans supprimer les films
+déjà importés ; relancer la commande met à jour les mêmes identifiants sans
+doublons. Les années dépassant la limite TMDB de 500 pages sont rejetées
+explicitement plutôt que partiellement importées.
+
 Pour créer et initialiser la base de données par défaut :
 
 ```sh

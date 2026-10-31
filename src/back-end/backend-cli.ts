@@ -7,6 +7,7 @@ import { upsertGenres } from './database/genre-repository.ts';
 import { DEFAULT_DATABASE_PATH, getDatabase } from './database/schema.ts';
 import { parseCountriesCsv } from './country-csv.ts';
 import { parseGenresCsv } from './genre-csv.ts';
+import { DEFAULT_LANGUAGE, DEFAULT_REGION } from './constants.ts';
 
 /**
  * Command-line interface for creating and initializing the movies database
@@ -115,4 +116,27 @@ cli.addCommand(
     }),
 );
 
-cli.parse();
+cli.addCommand(
+  new Command('add-movies')
+    .description('Discover and import enriched movies for a release year')
+    .argument('<year>', 'four-digit primary release year')
+    .option('--language <language>', 'TMDB language', DEFAULT_LANGUAGE)
+    .option('--region <region>', 'TMDB region', DEFAULT_REGION)
+    .action(
+      async (year: string, options: { language: string; region: string }) => {
+        const { importMovies } = await import('./movie-writer.ts');
+        const { validateDiscoverYear } = await import('./tmdb-service.ts');
+        validateDiscoverYear(year);
+        const { path } = cli.opts<{ path: string }>();
+        const database = getDatabase(path);
+        try {
+          const count = await importMovies(database, { year, ...options });
+          console.log(`Imported ${count} movies into ${resolve(path)}`);
+        } finally {
+          database.close();
+        }
+      },
+    ),
+);
+
+await cli.parseAsync();

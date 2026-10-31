@@ -1,12 +1,11 @@
 import type { Express } from 'express';
 import express from 'express';
-import { toSupportedMovie, toSupportedMovieDetails } from './utils';
+import { toSupportedMovie } from './utils';
+import { getMovieDetails } from './tmdb-service.ts';
 import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import { tmdbAccessToken } from './config';
 import type {
-  MovieDetails,
   MoviesApiResponse,
-  TmdbMovieDetails,
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 
@@ -74,43 +73,15 @@ export function registerMoviesApi(app: Express): void {
     async (_req: express.Request, res: express.Response) => {
       const movieId = _req.params.id;
 
-      // Create a URLSearchParams object to build the query string for the TMDB API request
-      const queryParams = new URLSearchParams();
-
-      // Extract query parameters from the request and append them to the query string
       const { language, page, region } = _req.query;
 
-      // Append the query parameters to the URLSearchParams object, using default values if not provided in the request
-      // parameters: language, page, region
-      queryParams.append('language', (language as string) || DEFAULT_LANGUAGE);
-      queryParams.append('page', (page as string) || DEFAULT_PAGE);
-      queryParams.append('region', (region as string) || DEFAULT_REGION);
-
-      // log the query parameters for debugging purposes
-      console.log('Query Params:', queryParams.toString());
-
       try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/movie/${movieId}?${queryParams.toString()}`,
-          {
-            headers: {
-              Authorization: `Bearer ${tmdbAccessToken}`,
-              'Content-Type': 'application/json;charset=utf-8',
-            },
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `TMDB API request failed with status ${response.status}`,
-          );
-        }
-
-        // Parse the raw response from the TMDB API
-        const rawData = (await response.json()) as TmdbMovieDetails;
-
-        // Transform the raw data into the supported format for our application
-        const data: MovieDetails = toSupportedMovieDetails(rawData);
+        const data = await getMovieDetails(String(movieId), {
+          language:
+            typeof language === 'string' && language ? language : undefined,
+          page: typeof page === 'string' && page ? page : undefined,
+          region: typeof region === 'string' && region ? region : undefined,
+        });
 
         // Send the transformed data as a JSON response
         res.json(data);

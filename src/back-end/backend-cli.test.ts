@@ -16,6 +16,9 @@ const getDatabaseMock = vi.fn(() => ({
 }));
 const upsertGenresMock = vi.fn();
 const upsertCountriesMock = vi.fn();
+const importMoviesMock = vi.fn();
+
+vi.mock('./movie-writer.ts', () => ({ importMovies: importMoviesMock }));
 
 vi.mock('./database/schema.ts', () => ({
   DEFAULT_DATABASE_PATH,
@@ -48,6 +51,66 @@ describe('backend-cli.ts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+  });
+
+  it('imports movies with the selected year, database, language and region', async () => {
+    importMoviesMock.mockResolvedValueOnce(3);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await runCliWithArgs([
+        '--path',
+        './data/custom.sqlite',
+        'add-movies',
+        '2020',
+        '--language',
+        'en-US',
+        '--region',
+        'US',
+      ]);
+      expect(getDatabaseMock).toHaveBeenCalledWith('./data/custom.sqlite');
+      expect(importMoviesMock).toHaveBeenCalledWith(
+        getDatabaseMock.mock.results[0].value,
+        {
+          year: '2020',
+          language: 'en-US',
+          region: 'US',
+        },
+      );
+      expect(closeMock).toHaveBeenCalledOnce();
+      expect(logSpy).toHaveBeenCalledWith(
+        `Imported 3 movies into ${resolve('./data/custom.sqlite')}`,
+      );
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
+  it('uses the movie import defaults', async () => {
+    importMoviesMock.mockResolvedValueOnce(0);
+    await runCliWithArgs(['add-movies', '2020']);
+    expect(importMoviesMock).toHaveBeenCalledWith(expect.anything(), {
+      year: '2020',
+      language: 'fr-FR',
+      region: 'FR',
+    });
+    expect(getDatabaseMock).toHaveBeenCalledWith(DEFAULT_DATABASE_PATH);
+    expect(closeMock).toHaveBeenCalledOnce();
+  });
+
+  it('closes the database and propagates import failures', async () => {
+    importMoviesMock.mockRejectedValueOnce(new Error('TMDB failed'));
+    await expect(runCliWithArgs(['add-movies', '2020'])).rejects.toThrow(
+      'TMDB failed',
+    );
+    expect(closeMock).toHaveBeenCalledOnce();
+  });
+
+  it('rejects an invalid import year before opening the database', async () => {
+    await expect(runCliWithArgs(['add-movies', '20'])).rejects.toThrow(
+      'four-digit year',
+    );
+    expect(getDatabaseMock).not.toHaveBeenCalled();
+    expect(importMoviesMock).not.toHaveBeenCalled();
   });
 
   it('rolls back and closes the database when a country import fails', async () => {

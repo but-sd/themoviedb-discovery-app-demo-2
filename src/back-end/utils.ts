@@ -38,6 +38,10 @@ export const toSupportedMovieDetails = (
   return {
     backdrop_path: movie.backdrop_path,
     genres: movie.genres,
+    runtime: movie.runtime,
+    budget: movie.budget,
+    revenue: movie.revenue,
+    production_countries: movie.production_countries,
     id: movie.id,
     original_language: movie.original_language,
     original_title: movie.original_title,
