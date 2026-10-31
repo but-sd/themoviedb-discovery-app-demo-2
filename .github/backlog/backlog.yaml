@@ -297,68 +297,100 @@ epics:
           - Des tests couvrent recherche absente, tri, insertion et mise à jour, codes et noms invalides, CSV avec guillemets, nettoyage sélectif et annulation de l'import.
           - Le fichier data/countries.csv fournit les exemples FR, GB et US ; le README explique import et nettoyage sur la base par défaut et sur une base personnalisée.
       - id: EXPL-07
+        key: EXPL-DISCOVER-API
+        type: feature
+        title: Exposer une page de films TMDB par année via une route Discover
+        story: |
+          En tant qu'analyste, je veux consulter les films d'une année de sortie
+          principale via l'API de l'application, en choisissant la page, la langue
+          et la région, pour explorer le catalogue au-delà des films populaires.
+
+          Ce ticket spécifie l'apport propre de la
+          [PR #56](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/56),
+          indépendamment des fonctionnalités de base et d'import CSV déjà décrites.
+          La route interroge TMDB Discover avec primary_release_year et renvoie
+          une seule page. Elle ne parcourt pas automatiquement toutes les pages,
+          n'enrichit pas les films par leur détail et ne les écrit pas en base.
+          La collecte sur une plage d'années et la gestion des limites de requêtes
+          restent le périmètre d'EXPL-08.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-01]
+        acceptance:
+          - La route GET /api/discover/movies est enregistrée dans le serveur sans remplacer les routes existantes.
+          - Le paramètre year est obligatoire, sous forme de chaîne de quatre chiffres entre 1000 et 9999 ; une valeur absente, vide, décimale, hors bornes, une liste ou un objet entraîne HTTP 400 avant tout appel TMDB.
+          - Une année invalide renvoie un objet JSON avec le message year must be a four-digit year between 1000 and 9999.
+          - L'appel TMDB utilise /3/discover/movie avec primary_release_year ; language, page et region valent par défaut fr-FR, 1 et FR.
+          - Les valeurs optionnelles non vides de type chaîne sont transmises via URLSearchParams ; aucune validation supplémentaire de leur domaine n'est revendiquée par ce ticket.
+          - L'authentification TMDB est effectuée côté serveur avec la configuration existante, sans exposer le jeton dans la réponse.
+          - La réponse conserve page, results, total_pages et total_results ; les films sont convertis avec le helper existant toSupportedMovie et n'exposent pas adult ou video.
+          - Une page vide est un résultat normal ; le client peut demander les pages suivantes avec page, sans parcours automatique ni écriture en base.
+          - Une erreur HTTP TMDB, une panne réseau ou un JSON illisible est journalisé côté serveur ; la route renvoie HTTP 500 avec le message Failed to discover movies.
+          - Des tests simulés couvrent paramètres par défaut et personnalisés, résultats vides, conversion des films, années invalides sans appel réseau et les trois familles d'erreurs.
+          - Le README documente un appel par année, les options, le format paginé et la distinction entre consultation d'une page et collecte complète.
+      - id: EXPL-08
         key: EXPL-04
         type: feature
         title: Extraire les films TMDB sur une plage d'années
         story: En tant qu'analyste, je veux collecter les films de chaque année demandée sans me limiter aux films populaires de la page d'accueil.
         size: L
         priority: P1
-        dependsOn: [EXPL-01]
+        dependsOn: [EXPL-01, EXPL-07]
         acceptance:
           - L'extraction utilise la recherche de catalogue TMDB par dates de sortie et parcourt la pagination pour chaque année demandée.
           - Les bornes d'années sont inclusives ; une date hors période est exclue et les films présents sur plusieurs pages sont dédupliqués par identifiant.
           - Les limites de pagination et de requêtes de TMDB ainsi que les plafonds choisis sont respectés et toute collecte tronquée est signalée.
           - Un HTTP 429 déclenche une attente bornée respectant Retry-After ; les erreurs persistantes sont explicites et ne produisent pas un succès apparent.
           - Des réponses TMDB simulées couvrent plusieurs pages, une année vide, un doublon, un HTTP 429 et une erreur persistante.
-      - id: EXPL-08
+      - id: EXPL-09
         key: EXPL-05
         type: feature
         title: Nettoyer et contrôler les données collectées
         story: En tant qu'analyste, je veux des données validées et un bilan de qualité avant leur chargement.
         size: M
         priority: P1
-        dependsOn: [EXPL-01, EXPL-07]
+        dependsOn: [EXPL-01, EXPL-08]
         acceptance:
           - Les types, dates, identifiants, genres et valeurs numériques sont contrôlés selon le dictionnaire.
           - Une note sans vote ne contribue pas aux statistiques de notes ; une valeur manquante n'est pas remplacée arbitrairement par zéro.
           - Les lignes rejetées sont comptées avec un motif explicite sans exposer le jeton TMDB.
           - Les transformations sont vérifiées sur des exemples valides, incomplets et invalides dont les résultats attendus sont connus.
-      - id: EXPL-09
+      - id: EXPL-10
         key: EXPL-06
         type: feature
         title: Charger les données en base de façon idempotente
         story: En tant qu'analyste, je veux relancer une alimentation sans doublonner les films ni masquer une collecte incomplète.
         size: L
         priority: P1
-        dependsOn: [EXPL-03, EXPL-08]
+        dependsOn: [EXPL-03, EXPL-09]
         acceptance:
           - Le chargement insère les nouveaux films, actualise les existants et synchronise leurs genres avec des transactions cohérentes.
           - Deux chargements du même jeu ne modifient pas les effectifs des films et associations.
           - Chaque exécution conserve son statut et ses compteurs insérés, actualisés, rejetés et collectés ainsi que son périmètre.
           - Une panne en cours d'alimentation est signalée comme échec ou exécution incomplète ; une relance ne double pas les données déjà chargées.
           - Un test sur base temporaire couvre deux chargements identiques, une mise à jour et une interruption.
-      - id: EXPL-10
+      - id: EXPL-11
         key: EXPL-07
         type: feature
         title: Piloter l'alimentation avec un petit CLI
         story: En tant qu'étudiant, je veux lancer le pipeline depuis le terminal en choisissant les années sans modifier son code.
         size: M
         priority: P1
-        dependsOn: [EXPL-04, EXPL-09]
+        dependsOn: [EXPL-04, EXPL-10]
         acceptance:
           - Une commande npm expose une aide et des options de début, fin et limite par année avec un exemple pour 2015 à 2024.
           - Le CLI appelle le pipeline partagé d'extraction, validation et chargement sans dupliquer sa logique.
           - Les options invalides et une période inversée sont refusées avant tout appel TMDB ou écriture en base.
           - Un mode simulation affiché le périmètre et les limites sans appel réseau ni modification de la base.
           - Le terminal affiché les compteurs et la durée ; un échec renvoie un code non nul et n'affiché aucun secret.
-      - id: EXPL-11
+      - id: EXPL-12
         key: EXPL-08
         type: feature
         title: Exposer les données et indicateurs d'exploration dans l'API
         story: En tant que visiteur, je veux explorer les données stockées sans déclencher de nouvelle collecte TMDB.
         size: L
         priority: P2
-        dependsOn: [EXPL-09]
+        dependsOn: [EXPL-10]
         acceptance:
           - Des routes documentées lisent uniquement la base et acceptent période inclusive, genre et pagination valides.
           - L'API fournit liste de films et agrégats par année avec effectif, nombre de films notés, moyenne et médiane des notes valides.
@@ -366,42 +398,42 @@ epics:
           - Le comptage des films reste unique lorsqu'un film possède plusieurs genres ; la pondération éventuelle par nombre de votes est distinguée de la moyenne simple.
           - Les réponses précisent date et périmètre de collecte, années manquantes et couverture partielle ; une base vide a une réponse explicite.
           - Un jeu de données connu vérifie les calculs, filtres, valeurs manquantes et erreurs de paramètres.
-      - id: EXPL-12
+      - id: EXPL-13
         key: EXPL-09
         type: feature
         title: Créer la page d'exploration et ses filtres
         story: En tant que visiteur, je veux choisir une plage d'années et un genre puis consulter les films correspondants.
         size: M
         priority: P2
-        dependsOn: [EXPL-11]
+        dependsOn: [EXPL-12]
         acceptance:
           - Une page Tableau de bord est accessible depuis la navigation sans modifier la liste existante des films populaires.
           - Les années de début et fin et le genre sont conservés dans l'URL et restaurés au rechargement.
           - Le tableau paginé affiché titre, année, genres, note et nombre de votes avec un lien vers la fiche du film.
           - Chargement, base vide, aucun résultat et erreur sont distingués ; une erreur permet de réessayer et une réponse obsolète ne remplace pas la dernière sélection.
           - Les filtres sont utilisables au clavier avec des libellés explicites.
-      - id: EXPL-13
+      - id: EXPL-14
         key: EXPL-10
         type: feature
         title: Visualiser et comparer les années du catalogue
         story: En tant qu'analyste, je veux comparer distributions et indicateurs entre années sans confondre absence de données et valeur nulle.
         size: L
         priority: P2
-        dependsOn: [EXPL-12]
+        dependsOn: [EXPL-13]
         acceptance:
           - La page affiché effectif et moyenne ou médiane des notes ainsi que des graphiques de répartition par année et par genre pour les filtres actifs.
           - Les titres, axes, unités, effectifs et règles de calcul sont visibles ; une alternative tabulaire restitue les valeurs.
           - Les années sans collecte sont distinguées des années collectées sans résultat et aucune interpolation n'invente de valeur.
           - La date de collecte et les limites de couverture sont affichees ; la page ne présente pas la popularité actuelle comme une mesure historique.
           - Les résultats affiches correspondent aux valeurs attendues du jeu de démonstration et restent lisibles sur mobile.
-      - id: EXPL-14
+      - id: EXPL-15
         key: EXPL-11
         type: feature
         title: Livrer un parcours reproductible de la base au tableau de bord
         story: En tant qu'étudiant ou enseignant, je veux démontrer le parcours complet sans dépendance à un jeton TMDB réel.
         size: M
         priority: P2
-        dependsOn: [EXPL-10, EXPL-13]
+        dependsOn: [EXPL-11, EXPL-14]
         acceptance:
           - Un petit jeu synthétique documenté couvre plusieurs années, plusieurs genres, une valeur manquante et une année sans données.
           - Une procédure depuis un clone explique installation, initialisation, alimentation de démonstration, lancement et consultation du tableau de bord.

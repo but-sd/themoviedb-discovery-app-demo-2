@@ -1,6 +1,6 @@
 # Un backlog agile pour les étudiants
 
-Le fichier [`backlog.yaml`](backlog.yaml) contient une **epic active et 14 tickets
+Le fichier [`backlog.yaml`](backlog.yaml) contient une **epic active et 15 tickets
 Feature** pour construire un tableau de bord d'exploration des films sur plusieurs
 années. Les anciennes idées restent commentées et ne sont pas importées.
 Chaque étudiant peut l'adapter, puis instancier les
@@ -41,14 +41,15 @@ recensement exhaustif.
 | EXPL-04 | CLI d'initialisation et chemin configurable        | S      | EXPL-03          |
 | EXPL-05 | Import CSV et entretien des genres                 | M      | EXPL-04          |
 | EXPL-06 | Import CSV et entretien des pays de production     | M      | EXPL-05          |
-| EXPL-07 | Extraction TMDB par année et pagination            | L      | EXPL-01          |
-| EXPL-08 | Nettoyage et contrôles de qualité                  | M      | EXPL-01, EXPL-07 |
-| EXPL-09 | Chargement idempotent et suivi des exécutions      | L      | EXPL-03, EXPL-08 |
-| EXPL-10 | CLI de pilotage et simulation                      | M      | EXPL-04, EXPL-09 |
-| EXPL-11 | API de lecture et agrégations                      | L      | EXPL-09          |
-| EXPL-12 | Page, filtres et tableau paginé                    | M      | EXPL-11          |
-| EXPL-13 | Visualisations et interprétation                   | L      | EXPL-12          |
-| EXPL-14 | Démonstration reproductible et tests d'intégration | M      | EXPL-10, EXPL-13 |
+| EXPL-07 | Route Discover paginée par année                   | M      | EXPL-01          |
+| EXPL-08 | Extraction TMDB par année et pagination            | L      | EXPL-01, EXPL-07 |
+| EXPL-09 | Nettoyage et contrôles de qualité                  | M      | EXPL-01, EXPL-08 |
+| EXPL-10 | Chargement idempotent et suivi des exécutions      | L      | EXPL-03, EXPL-09 |
+| EXPL-11 | CLI de pilotage et simulation                      | M      | EXPL-04, EXPL-10 |
+| EXPL-12 | API de lecture et agrégations                      | L      | EXPL-10          |
+| EXPL-13 | Page, filtres et tableau paginé                    | M      | EXPL-12          |
+| EXPL-14 | Visualisations et interprétation                   | L      | EXPL-13          |
+| EXPL-15 | Démonstration reproductible et tests d'intégration | M      | EXPL-11, EXPL-14 |
 
 EXPL-04, EXPL-05 et EXPL-06 spécifient respectivement les apports des PR
 [#50](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/50),
@@ -56,8 +57,12 @@ EXPL-04, EXPL-05 et EXPL-06 spécifient respectivement les apports des PR
 [#52](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/52).
 Ces PR contiennent aussi le socle des précédentes : les tickets distinguent
 leurs apports pour éviter de redemander les mêmes développements.
-Les anciens EXPL-04 à EXPL-11 deviennent EXPL-07 à EXPL-14 ; leurs clés stables
-conservent leurs issues et leur suivi. Les trois nouveaux tickets ont des clés
+EXPL-07 décrit la route Discover de la
+[#56](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/56) :
+une seule page pour une année de sortie principale, sans collecte automatique,
+enrichissement par le détail ni stockage.
+Les anciens EXPL-04 à EXPL-11 deviennent EXPL-08 à EXPL-15 ; leurs clés stables
+conservent leurs issues et leur suivi. Les nouveaux tickets ont des clés
 distinctes pour ne pas reprendre les anciennes issues portant ces numéros.
 Relancer avec `--update-existing --apply` pour actualiser les titres et les
 dépendances des issues déjà importées.
@@ -304,7 +309,7 @@ pas GitHub et ne détermine donc pas quelles issues ont changé.
    incertitudes et ajuster le découpage et les estimations du sprint suivant.
 
 Pour une première itération, lire la spécification **EXPL-01**, puis réaliser le
-schéma **EXPL-02** et discuter le contrat d'extraction **EXPL-07**. Construire ensuite un petit
+schéma **EXPL-02** et discuter le contrat d'extraction **EXPL-08**. Construire ensuite un petit
 incrément de bout en bout sur une période limitée avant d'élargir la collecte.
 Les tailles restent à réestimer ; découper les tickets L si nécessaire pour
 tenir l'objectif du sprint.
