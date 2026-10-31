@@ -24,6 +24,8 @@
     "dev:client": "vite",
     "dev:server": "tsx watch src/back-end/index.ts",
     "test": "vitest run --coverage",
+    "backlog:instantiate": "node scripts/instantiate-backlog.mjs",
+    "backlog:test": "node --test scripts/tests/backlog-checks.mjs",
     "prepare": "husky"
   },
   "dependencies": {
@@ -50,7 +52,8 @@
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.2",
+    "yaml": "^2.9.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css,html,md,yml,yaml}": "npm run fmt",

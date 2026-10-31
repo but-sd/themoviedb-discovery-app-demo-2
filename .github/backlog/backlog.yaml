@@ -1,0 +1,881 @@
+version: 1
+milestones:
+  - title: 1.1.0
+    description: Version 1.1.0 de l'application.
+project:
+  title: TMDB - Backlog pédagogique
+  viewName: Backlog
+  typeViews:
+    - name: Features
+      type: feature
+    - name: Bugs
+      type: bug
+  stages:
+    - Backlog
+    - Ready
+    - In Progress
+    - In Review
+    - Done
+sizes:
+  - name: XS
+    weight: 1
+    color: GREEN
+  - name: S
+    weight: 2
+    color: BLUE
+  - name: M
+    weight: 3
+    color: YELLOW
+  - name: L
+    weight: 5
+    color: ORANGE
+  - name: XL
+    weight: 8
+    color: RED
+epics:
+  - id: EXPL
+    title: Tableau de bord d'exploration des films sur plusieurs années
+    objective: Construire une chaîne de données reproductible, de la collecte TMDB au tableau de bord, pour comparer les films selon leur année de sortie sur une période configurable.
+    tickets:
+      - id: EXPL-01
+        type: feature
+        title: "Spécification : données et relations du catalogue d'exploration"
+        story: |
+          En tant qu'analyste, je veux comprendre les informations disponibles dans
+          TMDB et celles nécessaires au tableau de bord, afin de préparer leur
+          collecte et de disposer d'une base de travail pour la modélisation.
+
+          ### Besoin d'exploration
+
+          Le tableau de bord doit permettre de comparer les films selon leur année
+          de sortie sur une période inclusive configurable, par exemple 2015 à 2024.
+          On souhaite explorer les titres, les genres, les pays de production, les
+          notes, la popularité, les durées, les budgets et les recettes.
+          La limite de films retenus par année et le tri par popularité doivent être
+          annoncés : une sélection plafonnée n'est pas un recensement exhaustif.
+          Les notes et la popularité sont celles observées lors de la collecte,
+          pas une reconstitution de leur évolution au fil des années.
+
+          ### Parcours des sources : Discover, puis détail d'un film
+
+          Le point de départ est l'API TMDB Discover (`GET /discover/movie`).
+          Elle permet de rechercher des films selon leur date de sortie et fournit
+          une liste paginée : il faut examiner les différentes pages du résultat.
+          Chaque résultat donne notamment l'identifiant du film, ses titres, sa
+          date de sortie, son résumé, ses indicateurs de votes et de popularité,
+          ses chemins d'images et les identifiants de ses genres (`genre_ids`).
+
+          Discover ne fournit pas toutes les informations nécessaires au tableau
+          de bord. Pour chaque film retenu, son identifiant permet ensuite de
+          consulter sa fiche détaillée (`GET /movie/{movie_id}`). Celle-ci apporte
+          notamment la durée (`runtime`), le budget (`budget`), les recettes
+          (`revenue`) et les pays de production (`production_countries`).
+          Elle fournit aussi les genres avec leurs identifiants et leurs libellés.
+          Le catalogue des genres (`GET /genre/movie/list`) permet également de
+          retrouver les libellés correspondant aux identifiants de Discover.
+          Les titres, résumés et libellés de genres sont demandés en français,
+          sous réserve de leur disponibilité dans TMDB.
+
+          Un résultat Discover et sa fiche détaillée décrivent le même film lorsque
+          leur identifiant TMDB est identique : le détail complète les informations,
+          il ne représente pas un film supplémentaire. Une information absente de
+          Discover ne doit pas être déclarée inconnue avant d'avoir examiné le
+          détail ; même ce dernier peut toutefois comporter des valeurs manquantes.
+
+          ### Dictionnaire des données brutes à examiner
+
+          Ce dictionnaire décrit les informations reçues de TMDB, sans les organiser
+          en modèle de données. Les chemins indiquent où les retrouver dans les
+          réponses de l'API ; ce ne sont pas des noms de stockage à reprendre.
+
+          | Donnée | Champ ou chemin TMDB | Nature et unité | Source et signification |
+          | --- | --- | --- | --- |
+          | Identifiant du film | id | Nombre entier | Discover et détail ; identifiant stable permettant de reconnaître le même film |
+          | Titre traduit | title | Texte | Discover et détail ; titre destiné à l'affichage |
+          | Titre original | original_title | Texte | Discover et détail ; titre dans sa version originale |
+          | Langue originale | original_language | Code de langue | Discover et détail ; ne désigne pas un pays de production |
+          | Résumé | overview | Texte | Discover et détail ; peut être vide |
+          | Date de sortie | release_date | Date au format YYYY-MM-DD | Discover et détail ; peut être absente ou inexploitable |
+          | Popularité | popularity | Nombre décimal | Discover et détail ; score TMDB observé lors de la collecte |
+          | Note moyenne | vote_average | Nombre décimal sur 10 | Discover et détail ; à interpréter avec le nombre de votes |
+          | Nombre de votes | vote_count | Nombre entier | Discover et détail ; nombre de votes ayant servi à la note |
+          | Affiche | poster_path | Chemin relatif | Discover et détail ; peut être absent |
+          | Image de fond | backdrop_path | Chemin relatif | Discover et détail ; peut être absente |
+          | Identifiants des genres | genre_ids | Liste de nombres entiers | Discover ; codes des genres du film, sans leurs libellés |
+          | Identifiant d'un genre | genres[].id | Nombre entier | Détail et catalogue des genres ; correspond à un code reçu dans genre_ids |
+          | Libellé d'un genre | genres[].name | Texte | Détail et catalogue des genres ; libellé français lorsqu'il est disponible |
+          | Durée | runtime | Nombre entier de minutes | Détail ; durée du film, parfois inconnue |
+          | Budget | budget | Nombre entier de dollars US | Détail ; budget annoncé, parfois inconnu |
+          | Recettes | revenue | Nombre entier de dollars US | Détail ; recettes annoncées, parfois inconnues |
+          | Code d'un pays de production | production_countries[].iso_3166_1 | Code ISO 3166-1 alpha-2 | Détail ; code du pays participant à la production |
+          | Nom d'un pays de production | production_countries[].name | Texte | Détail ; libellé du pays fourni par TMDB |
+
+          Deux informations complémentaires ne sont pas des champs bruts de TMDB :
+          l'année de sortie est déduite de la date de sortie, et la date et l'heure
+          de collecte sont relevées par l'application pour situer l'observation.
+          L'année de sortie doit rester cohérente si la date est corrigée.
+          L'année demandée pour la recherche ne remplace jamais une année inconnue.
+          Un film dont la date est absente ou inexploitable reste au catalogue,
+          mais ne contribue pas aux graphiques et regroupements par année.
+
+          ### Comprendre les genres et les pays de production
+
+          Un genre décrit le contenu ou le style d'un film : comédie, aventure,
+          animation, etc. Un même film peut être à la fois une comédie et un film
+          d'aventure. Le libellé « Comédie » peut aussi être partagé par de nombreux
+          autres films ; il faut se fier au code TMDB pour reconnaître ce genre,
+          même si son libellé change de langue. TMDB peut ne renseigner aucun genre.
+
+          Le pays de production indique une participation à la production du film.
+          Il ne faut le confondre ni avec la langue originale, ni avec un lieu de
+          tournage, ni avec un pays où le film est distribué. Une coproduction
+          peut faire intervenir plusieurs pays, et un pays peut participer à de
+          nombreux films. TMDB peut ne renseigner aucun pays de production.
+
+          Par exemple, un film fictif classé « Comédie » et « Aventure », coproduit
+          par la France et la Belgique, doit être retrouvé lorsque l'on explore
+          chacun de ces genres ou chacun de ces pays. Il reste pourtant un seul
+          film dans le total du catalogue. Répéter le même genre ou le même pays
+          dans une réponse ne doit pas le compter deux fois pour ce film.
+          L'absence d'information ne justifie pas d'inventer un genre ou un pays
+          nommé « Inconnu ». Retirer un film du catalogue ne signifie pas que ses
+          genres ou ses pays cessent d'exister pour les autres films.
+
+          ### Valeurs absentes, actualisation et calculs
+
+          Les durées, budgets et recettes absents ou égaux à zéro sont considérés comme inconnus ;
+          une valeur renseignée doit être strictement positive. Popularité, note et
+          nombre de votes absents restent inconnus, sans remplacement par zéro.
+          Un film contribue aux moyennes des notes uniquement si sa note est connue
+          et son nombre de votes strictement positif. Une note de zéro avec des votes
+          est valide. Une durée inconnue est exclue de la moyenne des durées.
+
+          Retrouver un film déjà collecté doit permettre d'actualiser sa description,
+          ses genres, ses pays et la date de l'observation, sans créer un doublon
+          ni retirer les films des autres années. Ces informations doivent rester
+          cohérentes entre elles. Additionner les effectifs de tous les genres ou
+          pays peut dépasser le nombre total de films, puisqu'un même film peut
+          apparaître dans plusieurs catégories.
+
+          Ce périmètre ne comprend ni historique des exécutions ni historique de
+          notes : la date de collecte décrit le dernier état connu. Le suivi détaillé des
+          collectes prévu dans les tickets suivants est une extension distincte,
+          à spécifier avant de l'ajouter ; il n'est pas un besoin implicite d'EXPL-02.
+        size: S
+        priority: P1
+        milestone: 1.1.0
+        dependsOn: []
+        acceptance:
+          - L'équipe distingue année demandée pour la collecte, date de sortie, année dérivée de cette date et horodatage de collecte.
+          - Les exemples couvrent une date valide, une date absente et une date inexploitable ; aucune année de remplacement n'est inventée.
+          - L'équipe explique quelles informations proviennent de Discover et pourquoi une consultation du détail par identifiant de film est nécessaire.
+          - Le dictionnaire permet de retrouver les données brutes dans Discover, le détail et le catalogue des genres, sans fournir de modèle préconstruit.
+          - Un exemple de film avec plusieurs genres et deux pays explique les filtres et les comptages attendus, sans diagramme ni vocabulaire de modélisation.
+          - Les étudiants déduisent eux-mêmes le MCD à partir du dictionnaire et des règles fonctionnelles ; ce ticket n'en fournit pas la solution.
+          - Un exemple sans durée, budget, recette ni votes explicite les valeurs inconnues et les exclusions des calculs.
+          - Une correction de date de sortie entraîne une année cohérente ; une date absente ou inexploitable laisse cette année inconnue.
+          - Les critères d'EXPL-02 sont traçables à cette spécification ; la limite par année et la couverture non exhaustive sont explicites.
+      - id: EXPL-02
+        type: feature
+        title: Mettre en place le schéma SQLite à partir de la spécification
+        story: |
+          En tant que développeur, je veux traduire la spécification EXPL-01 en
+          schéma SQLite pour stocker les films, leurs genres et leurs pays sans doublons.
+
+          Le livrable est une définition SQL versionnée, accompagnée du diagramme
+          relationnel et de tests sur une base temporaire. Il ne s'agit pas de choisir
+          un autre moteur ou de redéfinir les données : EXPL-01 constitue le cahier
+          des charges. EXPL-03 prendra ensuite en charge l'initialisation locale
+          et la procédure d'installation.
+        size: M
+        priority: P1
+        milestone: 1.1.0
+        dependsOn: [EXPL-01]
+        acceptance:
+          - Un MCD déduit du dictionnaire et des règles fonctionnelles d'EXPL-01 justifie les entités et cardinalités retenues avant leur traduction en schéma relationnel.
+          - Les cinq tables movies, genres, countries, movie_genres et production_countries traduisent le MCD construit par les étudiants ; les types SQLite et nullabilités sont documentés selon les données et règles du dictionnaire.
+          - "movies.release_year est une colonne INTEGER GENERATED ALWAYS AS (CAST(strftime('%Y', release_date) AS INTEGER)) STORED, nullable et non renseignée par les écritures."
+          - Un test insère un film daté de 2020, vérifie release_year = 2020, modifie release_date vers 2021 et vérifie le recalcul automatique.
+          - Des tests vérifient release_year IS NULL pour une date NULL ou inexploitable, et le refus d'une insertion ou modification explicite de release_year.
+          - movies.id, genres.id et countries.code sont les clés primaires ; les tables de liaison utilisent les clés primaires composées (movie_id, genre_id) et (movie_id, country_code).
+          - Les clés étrangères sont activées sur chaque connexion de test ; un lien vers une référence absente et une association en double sont refusés.
+          - Les références au film utilisent ON DELETE CASCADE ; supprimer un film retire ses liaisons mais conserve les genres et pays de référence.
+          - Les contraintes CHECK imposent runtime_minutes > 0, budget > 0 et revenue > 0 lorsqu'ils sont renseignés, tout en autorisant NULL.
+          - Les index movies_release_year sur movies.release_year et movie_genres_genre_id sur movie_genres.genre_id sont créés.
+          - Des tests SQL sur base temporaire couvrent film multigenre et coproduction, valeurs NULL, note zéro avec votes, doublons, références absentes, valeurs positives et suppression en cascade.
+          - Un diagramme relationnel et une requête de comptage par année et genre documentent le schéma ; aucune table d'historique ou d'exécutions n'est ajoutée dans ce ticket.
+      - id: EXPL-03
+        type: feature
+        title: Créer et initialiser la base de données locale
+        story: En tant qu'étudiant, je veux initialiser la base avec une commande documentée pour pouvoir travailler depuis un clone du projet.
+        size: M
+        priority: P1
+        milestone: 1.1.0
+        dependsOn: [EXPL-02]
+        acceptance:
+          - Des migrations versionnées créent les tables, contraintes et index du modèle.
+          - Une commande documentée initialise une base vierge et sa réexécution ne supprime ni ne duplique les données.
+          - La configuration de connexion est externalisée et les secrets ainsi que les fichiers locaux de base ne sont pas versionnés.
+          - Un test sur une base temporaire vérifie les migrations et le refus des doublons.
+      - id: EXPL-04
+        key: EXPL-CLI-INIT
+        type: feature
+        title: Initialiser la base depuis un CLI avec un chemin configurable
+        story: |
+          En tant qu'étudiant, je veux disposer d'un point d'entrée en ligne de
+          commande pour ouvrir ou créer ma base locale et savoir où elle se trouve.
+
+          Ce ticket formalise le socle livré dans la
+          [PR #50](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/50).
+          Il réutilise le schéma d'EXPL-02 et l'initialisation d'EXPL-03 ; il ne
+          redemande pas leur conception. Le CLI servira ensuite aux commandes
+          de gestion des genres et des pays, puis au pipeline de collecte.
+          La PR initialise le schéma existant, mais ne fournit pas de moteur
+          de migration d'une ancienne base incompatible.
+        size: S
+        priority: P1
+        dependsOn: [EXPL-03]
+        acceptance:
+          - La commande node src/back-end/backend-cli.ts utilise Commander et initialise par défaut data/movies.sqlite.
+          - L'option -p ou --path permet de choisir un autre fichier ; les répertoires parents absents sont créés.
+          - L'ouverture active les clés étrangères et initialise les cinq tables et les index dans une transaction ; une erreur annule cette initialisation et reste visible.
+          - Une base compatible peut être rouverte sans perte de données ; une base incompatible n'est pas présentée comme migrée avec succès.
+          - La connexion est fermée après une initialisation réussie et le terminal affiche le chemin absolu du fichier disponible.
+          - Des tests couvrent les chemins par défaut et personnalisé, les tables et index attendus, les références absentes et l'annulation en cas d'échec.
+          - Le README documente les commandes et la configuration TypeScript permet les imports .ts utilisés par le CLI.
+      - id: EXPL-05
+        key: EXPL-GENRES-CSV
+        type: feature
+        title: Importer et entretenir les genres depuis un fichier CSV
+        story: |
+          En tant qu'analyste, je veux alimenter les genres à partir d'un CSV,
+          corriger leurs libellés sans doublon et retirer ceux qui ne servent à
+          aucun film.
+
+          Ce ticket formalise l'apport propre de la
+          [PR #51](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/51),
+          au-delà du socle d'initialisation de la PR #50. L'import est local :
+          il ne collecte pas les genres auprès de TMDB et ne charge pas de films.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-04]
+        acceptance:
+          - Un module dédié permet de rechercher un genre par identifiant, de lister les genres triés par identifiant et d'insérer ou actualiser leurs libellés.
+          - La commande add-genres <csv-file> accepte exactement les colonnes id et name, sans dépendre de leur ordre ni de la casse des en-têtes.
+          - Le lecteur CSV prend en charge le BOM, les espaces autour des valeurs et les champs entre guillemets ; il ignore les lignes vides ou dont les deux valeurs sont vides.
+          - Chaque identifiant est un entier strictement positif représentable sans perte de précision et chaque nom est non vide ; une erreur de valeur indique la ligne concernée.
+          - Le fichier est entièrement lu et validé avant ouverture de la base ; l'import est transactionnel, actualise le nom d'un identifiant existant et ne crée pas de doublon à la relance.
+          - La commande clean-genres supprime uniquement les genres sans film dans movie_genres et conserve ceux qui sont utilisés.
+          - Les deux commandes respectent --path, ferment la connexion après traitement et affichent le nombre de lignes importées ou de genres supprimés ainsi que le chemin de la base.
+          - Des tests couvrent recherche absente, tri, insertion et mise à jour, CSV invalides, noms contenant une virgule, nettoyage sélectif et annulation de l'import en cas d'erreur.
+          - Un CSV d'exemple et les commandes d'import et de nettoyage sont documentés.
+      - id: EXPL-06
+        key: EXPL-COUNTRIES-CSV
+        type: feature
+        title: Importer et entretenir les pays de production depuis un fichier CSV
+        story: |
+          En tant qu'analyste, je veux alimenter les pays de production à partir
+          d'un CSV, actualiser leurs noms et supprimer seulement les pays qui ne
+          sont utilisés par aucun film.
+
+          Ce ticket formalise l'apport propre de la
+          [PR #52](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/52).
+          Il prolonge le CLI utilisé pour les genres sans réimplémenter leurs
+          commandes. Le contrôle porte sur le format du code pays ; il ne s'agit
+          pas d'une vérification de son existence dans un catalogue ISO complet.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-05]
+        acceptance:
+          - Un module dédié permet de rechercher un pays par code, de lister les pays triés par code et d'insérer ou actualiser leurs noms sans doublon.
+          - La commande add-countries <csv-file> accepte exactement les colonnes code et name, sans dépendre de leur ordre ni de la casse des en-têtes.
+          - Le lecteur CSV accepte le BOM, les espaces autour des valeurs et les champs entre guillemets ; il ignore les lignes vides ou dont les deux valeurs sont vides.
+          - Le code contient exactement deux lettres majuscules et le nom est non vide ; une valeur invalide produit une erreur avec la ligne concernée, sans convertir silencieusement le code.
+          - Le fichier est entièrement lu et validé avant ouverture de la base ; l'import est transactionnel et actualise le nom d'un code déjà présent sans ajouter de pays en double.
+          - La commande clean-countries retire uniquement les pays absents de production_countries et préserve ceux qui participent à un film.
+          - Les commandes respectent --path, ferment la connexion et affichent les compteurs d'import ou de suppression ainsi que le chemin de la base ; les erreurs ne produisent pas de message de succès.
+          - Des tests couvrent recherche absente, tri, insertion et mise à jour, codes et noms invalides, CSV avec guillemets, nettoyage sélectif et annulation de l'import.
+          - Le fichier data/countries.csv fournit les exemples FR, GB et US ; le README explique import et nettoyage sur la base par défaut et sur une base personnalisée.
+      - id: EXPL-07
+        key: EXPL-DISCOVER-API
+        type: feature
+        title: Exposer une page de films TMDB par année via une route Discover
+        story: |
+          En tant qu'analyste, je veux consulter les films d'une année de sortie
+          principale via l'API de l'application, en choisissant la page, la langue
+          et la région, pour explorer le catalogue au-delà des films populaires.
+
+          Ce ticket spécifie l'apport propre de la
+          [PR #56](https://github.com/but-sd/themoviedb-discovery-app-demo-2/pull/56),
+          indépendamment des fonctionnalités de base et d'import CSV déjà décrites.
+          La route interroge TMDB Discover avec primary_release_year et renvoie
+          une seule page. Elle ne parcourt pas automatiquement toutes les pages,
+          n'enrichit pas les films par leur détail et ne les écrit pas en base.
+          La collecte sur une plage d'années et la gestion des limites de requêtes
+          restent le périmètre d'EXPL-08.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-01]
+        acceptance:
+          - La route GET /api/discover/movies est enregistrée dans le serveur sans remplacer les routes existantes.
+          - Le paramètre year est obligatoire, sous forme de chaîne de quatre chiffres entre 1000 et 9999 ; une valeur absente, vide, décimale, hors bornes, une liste ou un objet entraîne HTTP 400 avant tout appel TMDB.
+          - Une année invalide renvoie un objet JSON avec le message year must be a four-digit year between 1000 and 9999.
+          - L'appel TMDB utilise /3/discover/movie avec primary_release_year ; language, page et region valent par défaut fr-FR, 1 et FR.
+          - Les valeurs optionnelles non vides de type chaîne sont transmises via URLSearchParams ; aucune validation supplémentaire de leur domaine n'est revendiquée par ce ticket.
+          - L'authentification TMDB est effectuée côté serveur avec la configuration existante, sans exposer le jeton dans la réponse.
+          - La réponse conserve page, results, total_pages et total_results ; les films sont convertis avec le helper existant toSupportedMovie et n'exposent pas adult ou video.
+          - Une page vide est un résultat normal ; le client peut demander les pages suivantes avec page, sans parcours automatique ni écriture en base.
+          - Une erreur HTTP TMDB, une panne réseau ou un JSON illisible est journalisé côté serveur ; la route renvoie HTTP 500 avec le message Failed to discover movies.
+          - Des tests simulés couvrent paramètres par défaut et personnalisés, résultats vides, conversion des films, années invalides sans appel réseau et les trois familles d'erreurs.
+          - Le README documente un appel par année, les options, le format paginé et la distinction entre consultation d'une page et collecte complète.
+      - id: EXPL-08
+        key: EXPL-04
+        type: feature
+        title: Extraire les films TMDB sur une plage d'années
+        story: En tant qu'analyste, je veux collecter les films de chaque année demandée sans me limiter aux films populaires de la page d'accueil.
+        size: L
+        priority: P1
+        dependsOn: [EXPL-01, EXPL-07]
+        acceptance:
+          - L'extraction utilise la recherche de catalogue TMDB par dates de sortie et parcourt la pagination pour chaque année demandée.
+          - Les bornes d'années sont inclusives ; une date hors période est exclue et les films présents sur plusieurs pages sont dédupliqués par identifiant.
+          - Les limites de pagination et de requêtes de TMDB ainsi que les plafonds choisis sont respectés et toute collecte tronquée est signalée.
+          - Un HTTP 429 déclenche une attente bornée respectant Retry-After ; les erreurs persistantes sont explicites et ne produisent pas un succès apparent.
+          - Des réponses TMDB simulées couvrent plusieurs pages, une année vide, un doublon, un HTTP 429 et une erreur persistante.
+      - id: EXPL-09
+        key: EXPL-05
+        type: feature
+        title: Nettoyer et contrôler les données collectées
+        story: En tant qu'analyste, je veux des données validées et un bilan de qualité avant leur chargement.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-01, EXPL-08]
+        acceptance:
+          - Les types, dates, identifiants, genres et valeurs numériques sont contrôlés selon le dictionnaire.
+          - Une note sans vote ne contribue pas aux statistiques de notes ; une valeur manquante n'est pas remplacée arbitrairement par zéro.
+          - Les lignes rejetées sont comptées avec un motif explicite sans exposer le jeton TMDB.
+          - Les transformations sont vérifiées sur des exemples valides, incomplets et invalides dont les résultats attendus sont connus.
+      - id: EXPL-10
+        key: EXPL-06
+        type: feature
+        title: Charger les données en base de façon idempotente
+        story: En tant qu'analyste, je veux relancer une alimentation sans doublonner les films ni masquer une collecte incomplète.
+        size: L
+        priority: P1
+        dependsOn: [EXPL-03, EXPL-09]
+        acceptance:
+          - Le chargement insère les nouveaux films, actualise les existants et synchronise leurs genres avec des transactions cohérentes.
+          - Deux chargements du même jeu ne modifient pas les effectifs des films et associations.
+          - Chaque exécution conserve son statut et ses compteurs insérés, actualisés, rejetés et collectés ainsi que son périmètre.
+          - Une panne en cours d'alimentation est signalée comme échec ou exécution incomplète ; une relance ne double pas les données déjà chargées.
+          - Un test sur base temporaire couvre deux chargements identiques, une mise à jour et une interruption.
+      - id: EXPL-11
+        key: EXPL-07
+        type: feature
+        title: Piloter l'alimentation avec un petit CLI
+        story: En tant qu'étudiant, je veux lancer le pipeline depuis le terminal en choisissant les années sans modifier son code.
+        size: M
+        priority: P1
+        dependsOn: [EXPL-04, EXPL-10]
+        acceptance:
+          - Une commande npm expose une aide et des options de début, fin et limite par année avec un exemple pour 2015 à 2024.
+          - Le CLI appelle le pipeline partagé d'extraction, validation et chargement sans dupliquer sa logique.
+          - Les options invalides et une période inversée sont refusées avant tout appel TMDB ou écriture en base.
+          - Un mode simulation affiché le périmètre et les limites sans appel réseau ni modification de la base.
+          - Le terminal affiché les compteurs et la durée ; un échec renvoie un code non nul et n'affiché aucun secret.
+      - id: EXPL-12
+        key: EXPL-08
+        type: feature
+        title: Exposer les données et indicateurs d'exploration dans l'API
+        story: En tant que visiteur, je veux explorer les données stockées sans déclencher de nouvelle collecte TMDB.
+        size: L
+        priority: P2
+        dependsOn: [EXPL-10]
+        acceptance:
+          - Des routes documentées lisent uniquement la base et acceptent période inclusive, genre et pagination valides.
+          - L'API fournit liste de films et agrégats par année avec effectif, nombre de films notés, moyenne et médiane des notes valides.
+          - Les filtres s'appliquent à tout le périmètre en base avant agrégation ou pagination, pas seulement à la page courante.
+          - Le comptage des films reste unique lorsqu'un film possède plusieurs genres ; la pondération éventuelle par nombre de votes est distinguée de la moyenne simple.
+          - Les réponses précisent date et périmètre de collecte, années manquantes et couverture partielle ; une base vide a une réponse explicite.
+          - Un jeu de données connu vérifie les calculs, filtres, valeurs manquantes et erreurs de paramètres.
+      - id: EXPL-13
+        key: EXPL-09
+        type: feature
+        title: Créer la page d'exploration et ses filtres
+        story: En tant que visiteur, je veux choisir une plage d'années et un genre puis consulter les films correspondants.
+        size: M
+        priority: P2
+        dependsOn: [EXPL-12]
+        acceptance:
+          - Une page Tableau de bord est accessible depuis la navigation sans modifier la liste existante des films populaires.
+          - Les années de début et fin et le genre sont conservés dans l'URL et restaurés au rechargement.
+          - Le tableau paginé affiché titre, année, genres, note et nombre de votes avec un lien vers la fiche du film.
+          - Chargement, base vide, aucun résultat et erreur sont distingués ; une erreur permet de réessayer et une réponse obsolète ne remplace pas la dernière sélection.
+          - Les filtres sont utilisables au clavier avec des libellés explicites.
+      - id: EXPL-14
+        key: EXPL-10
+        type: feature
+        title: Visualiser et comparer les années du catalogue
+        story: En tant qu'analyste, je veux comparer distributions et indicateurs entre années sans confondre absence de données et valeur nulle.
+        size: L
+        priority: P2
+        dependsOn: [EXPL-13]
+        acceptance:
+          - La page affiché effectif et moyenne ou médiane des notes ainsi que des graphiques de répartition par année et par genre pour les filtres actifs.
+          - Les titres, axes, unités, effectifs et règles de calcul sont visibles ; une alternative tabulaire restitue les valeurs.
+          - Les années sans collecte sont distinguées des années collectées sans résultat et aucune interpolation n'invente de valeur.
+          - La date de collecte et les limites de couverture sont affichees ; la page ne présente pas la popularité actuelle comme une mesure historique.
+          - Les résultats affiches correspondent aux valeurs attendues du jeu de démonstration et restent lisibles sur mobile.
+      - id: EXPL-15
+        key: EXPL-11
+        type: feature
+        title: Livrer un parcours reproductible de la base au tableau de bord
+        story: En tant qu'étudiant ou enseignant, je veux démontrer le parcours complet sans dépendance à un jeton TMDB réel.
+        size: M
+        priority: P2
+        dependsOn: [EXPL-11, EXPL-14]
+        acceptance:
+          - Un petit jeu synthétique documenté couvre plusieurs années, plusieurs genres, une valeur manquante et une année sans données.
+          - Une procédure depuis un clone explique installation, initialisation, alimentation de démonstration, lancement et consultation du tableau de bord.
+          - Un test d'intégration automatisé initialise une base temporaire, charge le jeu deux fois et vérifie les indicateurs et le filtrage sans appel TMDB.
+          - La vérification continue exécute les tests sans secret et les commandes échouent explicitement si la configuration est invalide.
+          - La démonstration et la documentation permettent de distinguer données synthétiques, données collectées et limites de l'analyse.
+  # - id: BUG
+  #   title: Corrections de bugs
+  #   objective: Reproduire un défaut, écrire un test de régression et vérifier sa
+  #     correction.
+  #   tickets:
+  #     - id: BUG-01
+  #       type: bug
+  #       title: Éviter un chargement indéfini apres une erreur réseau
+  #       story:
+  #         En tant que visiteur, je veux un message d'erreur plutot qu'un chargement
+  #         permanent.
+  #       size: S
+  #       priority: P1
+  #       dependsOn: []
+  #       reproduction:
+  #         - Ouvrir la liste des films avec le serveur API indisponible.
+  #         - Observer que Loading reste affiché et que le rejet de fetch n'est
+  #           pas géré.
+  #       acceptance:
+  #         - Une erreur réseau affiché un message explicite sur la liste et la
+  #           fiche.
+  #         - Un bouton permet de réessayer sans recharger toute l'application.
+  #         - Un test avec fetch rejeté reproduit puis vérifie la correction.
+  #     - id: BUG-02
+  #       type: bug
+  #       title: Ne pas traiter une réponse HTTP en erreur comme un film
+  #       story:
+  #         En tant que visiteur, je veux une fiche en erreur lisible sans plantage
+  #         de l'interface.
+  #       size: M
+  #       priority: P1
+  #       dependsOn: []
+  #       reproduction:
+  #         - Ouvrir une fiche dont l'API renvoie HTTP 500 avec un objet contenant
+  #           error.
+  #         - Observer que response.json est transmis a MovieDetailCard sans
+  #           vérifier response.ok.
+  #         - Le composant tente d'acceder a release_date.slice sur une propriete
+  #           absente.
+  #       acceptance:
+  #         - Les réponses HTTP non reussies ne sont pas utilisees comme des films.
+  #         - La fiche affiché une erreur et ne plante pas.
+  #         - Un test couvre une réponse HTTP 500 avec un corps JSON.
+  #     - id: BUG-03
+  #       type: bug
+  #       title: Conserver le statut introuvable pour un film absent
+  #       story:
+  #         En tant que client de l'API, je veux distinguer un film absent d'une
+  #         panne serveur.
+  #       size: S
+  #       priority: P2
+  #       dependsOn: []
+  #       reproduction:
+  #         - Simuler une réponse TMDB HTTP 404 sur GET /api/movies/:id.
+  #         - Observer que le gestionnaire lève une erreur puis renvoie HTTP 500.
+  #       acceptance:
+  #         - Une réponse TMDB 404 produit une réponse API 404 avec un message
+  #           explicite.
+  #         - Une panne serveur reste distincte d'un film introuvable.
+  #         - Un test de régression simule les statuts 404 et 500 sans appel TMDB
+  #           réel.
+  # - id: EXP
+  #   title: Explorer le catalogue
+  #   objective: Apprendre a interroger une API et a concevoir une exploration de données.
+  #   tickets:
+  #     - id: EXP-01
+  #       type: feature
+  #       title: Naviguer entre les pages de films
+  #       story:
+  #         En tant que visiteur, je veux parcourir plusieurs pages pour decouvrir
+  #         davantage de films.
+  #       size: S
+  #       priority: P1
+  #       dependsOn:
+  #         - REL-01
+  #       acceptance:
+  #         - Les boutons precedent et suivant respectent les bornes des résultats.
+  #         - La page courante est présenté dans l'URL et restauree apres
+  #           rechargement.
+  #         - Une erreur de chargement est affichee sans perdre la possibilite de
+  #           réessayer.
+  #     - id: EXP-02
+  #       type: feature
+  #       title: Rechercher un film par titre
+  #       story: En tant que visiteur, je veux rechercher un titre pour retrouver un film.
+  #       size: M
+  #       priority: P1
+  #       dependsOn:
+  #         - EXP-01
+  #       acceptance:
+  #         - Une recherche affiché les films correspondants et permet d'ouvrir
+  #           leur fiche.
+  #         - Les recherches vides et sans résultat ont un comportement explicite.
+  #         - Les caractères spéciaux sont acceptés et les résultats sont
+  #           paginables.
+  #     - id: EXP-03
+  #       type: feature
+  #       title: Filtrer et trier le catalogue
+  #       story:
+  #         En tant que visiteur, je veux combiner genre, année et note minimale pour
+  #         affiner ma sélection.
+  #       size: L
+  #       priority: P2
+  #       dependsOn:
+  #         - EXP-01
+  #       acceptance:
+  #         - Les filtres peuvent être combinés sur le catalogue interrogé, pas
+  #           seulement sur la page affichee.
+  #         - Le tri par popularité ou note est disponible et documenté.
+  #         - Changer un filtre revient a la premiere page et les critères sont
+  #           conservés dans l'URL.
+  # - id: DASH
+  #   title: Tableau de bord cinema
+  #   objective: Transformer un échantillon en indicateurs et visualisations interpretables.
+  #   tickets:
+  #     - id: DASH-01
+  #       type: feature
+  #       title: Construire un jeu de données d'analyse
+  #       story:
+  #         En tant qu'analyste, je veux un échantillon documenté pour savoir ce que
+  #         mes indicateurs représentent.
+  #       size: M
+  #       priority: P2
+  #       dependsOn:
+  #         - REL-02
+  #       acceptance:
+  #         - Les films collectés sont dédupliqués par identifiant et exportables
+  #           en CSV.
+  #         - La source, la date de collecte, les critères et la taille de
+  #           l'échantillon sont fournis.
+  #         - Les valeurs manquantes sont conservees comme telles et leur
+  #           traitement est explique.
+  #     - id: DASH-02
+  #       type: feature
+  #       title: Calculer les indicateurs descriptifs
+  #       story:
+  #         En tant qu'analyste, je veux decrire les notes et années de sortie pour
+  #         comprendre mon échantillon.
+  #       size: M
+  #       priority: P2
+  #       dependsOn:
+  #         - DASH-01
+  #       acceptance:
+  #         - Effectif, moyenne et médiane des notes sont calcules sur les valeurs
+  #           valides.
+  #         - Les distributions par année et genre sont disponibles avec leurs
+  #           effectifs.
+  #         - Un petit jeu de données connu permet de vérifier les calculs, y
+  #           compris le cas vide.
+  #     - id: DASH-03
+  #       type: feature
+  #       title: Afficher un tableau de bord interpretable
+  #       story:
+  #         En tant que visiteur, je veux visualiser les distributions pour explorer
+  #         les tendances de l'échantillon.
+  #       size: L
+  #       priority: P2
+  #       dependsOn:
+  #         - DASH-02
+  #       acceptance:
+  #         - Un histogramme des notes et une répartition des genres affichent
+  #           titres, axes et unités.
+  #         - Une alternative textuelle ou tabulaire rend les données accessibles.
+  #         - La page affiché le périmètre de collecte et avertit que les films
+  #           populaires ne représentent pas tout le cinema.
+  # - id: COMP
+  #   title: Comparer les films
+  #   objective:
+  #     Interroger les biais des indicateurs et distinguer popularité, note
+  #     et volume de votes.
+  #   tickets:
+  #     - id: COMP-01
+  #       type: feature
+  #       title: Expliquer les indicateurs TMDB
+  #       story:
+  #         En tant que visiteur, je veux connaître la signification des indicateurs
+  #         pour ne pas confondre popularité et qualité.
+  #       size: XS
+  #       priority: P1
+  #       dependsOn: []
+  #       acceptance:
+  #         - La note moyenne, le nombre de votes et la popularité ont une
+  #           definition visible.
+  #         - Une source TMDB et une date de consultation accompagnent les
+  #           definitions.
+  #         - Le texte explique qu'un faible nombre de votes rend une note moins
+  #           robuste.
+  #     - id: COMP-02
+  #       type: feature
+  #       title: Comparer une sélection de films
+  #       story:
+  #         En tant que visiteur, je veux comparer deux a quatre films pour choisir
+  #         lequel regarder.
+  #       size: M
+  #       priority: P2
+  #       dependsOn:
+  #         - COMP-01
+  #       acceptance:
+  #         - Deux a quatre films peuvent être ajoutes et retires sans doublon.
+  #         - Le tableau compare année, genres, note, nombre de votes et
+  #           popularité.
+  #         - Les informations manquantes sont distinguées des valeurs nulles ou
+  #           egales a zéro.
+  #     - id: COMP-03
+  #       type: feature
+  #       title: Etudier la relation entre votes et notes
+  #       story:
+  #         En tant qu'analyste, je veux explorer les liens entre indicateurs pour
+  #         discuter leurs limites.
+  #       size: L
+  #       priority: P3
+  #       dependsOn:
+  #         - DASH-01
+  #         - COMP-01
+  #       acceptance:
+  #         - Un nuage de points représente nombre de votes et note moyenne sur le
+  #           jeu d'analyse.
+  #         - Une correlation est calculee et verifiee sur un exemple connu.
+  #         - Une interpretation discute les valeurs extremes, le biais de
+  #           sélection et l'absence de conclusion causale.
+  # - id: HIST
+  #   title: Historique des tendances
+  #   objective: Construire un mini-ETL, modeliser des données et analyser des
+  #     evolutions temporelles.
+  #   tickets:
+  #     - id: HIST-01
+  #       type: feature
+  #       title: Modeliser et stocker les instantanes
+  #       story:
+  #         En tant qu'analyste, je veux conserver des observations datees pour
+  #         comparer les tendances.
+  #       size: L
+  #       priority: P3
+  #       dependsOn:
+  #         - DASH-01
+  #       acceptance:
+  #         - Un schéma distingue les films et leurs observations datees.
+  #         - Une collecte conserve les critères, l'horodatage et les indicateurs
+  #           retenus.
+  #         - La réexécution d'une même collecte ne cree pas de doublons et un
+  #           test le demontre.
+  #     - id: HIST-02
+  #       type: feature
+  #       title: Automatiser et suivre la collecte
+  #       story:
+  #         En tant qu'analyste, je veux une collecte periodique observable pour
+  #         disposer d'un historique fiable.
+  #       size: L
+  #       priority: P3
+  #       dependsOn:
+  #         - HIST-01
+  #       acceptance:
+  #         - La periodicite et le volume collecte sont configurables et
+  #           documentés.
+  #         - Les limites de l'API sont respectees et les erreurs sont signalees
+  #           dans un journal.
+  #         - Une collecte interrompue peut être relancee sans dupliquer les
+  #           observations.
+  #     - id: HIST-03
+  #       type: feature
+  #       title: Visualiser les evolutions de popularité
+  #       story:
+  #         En tant que visiteur, je veux comparer les observations d'un film pour
+  #         voir son evolution.
+  #       size: M
+  #       priority: P3
+  #       dependsOn:
+  #         - HIST-01
+  #       acceptance:
+  #         - Une courbe affiché les observations en ordre chronologique sur une
+  #           période selectionnee.
+  #         - Les jours sans observation sont signales sans inventer de valeur.
+  #         - Un jeu d'instantanes de démonstration permet de travailler sans
+  #           attendre plusieurs semaines.
+  # - id: REC
+  #   title: Recommandation explicable
+  #   objective: Preparer des variables, comparer des methodes simples et evaluer
+  #     leurs recommandations.
+  #   tickets:
+  #     - id: REC-01
+  #       type: feature
+  #       title: Proposer une recommandation par genres
+  #       story:
+  #         En tant que visiteur, je veux des suggestions proches d'un film choisi
+  #         avec une explication comprehensible.
+  #       size: M
+  #       priority: P3
+  #       dependsOn:
+  #         - DASH-01
+  #       acceptance:
+  #         - La methode de similarite des genres est decrite et testee sur un
+  #           exemple connu.
+  #         - Le film de depart est exclu des résultats et les egalites ont un
+  #           ordre deterministe.
+  #         - Chaque suggestion indique les genres partages et le périmètre du
+  #           catalogue utilise.
+  #     - id: REC-02
+  #       type: feature
+  #       title: Personnaliser les suggestions avec des favoris
+  #       story:
+  #         En tant qu'utilisateur, je veux des suggestions issues de plusieurs films
+  #         apprecies pour explorer mes preferences.
+  #       size: L
+  #       priority: P3
+  #       dependsOn:
+  #         - REC-01
+  #         - WATCH-01
+  #       acceptance:
+  #         - Les favoris alimentent un profil dont la construction est expliquee.
+  #         - Les films déjà favoris sont exclus des suggestions.
+  #         - Sans favoris ou sans résultat, une explication invite a enrichir la
+  #           sélection.
+  #     - id: REC-03
+  #       type: feature
+  #       title: Comparer et evaluer les methodes de recommandation
+  #       story:
+  #         En tant qu'analyste, je veux comparer ma methode a une reference pour
+  #         discuter sa pertinence.
+  #       size: XL
+  #       priority: P3
+  #       dependsOn:
+  #         - REC-02
+  #       acceptance:
+  #         - Un protocole reproductible compare la methode a une reference par
+  #           popularité.
+  #         - Les metriques retenues, par exemple precision a k et diversite, sont
+  #           definies et calculees sur un jeu documenté.
+  #         - Le rapport explique les limites des données et propose un decoupage
+  #           du ticket avant son engagement en sprint.
+  # - id: WATCH
+  #   title: Watchlist et notes personnelles
+  #   objective:
+  #     Modeliser un etat utilisateur persistant sans imposer de comptes pour
+  #     une premiere version.
+  #   tickets:
+  #     - id: WATCH-01
+  #       type: feature
+  #       title: Conserver une liste de films favoris
+  #       story:
+  #         En tant qu'utilisateur, je veux retrouver ma liste de films a voir apres
+  #         avoir ferme la page.
+  #       size: S
+  #       priority: P1
+  #       dependsOn: []
+  #       acceptance:
+  #         - Un film peut être ajoute ou retire depuis sa fiche et depuis la
+  #           liste.
+  #         - La liste est conservee dans le navigateur sans doublon apres
+  #           rechargement.
+  #         - La limite du stockage local et les erreurs de lecture ou d'écriture
+  #           sont expliquees a l'utilisateur.
+  #     - id: WATCH-02
+  #       type: feature
+  #       title: Noter les films vus
+  #       story: En tant qu'utilisateur, je veux distinguer les films vus et leur
+  #         attribuer une note personnelle.
+  #       size: M
+  #       priority: P2
+  #       dependsOn:
+  #         - WATCH-01
+  #       acceptance:
+  #         - Un film peut être marque vu ou a voir et filtre par cet etat.
+  #         - Une note personnelle de 0 a 10 peut être saisie, modifiee et
+  #           supprimee.
+  #         - La note personnelle est clairement distinguée de la note TMDB et
+  #           persiste apres rechargement.
+  #     - id: WATCH-03
+  #       type: feature
+  #       title: Exporter et importer une watchlist
+  #       story:
+  #         En tant qu'utilisateur, je veux sauvegarder ma liste pour la transferer
+  #         vers un autre navigateur.
+  #       size: M
+  #       priority: P2
+  #       dependsOn:
+  #         - WATCH-02
+  #       acceptance:
+  #         - Un export JSON contient une version de format et les données
+  #           personnelles de la liste.
+  #         - Un import valide restaure les données avec une règle de fusion
+  #           documentée.
+  #         - Un fichier invalide est refuse avec un message explicite et sans
+  #           alterer la liste existante.
+  # - id: REL
+  #   title: Fiabiliser l'application
+  #   objective:
+  #     Garantir la qualité des données et apprendre a livrer un increment
+  #     verifiable.
+  #   tickets:
+  #     - id: REL-01
+  #       type: feature
+  #       title: Gerer chargements, erreurs et résultats vides
+  #       story:
+  #         En tant que visiteur, je veux comprendre l'etat de la page et pouvoir
+  #         réessayer apres une erreur.
+  #       size: S
+  #       priority: P1
+  #       dependsOn: []
+  #       acceptance:
+  #         - Liste et fiche distinguent chargement, succès, résultat vide et
+  #           erreur.
+  #         - Un échec HTTP ou réseau ne laisse pas un chargement indéfini et
+  #           permet de réessayer.
+  #         - Les erreurs attendues sont testees sans appel réel a TMDB.
+  #     - id: REL-02
+  #       type: feature
+  #       title: Valider et documenter les données TMDB
+  #       story:
+  #         En tant que développeur, je veux contrôler les données externes pour ne
+  #         pas produire d'indicateurs trompeurs.
+  #       size: M
+  #       priority: P1
+  #       dependsOn:
+  #         - REL-01
+  #       acceptance:
+  #         - Les paramètres de pagination et les identifiants de films invalides
+  #           sont refuses explicitement.
+  #         - Les données externes invalides et les valeurs manquantes ont des
+  #           traitements documentés.
+  #         - Des jeux de test couvrent réponses incompletes, dates absentes et
+  #           erreurs de l'API.
+  #     - id: REL-03
+  #       type: feature
+  #       title: Tester un parcours utilisateur complet
+  #       story:
+  #         En tant qu'equipe, je veux vérifier un parcours de bout en bout pour
+  #         livrer sans régression.
+  #       size: M
+  #       priority: P2
+  #       dependsOn:
+  #         - REL-01
+  #         - EXP-01
+  #       acceptance:
+  #         - Un test automatisé couvre liste, changement de page, fiche et retour
+  #           a la liste.
+  #         - Le test est reproductible avec des données controlees sans jeton
+  #           TMDB réel.
+  #         - La commande et son intégration a la vérification continue sont
+  #           documentées.
