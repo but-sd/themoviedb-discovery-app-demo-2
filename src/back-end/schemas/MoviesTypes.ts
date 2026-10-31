@@ -39,6 +39,10 @@ export type TmdbMovieDetails = {
   vote_average: number;
   vote_count: number;
   genres: Array<{ id: number; name: string }>;
+  runtime: number | null;
+  budget: number;
+  revenue: number;
+  production_countries: Array<{ iso_3166_1: string; name: string }>;
   tagline: string | null;
   production_companies: Array<{
     id: number;
@@ -57,12 +61,21 @@ export type MoviesApiResponse = {
 };
 
 // TypeScript type for the supported movie format used in our application, omitting 'adult' and 'video' properties from the TmdbMovie type.
-export type Movie = Omit<TmdbMovie, "adult" | "video">;
+export type Movie = Omit<TmdbMovie, 'adult' | 'video'>;
 
 // TypeScript type for the supported movie details format used in our application, omitting 'adult','video' and production_companies properties from the TmdbMovieDetails type.
-export type MovieDetails = Omit<TmdbMovieDetails, "adult" | "video" | "production_companies">;
+export type MovieDetails = Omit<
+  TmdbMovieDetails,
+  'adult' | 'video' | 'production_companies'
+>;
 
 // TypeScript type for the API response when fetching popular movies, containing an array of supported Movie objects.
 export type ApiErrorResponse = {
   error: string;
 };
+
+// TypeScript type for a movie genre, containing an ID and a name.
+export type Genre = { id: number; name: string };
+
+// TypeScript type for a country, containing a code and a name.
+export type Country = { code: string; name: string };

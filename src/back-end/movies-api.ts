@@ -1,12 +1,11 @@
 import type { Express } from 'express';
 import express from 'express';
-import { toSupportedMovie, toSupportedMovieDetails } from './utils';
+import { toSupportedMovie } from './utils';
+import { getMovieDetails } from './tmdb-service.ts';
 import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import { tmdbAccessToken } from './config';
 import type {
-  MovieDetails,
   MoviesApiResponse,
-  TmdbMovieDetails,
   TmdbMoviesRawResponse,
 } from './schemas/MoviesTypes';
 
@@ -69,32 +68,29 @@ export function registerMoviesApi(app: Express): void {
     },
   );
 
-  app.get("/api/movies/:id", async (_req: express.Request, res: express.Response) => {
-    const movieId = _req.params.id;
+  app.get(
+    '/api/movies/:id',
+    async (_req: express.Request, res: express.Response) => {
+      const movieId = _req.params.id;
 
-    try {
-      const response = await fetch(`https://api.themoviedb.org/3/movie/${movieId}`, {
-        headers: {
-          Authorization: `Bearer ${tmdbAccessToken}`,
-          "Content-Type": "application/json;charset=utf-8",
-        },
-      });
+      const { language, page, region } = _req.query;
 
-      if (!response.ok) {
-        throw new Error(`TMDB API request failed with status ${response.status}`);
+      try {
+        const data = await getMovieDetails(String(movieId), {
+          language:
+            typeof language === 'string' && language ? language : undefined,
+          page: typeof page === 'string' && page ? page : undefined,
+          region: typeof region === 'string' && region ? region : undefined,
+        });
+
+        // Send the transformed data as a JSON response
+        res.json(data);
+      } catch (error) {
+        console.error(`Error fetching movie with ID ${movieId}:`, error);
+        res
+          .status(500)
+          .json({ error: `Failed to fetch movie with ID ${movieId}` });
       }
-
-      // Parse the raw response from the TMDB API
-      const rawData = (await response.json()) as TmdbMovieDetails;
-
-      // Transform the raw data into the supported format for our application
-      const data: MovieDetails = toSupportedMovieDetails(rawData);
-
-      // Send the transformed data as a JSON response
-      res.json(data);
-    } catch (error) {
-      console.error(`Error fetching movie with ID ${movieId}:`, error);
-      res.status(500).json({ error: `Failed to fetch movie with ID ${movieId}` });
-    }
-  });
+    },
+  );
 }
