@@ -13,6 +13,7 @@ export const DEFAULT_DATABASE_PATH = resolve('data/movies.sqlite');
  */
 export function getDatabase(
   databasePath = DEFAULT_DATABASE_PATH,
+  { force = false }: { force?: boolean } = {},
 ): DatabaseSync {
   // Create the directory for the database file if it doesn't exist
   mkdirSync(dirname(databasePath), { recursive: true });
@@ -26,12 +27,22 @@ export function getDatabase(
   // Begin a transaction to initialize the schema
   database.exec('BEGIN TRANSACTION;');
   try {
+    if (force) {
+      database.exec(`
+        DROP TABLE IF EXISTS movie_genres;
+        DROP TABLE IF EXISTS production_countries;
+        DROP TABLE IF EXISTS movies;
+        DROP TABLE IF EXISTS genres;
+        DROP TABLE IF EXISTS countries;
+      `);
+    }
     initializeSchema(database);
     database.exec('COMMIT;');
     // Schema initialized successfully, commit the transaction
   } catch (error) {
     // An error occurred while initializing the schema, rollback the transaction
     database.exec('ROLLBACK;');
+    database.close();
     throw error;
   }
 
@@ -67,9 +78,9 @@ function initializeMoviesSchema(database: DatabaseSync): void {
       vote_count INTEGER,
       poster_path TEXT,
       backdrop_path TEXT,
-      runtime_minutes INTEGER CHECK(runtime_minutes > 0),
-      budget INTEGER CHECK(budget > 0),
-      revenue INTEGER CHECK(revenue > 0),
+      runtime_minutes INTEGER CHECK(runtime_minutes IS NULL OR runtime_minutes > 0),
+      budget INTEGER CHECK(budget IS NULL OR budget > 0),
+      revenue INTEGER CHECK(revenue IS NULL OR revenue > 0),
       collected_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS movies_release_year ON movies(release_year);
