@@ -1,18 +1,12 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { MovieDetails } from '../schemas/MoviesTypes.ts';
 
-function positiveOrNull(value: number | null): number | null {
-  if (value === null || value === 0) {
-    return null;
-  }
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new Error(
-      'Movie runtime, budget and revenue must be non-negative integers or null',
-    );
-  }
-  return value;
-}
-
+/**
+ * Upserts a movie into the database (inserts if it doesn't exist, updates if it does)
+ * @param database The SQLite database instance to use for storing movie details
+ * @param movie The movie details to insert or update in the database
+ * @param collectedAt The timestamp when the movie details were collected (defaults to the current time)
+ */
 export function upsertMovie(
   database: DatabaseSync,
   movie: Omit<MovieDetails, 'genres' | 'production_countries' | 'tagline'>,
@@ -55,9 +49,9 @@ export function upsertMovie(
         movie.vote_count,
         movie.poster_path,
         movie.backdrop_path,
-        positiveOrNull(movie.runtime),
-        positiveOrNull(movie.budget),
-        positiveOrNull(movie.revenue),
+        movie.runtime,
+        movie.budget,
+        movie.revenue,
         collectedAt,
       );
     database.exec('COMMIT;');
